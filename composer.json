@@ -10,7 +10,9 @@
         "react/stream": "0.4.*"
     },
     "autoload": {
-        "psr-4": { "React\\Socket\\": "" }
+        "psr-4": {
+            "React\\Socket\\": "src"
+        }
     },
     "extra": {
         "branch-alias": {

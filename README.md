@@ -1,5 +1,7 @@
 # Socket Component
 
+[![Build Status](https://secure.travis-ci.org/reactphp/socket.png?branch=master)](http://travis-ci.org/reactphp/socket)
+
 Library for building an evented socket server.
 
 The socket component provides a more usable interface for a socket-layer
@@ -18,7 +20,7 @@ or in a client context.
 ## Usage
 
 Here is a server that closes the connection if you send it anything.
-
+```php
     $loop = React\EventLoop\Factory::create();
 
     $socket = new React\Socket\Server($loop);
@@ -34,15 +36,15 @@ Here is a server that closes the connection if you send it anything.
     $socket->listen(1337);
 
     $loop->run();
-    
+```    
 You can change the host the socket is listening on through a second parameter 
 provided to the listen method:
-
+```php
     $socket->listen(1337, '192.168.0.1');
-
+```
 Here's a client that outputs the output of said server and then attempts to
 send it a string.
-
+```php
     $loop = React\EventLoop\Factory::create();
 
     $client = stream_socket_client('tcp://127.0.0.1:1337');
@@ -51,3 +53,4 @@ send it a string.
     $conn->write("Hello World!\n");
 
     $loop->run();
+```
