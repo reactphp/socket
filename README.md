@@ -1,5 +1,7 @@
 # SocketClient Component
 
+[![Build Status](https://secure.travis-ci.org/reactphp/socket-client.png?branch=master)](http://travis-ci.org/reactphp/socket-client)
+
 Async Connector to open TCP/IP and SSL/TLS based connections.
 
 ## Introduction

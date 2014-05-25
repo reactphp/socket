@@ -10,7 +10,9 @@
         "react/promise": "~2.0"
     },
     "autoload": {
-        "psr-4": { "React\\SocketClient\\": "" }
+        "psr-4": {
+            "React\\SocketClient\\": "src"
+        }
     },
     "extra": {
         "branch-alias": {
