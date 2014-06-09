@@ -1,5 +1,4 @@
-CHANGELOG
-=========
+# Changelog
 
 ## 0.4.1 (2014-04-13)
 
@@ -16,14 +15,15 @@ CHANGELOG
 * BC break: Update to React/Promise 2.0
 * BC break: Update to Evenement 2.0
 * Dependency: Autoloading and filesystem structure now PSR-4 instead of PSR-0
+* Bump React dependencies to v0.4
 
 ## 0.3.3 (2013-07-08)
 
-???
+* Version bump
 
 ## 0.3.2 (2013-05-10)
 
-???
+* Version bump
 
 ## 0.3.1 (2013-04-21)
 
@@ -31,23 +31,23 @@ CHANGELOG
 
 ## 0.3.0 (2013-04-14)
 
-???
+* Bump React dependencies to v0.3
 
 ## 0.2.6 (2012-12-26)
 
-???
+* Version bump
 
 ## 0.2.3 (2012-11-14)
 
-???
+* Version bump
 
 ## 0.2.0 (2012-09-10)
 
-???
+* Bump React dependencies to v0.2
 
 ## 0.1.1 (2012-07-12)
 
-???
+* Version bump
 
 ## 0.1.0 (2012-07-11)
 
