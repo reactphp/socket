@@ -7,6 +7,7 @@ use React\EventLoop\LoopInterface;
 use React\Stream\DuplexStreamInterface;
 use React\Stream\WritableStreamInterface;
 use React\Stream\Stream;
+use React\Stream\Util;
 
 class SecureStream implements DuplexStreamInterface
 {
@@ -87,6 +88,8 @@ class SecureStream implements DuplexStreamInterface
 
     public function pipe(WritableStreamInterface $dest, array $options = array())
     {
-        return $this->stream->pipe($dest, $options);
+        Util::pipe($this, $dest, $options);
+
+        return $dest;
     }
 }
