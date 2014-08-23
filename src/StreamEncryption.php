@@ -54,8 +54,13 @@ class StreamEncryption
         $this->loop->addReadStream($socket, $toggleCrypto);
         $toggleCrypto();
 
-        return $deferred->promise()->then(function () use ($stream) {
+        return $deferred->promise()->then(function () use ($stream, $toggle) {
+            if ($toggle) {
+                return new SecureStream($stream, $this->loop);
+            }
+            
             $stream->resume();
+            
             return $stream;
         }, function($error) use ($stream) {
             $stream->resume();
