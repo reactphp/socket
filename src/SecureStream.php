@@ -12,13 +12,16 @@ use React\Stream\Util;
 class SecureStream implements DuplexStreamInterface
 {
     use EventEmitterTrait;
-
+    
+    public $stream;
+    
+    public $decorating;
     protected $loop;
-    protected $stream;
 
     public function __construct(Stream $stream, LoopInterface $loop) {
-        $this->stream = $stream;
-        $this->loop   = $loop;
+        $this->stream = $stream->stream;
+        $this->decorating = $stream;
+        $this->loop = $loop;
 
         $stream->on('error', function($error) {
             $this->emit('error', [$error, $this]);
@@ -51,39 +54,39 @@ class SecureStream implements DuplexStreamInterface
             
     public function pause()
     {
-        $this->loop->removeReadStream($this->stream->stream);
+        $this->loop->removeReadStream($this->decorating->stream);
     }
 
     public function resume()
     {
         if ($this->isReadable()) {
-            $this->loop->addReadStream($this->stream->stream, [$this, 'handleData']);
+            $this->loop->addReadStream($this->decorating->stream, [$this, 'handleData']);
         }
     }
 
     public function isReadable()
     {
-        return $this->stream->isReadable();
+        return $this->decorating->isReadable();
     }
 
     public function isWritable()
     {
-        return $this->stream->isWritable();
+        return $this->decorating->isWritable();
     }
 
     public function write($data)
     {
-        return $this->stream->write($data);
+        return $this->decorating->write($data);
     }
 
     public function close()
     {
-        return $this->stream->close();
+        return $this->decorating->close();
     }
 
     public function end($data = null)
     {
-        return $this->stream->end($data);
+        return $this->decorating->end($data);
     }
 
     public function pipe(WritableStreamInterface $dest, array $options = array())
