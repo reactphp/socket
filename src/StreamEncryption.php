@@ -30,7 +30,7 @@ class StreamEncryption
         //  get an empty string back because the buffer indicator could be wrong
         if (
             PHP_VERSION_ID < 50433
-         || (PHP_VERSION_ID >= 50000 && PHP_VERSION_ID < 50517)
+         || (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 50517)
          || PHP_VERSION_ID === 50600
         ) {
             $this->wrapSecure = true;
