@@ -12,6 +12,11 @@ sudo: false
 
 install:
   - composer install --prefer-source --no-interaction
+  - sudo apt-get install -y openssl stunnel
+  - openssl genrsa 1024 > stunnel.key
+  - openssl req -batch -subj '/CN=127.0.0.1' -new -x509 -nodes -sha1 -days 3650 -key stunnel.key > stunnel.cert
+  - cat stunnel.key stunnel.cert > stunnel.pem
+  - stunnel -f -p stunnel.pem -d 6001 -r 6000 &
 
 script:
   - phpunit --coverage-text

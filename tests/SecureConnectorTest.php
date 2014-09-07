@@ -36,6 +36,19 @@ class SecureConnectorTest extends TestCase
         $resolver = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
         $connector = new Connector($loop, $resolver);
+
+        // verify server is listening by creating an unencrypted connection once
+        $promise = $connector->create('127.0.0.1', 6001);
+        try {
+            $client = Block\await($promise, $loop);
+            /* @var $client Stream */
+            $client->close();
+        } catch (\Exception $e) {
+            $this->markTestSkipped('stunnel not reachable?');
+        }
+
+        $this->assertEquals(0, $connected);
+
         $secureConnector = new SecureConnector($connector, $loop);
 
         $promise = $secureConnector->create('127.0.0.1', 6001);
@@ -67,7 +80,7 @@ class SecureConnectorTest extends TestCase
         $echo('world');
 
         // send a 10k message once to fill buffer (failing!)
-        //$echo(str_repeat('1234567890', 10000));
+        $echo(str_repeat('1234567890', 10000));
 
         $echo('again');
     }
