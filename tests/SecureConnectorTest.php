@@ -49,7 +49,7 @@ class SecureConnectorTest extends TestCase
 
         $this->assertEquals(0, $connected);
 
-        $secureConnector = new SecureConnector($connector, $loop);
+        $secureConnector = new SecureConnector($connector, $loop, array('verify_peer' => false));
 
         $promise = $secureConnector->create('127.0.0.1', 6001);
         //$promise = $connector->create('127.0.0.1', 6000);
