@@ -76,3 +76,11 @@ immediately.
     });
     $socket->listen(1337);
 ```
+
+### Setting `SO_REUSEADDR`
+The `SO_REUSEADDR` socket option allows a socket to forcibly bind to a
+port in use by another socket. This means multiple processes could be
+launched listening on the same port.
+```php
+    $socket->setSocketOption(SO_REUSEADDR, true);
+```
