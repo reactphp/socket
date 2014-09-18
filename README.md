@@ -54,3 +54,25 @@ send it a string.
 
     $loop->run();
 ```
+
+## Advanced Usage
+
+### Disabling TCP Nagle
+Nagle helps to improve the efficiency of TCP communication by reducing the
+number of packets that need to be sent over the network.
+
+This helps to reduce TCP overheads.
+
+Sometimes you want to disable Nagle to ensure that data will be sent
+immediately.
+```php
+    $socket = new React\Socket\Server($loop);
+    $socket->setTCPOption(TCP_NODELAY, true);
+    $socket->on('connection', function ($conn) {
+        $conn->write("This data will be sent.\n");
+        usleep(200);
+        $conn->write("... after 200ms!\n");
+        $conn->close();
+    });
+    $socket->listen(1337);
+```
