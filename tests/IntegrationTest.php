@@ -36,7 +36,7 @@ class IntegrationTest extends TestCase
         $loop->run();
 
         $this->assertTrue($connected);
-        $this->assertContains('HTTP/1.0 302 Found', $response);
+        $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
 
     /** @test */
@@ -67,6 +67,6 @@ class IntegrationTest extends TestCase
         $loop->run();
 
         $this->assertTrue($connected);
-        $this->assertContains('HTTP/1.0 302 Found', $response);
+        $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
 }
