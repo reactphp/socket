@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 (2014-xx-xx)
+
+* Bugfix: Only toggle the stream crypto handshake once (@DaveRandom and @rdlowrey)
+* Bugfix: Workaround for ext-openssl bug (@DaveRandom)
+
 ## 0.4.0 (2014-02-02)
 
 * BC break: Bump minimum PHP version to PHP 5.4, remove 5.3 specific hacks
