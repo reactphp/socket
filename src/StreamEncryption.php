@@ -50,7 +50,6 @@ class StreamEncryption
             $this->toggleCrypto($socket, $deferred, $toggle);
         };
 
-        $this->loop->addWriteStream($socket, $toggleCrypto);
         $this->loop->addReadStream($socket, $toggleCrypto);
         $toggleCrypto();
 
@@ -70,12 +69,10 @@ class StreamEncryption
         restore_error_handler();
 
         if (true === $result) {
-            $this->loop->removeWriteStream($socket);
             $this->loop->removeReadStream($socket);
 
             $deferred->resolve();
         } else if (false === $result) {
-            $this->loop->removeWriteStream($socket);
             $this->loop->removeReadStream($socket);
 
             $deferred->reject(new UnexpectedValueException(
