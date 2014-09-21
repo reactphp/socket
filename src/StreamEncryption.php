@@ -18,10 +18,23 @@ class StreamEncryption
 
     private $errstr;
     private $errno;
+    
+    private $wrapSecure = false;
 
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
+        
+        // See https://bugs.php.net/bug.php?id=65137
+        // On versions affected by this bug we need to fread the stream until we
+        //  get an empty string back because the buffer indicator could be wrong
+        if (
+            PHP_VERSION_ID < 50433
+         || (PHP_VERSION_ID >= 50500 && PHP_VERSION_ID < 50517)
+         || PHP_VERSION_ID === 50600
+        ) {
+            $this->wrapSecure = true;
+        }
     }
 
     public function enable(Stream $stream)
@@ -36,6 +49,10 @@ class StreamEncryption
 
     public function toggle(Stream $stream, $toggle)
     {
+        if (__NAMESPACE__ . '\SecureStream' === get_class($stream)) {
+                $stream = $stream->decorating;
+        }
+
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
 
@@ -53,8 +70,13 @@ class StreamEncryption
         $this->loop->addReadStream($socket, $toggleCrypto);
         $toggleCrypto();
 
-        return $deferred->promise()->then(function () use ($stream) {
+        return $deferred->promise()->then(function () use ($stream, $toggle) {
+            if ($toggle && $this->wrapSecure) {
+                return new SecureStream($stream, $this->loop);
+            }
+            
             $stream->resume();
+            
             return $stream;
         }, function($error) use ($stream) {
             $stream->resume();
