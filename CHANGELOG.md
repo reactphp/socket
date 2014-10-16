@@ -1,11 +1,12 @@
 # Changelog
 
-## 0.4.1 (2014-xx-xx)
+## 0.4.2 (2014-10-16)
 
 * Bugfix: Only toggle the stream crypto handshake once (@DaveRandom and @rdlowrey)
-* Bugfix: Workaround for ext-openssl bug (@DaveRandom)
+* Bugfix: Workaround for ext-openssl buffering bug (@DaveRandom)
+* Bugfix: SNI fix for PHP < 5.6 (@DaveRandom)
 
-## 0.4.0 (2014-02-02)
+## 0.4.(0/1) (2014-02-02)
 
 * BC break: Bump minimum PHP version to PHP 5.4, remove 5.3 specific hacks
 * BC break: Update to React/Promise 2.0
