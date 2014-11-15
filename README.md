@@ -5,7 +5,8 @@
 Library for building an evented socket server.
 
 The socket component provides a more usable interface for a socket-layer
-server or client based on the `EventLoop` and `Stream` components.
+server or client based on the [`EventLoop`](https://github.com/reactphp/event-loop)
+and [`Stream`](https://github.com/reactphp/stream) components.
 
 ## Server
 
@@ -14,8 +15,12 @@ client connects.
 
 ## Connection
 
-The connection is a readable and writable stream. It can be used in a server
-or in a client context.
+The `Connection` is a readable and writable [`Stream`](https://github.com/reactphp/stream).
+The incoming connection represents the server-side end of the connection.
+
+It MUST NOT be used to represent an outgoing connection in a client-side context.
+If you want to establish an outgoing connection,
+use the [`SocketClient`](https://github.com/reactphp/socket-client) component instead.
 
 ## Usage
 
@@ -44,11 +49,13 @@ provided to the listen method:
 ```
 Here's a client that outputs the output of said server and then attempts to
 send it a string.
+For anything more complex, consider using the
+[`SocketClient`](https://github.com/reactphp/socket-client) component instead.
 ```php
     $loop = React\EventLoop\Factory::create();
 
     $client = stream_socket_client('tcp://127.0.0.1:1337');
-    $conn = new React\Socket\Connection($client, $loop);
+    $conn = new React\Stream\Stream($client, $loop);
     $conn->pipe(new React\Stream\Stream(STDOUT, $loop));
     $conn->write("Hello World!\n");
 
