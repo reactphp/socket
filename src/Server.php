@@ -56,6 +56,11 @@ class Server extends EventEmitter implements ServerInterface
 
         return (int) substr(strrchr($name, ':'), 1);
     }
+    
+    protected function getLoop()
+    {
+        return $this->loop;
+    }
 
     public function shutdown()
     {
