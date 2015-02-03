@@ -9,12 +9,12 @@ use React\Stream\WritableStreamInterface;
 use React\Stream\Stream;
 use React\Stream\Util;
 
-class SecureStream implements DuplexStreamInterface
+class SecureStream extends Stream implements DuplexStreamInterface
 {
-    use EventEmitterTrait;
-    
+//    use EventEmitterTrait;
+
     public $stream;
-    
+
     public $decorating;
     protected $loop;
 
@@ -35,12 +35,12 @@ class SecureStream implements DuplexStreamInterface
         $stream->on('drain', function() {
             $this->emit('drain', [$this]);
         });
-        
+
         $stream->pause();
-        
+
         $this->resume();
     }
-    
+
     public function handleData($stream)
     {
         $data = stream_get_contents($stream);
@@ -51,7 +51,7 @@ class SecureStream implements DuplexStreamInterface
             $this->end();
         }
     }
-            
+
     public function pause()
     {
         $this->loop->removeReadStream($this->decorating->stream);
