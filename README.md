@@ -41,7 +41,7 @@ succeeds or fails.
 ```php
 $connector = new React\SocketClient\Connector($loop, $dns);
 
-$connector->create('www.google.com', 80)->then(function (React\Stream\DuplexStreamInterface $stream) {
+$connector->create('www.google.com', 80)->then(function (React\Stream\Stream $stream) {
     $stream->write('...');
     $stream->close();
 });
@@ -57,7 +57,7 @@ a `Stream` instance that can be used just like any non-encrypted stream.
 ```php
 $secureConnector = new React\SocketClient\SecureConnector($connector, $loop);
 
-$secureConnector->create('www.google.com', 443)->then(function (React\Stream\DuplexStreamInterface $stream) {
+$secureConnector->create('www.google.com', 443)->then(function (React\Stream\Stream $stream) {
     $stream->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
     ...
 });
