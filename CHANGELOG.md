@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3 (2015-03-20)
+
+* Bugfix: Set peer name to hostname to correct security concern in PHP 5.6 (@WyyriHaximus)
+* Bugfix: Always wrap secure to pull buffer due to regression in PHP
+* Bugfix: SecureStream extends Stream to match documentation preventing BC (@clue)
+
 ## 0.4.2 (2014-10-16)
 
 * Bugfix: Only toggle the stream crypto handshake once (@DaveRandom and @rdlowrey)
