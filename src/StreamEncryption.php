@@ -32,8 +32,14 @@ class StreamEncryption
         //  get an empty string back because the buffer indicator could be wrong
         $this->wrapSecure = true;
 
-        if (PHP_VERSION_ID >= 50600) {
-            $this->method = STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT')) {
+            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+        }
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT')) {
+            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+        }
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
         }
     }
 
