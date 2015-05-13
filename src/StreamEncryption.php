@@ -30,9 +30,9 @@ class StreamEncryption
         // https://github.com/reactphp/socket-client/issues/24
         // On versions affected by this bug we need to fread the stream until we
         //  get an empty string back because the buffer indicator could be wrong
-	if (version_compare(PHP_VERSION, '5.6.8', '<')) {
-        	$this->wrapSecure = true;
-	}
+        if (version_compare(PHP_VERSION, '5.6.8', '<')) {
+            $this->wrapSecure = true;
+        }
 
         if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT')) {
             $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
