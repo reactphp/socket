@@ -38,14 +38,14 @@ Here is a server that closes the connection if you send it anything.
             $conn->close();
         });
     });
-    $socket->listen(1337);
+    $socket->listen('tcp://127.0.0.1:1337');
 
     $loop->run();
-```    
-You can change the host the socket is listening on through a second parameter 
+```
+You can change the host the socket is listening on through a second parameter
 provided to the listen method:
 ```php
-    $socket->listen(1337, '192.168.0.1');
+    $socket->listen('tcp://192.168.0.1:1337');
 ```
 Here's a client that outputs the output of said server and then attempts to
 send it a string.

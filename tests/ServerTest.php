@@ -9,7 +9,6 @@ class ServerTest extends TestCase
 {
     private $loop;
     private $server;
-    private $port;
 
     private function createLoop()
     {
@@ -19,25 +18,23 @@ class ServerTest extends TestCase
     /**
      * @covers React\Socket\Server::__construct
      * @covers React\Socket\Server::listen
-     * @covers React\Socket\Server::getPort
      */
     public function setUp()
     {
         $this->loop = $this->createLoop();
         $this->server = new Server($this->loop);
-        $this->server->listen(0);
-
-        $this->port = $this->server->getPort();
+        $this->server->listen('tcp://127.0.0.1:4321');
     }
 
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Server::handleConnection
      * @covers React\Socket\Server::createConnection
+     * @covers React\Socket\Server::getAddress
      */
     public function testConnection()
     {
-        $client = stream_socket_client('tcp://localhost:'.$this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         $this->server->on('connection', $this->expectCallableOnce());
         $this->loop->tick();
@@ -47,12 +44,13 @@ class ServerTest extends TestCase
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Server::handleConnection
      * @covers React\Socket\Server::createConnection
+     * @covers React\Socket\Server::getAddress
      */
     public function testConnectionWithManyClients()
     {
-        $client1 = stream_socket_client('tcp://localhost:'.$this->port);
-        $client2 = stream_socket_client('tcp://localhost:'.$this->port);
-        $client3 = stream_socket_client('tcp://localhost:'.$this->port);
+        $client1 = stream_socket_client($this->server->getAddress());
+        $client2 = stream_socket_client($this->server->getAddress());
+        $client3 = stream_socket_client($this->server->getAddress());
 
         $this->server->on('connection', $this->expectCallableExactly(3));
         $this->loop->tick();
@@ -63,10 +61,11 @@ class ServerTest extends TestCase
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::handleData
+     * @covers React\Socket\Server::getAddress
      */
     public function testDataWithNoData()
     {
-        $client = stream_socket_client('tcp://localhost:'.$this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         $mock = $this->expectCallableNever();
 
@@ -80,10 +79,11 @@ class ServerTest extends TestCase
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::handleData
+     * @covers React\Socket\Server::getAddress
      */
     public function testData()
     {
-        $client = stream_socket_client('tcp://localhost:'.$this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         fwrite($client, "foo\n");
 
@@ -105,10 +105,11 @@ class ServerTest extends TestCase
      *
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::handleData
+     * @covers React\Socket\Server::getAddress
      */
     public function testDataSentFromPy()
     {
-        $client = stream_socket_client('tcp://localhost:' . $this->port);
+        $client = stream_socket_client($this->server->getAddress());
         fwrite($client, "foo\n");
         stream_socket_shutdown($client, STREAM_SHUT_WR);
 
@@ -126,9 +127,12 @@ class ServerTest extends TestCase
         $this->loop->tick();
     }
 
+    /**
+     * @covers React\Socket\Server::getAddress
+     */
     public function testFragmentedMessage()
     {
-        $client = stream_socket_client('tcp://localhost:' . $this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         fwrite($client, "Hello World!\n");
 
@@ -148,10 +152,11 @@ class ServerTest extends TestCase
 
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
+     * @covers React\Socket\Server::getAddress
      */
     public function testDisconnectWithoutDisconnect()
     {
-        $client = stream_socket_client('tcp://localhost:'.$this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         $mock = $this->expectCallableNever();
 
@@ -165,10 +170,11 @@ class ServerTest extends TestCase
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::end
+     * @covers React\Socket\Server::getAddress
      */
     public function testDisconnect()
     {
-        $client = stream_socket_client('tcp://localhost:'.$this->port);
+        $client = stream_socket_client($this->server->getAddress());
 
         fclose($client);
 

@@ -5,29 +5,29 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 
-/** @event connection */
+/** @event connection(Connection $client) */
+/** @event error(RuntimeException $error) */
 class Server extends EventEmitter implements ServerInterface
 {
+    protected $address;
     public $master;
-    private $loop;
+    protected $loop;
 
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
     }
 
-    public function listen($port, $host = '127.0.0.1')
+    public function listen($address)
     {
-        if (strpos($host, ':') !== false) {
-            // enclose IPv6 addresses in square brackets before appending port
-            $host = '[' . $host . ']';
-        }
+        $this->address = $address;
+        $this->master = @stream_socket_server($address, $errno, $errstr);
 
-        $this->master = @stream_socket_server("tcp://$host:$port", $errno, $errstr);
         if (false === $this->master) {
-            $message = "Could not bind to tcp://$host:$port: $errstr";
+            $message = "Could not bind to {$address}: {$errstr}";
             throw new ConnectionException($message, $errno);
         }
+
         stream_set_blocking($this->master, 0);
 
         $this->loop->addReadStream($this->master, function ($master) {
@@ -50,11 +50,9 @@ class Server extends EventEmitter implements ServerInterface
         $this->emit('connection', array($client));
     }
 
-    public function getPort()
+    public function getAddress()
     {
-        $name = stream_socket_get_name($this->master, false);
-
-        return (int) substr(strrchr($name, ':'), 1);
+        return $this->address;
     }
 
     public function shutdown()

@@ -8,38 +8,49 @@ use React\EventLoop\StreamSelectLoop;
 
 class ConnectionTest extends TestCase
 {
+    private $loop;
+    private $server;
+
+    /**
+     * @covers React\Socket\Server::__construct
+     * @covers React\Socket\Server::listen
+     */
+    public function setUp()
+    {
+        $this->loop = new StreamSelectLoop();
+        $this->server = new Server($this->loop);
+        $this->server->listen('tcp://127.0.0.1:4321');
+    }
+
     /**
      * @covers React\Socket\Connection::getRemoteAddress
+     * @covers React\Socket\Server::getAddress
      */
     public function testGetRemoteAddress()
     {
-        $loop   = new StreamSelectLoop();
-        $server = new Server($loop);
-        $server->listen(0);
-
         $class  = new \ReflectionClass('React\\Socket\\Server');
         $master = $class->getProperty('master');
         $master->setAccessible(true);
 
-        $client = stream_socket_client('tcp://localhost:' . $server->getPort());
+        $client = stream_socket_client($this->server->getAddress());
 
         $class  = new \ReflectionClass('React\\Socket\\Connection');
         $method = $class->getMethod('parseAddress');
         $method->setAccessible(true);
 
-        $servConn = new Connection($server->master, $loop);
+        $servConn = new Connection($this->server->master, $this->loop);
 
         $mock = $this->createCallableMock();
         $mock
             ->expects($this->once())
             ->method('__invoke')
-            ->with($method->invokeArgs($servConn, array(stream_socket_get_name($master->getValue($server), false))))
+            ->with($method->invokeArgs($servConn, array(stream_socket_get_name($master->getValue($this->server), false))))
         ;
 
-        $server->on('connection', function ($conn) use ($mock) {
+        $this->server->on('connection', function ($conn) use ($mock) {
             $mock($conn->getRemoteAddress());
         });
-        $loop->tick();
+        $this->loop->tick();
     }
 
     public function remoteAddressProvider()
@@ -73,5 +84,15 @@ class ConnectionTest extends TestCase
     private function createLoopMock()
     {
         return $this->getMock('React\EventLoop\LoopInterface');
+    }
+
+    /**
+     * @covers React\Socket\Server::shutdown
+     */
+    public function tearDown()
+    {
+        if ($this->server) {
+            $this->server->shutdown();
+        }
     }
 }
