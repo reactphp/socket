@@ -45,6 +45,8 @@ $connector->create('www.google.com', 80)->then(function (React\Stream\Stream $st
     $stream->write('...');
     $stream->close();
 });
+
+$loop->run();
 ```
 
 ### Async SSL/TLS connections
@@ -61,4 +63,6 @@ $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Str
     $stream->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
     ...
 });
+
+$loop->run();
 ```
