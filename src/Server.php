@@ -24,14 +24,12 @@ class Server extends EventEmitter implements ServerInterface
         } elseif (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             // enclose IPv6 addresses in square brackets before appending port
             $localSocket = 'tcp://[' . $host . ']:' . $port;
-        } elseif (preg_match('#^(unix|udg)://#', $host)) {
+        } elseif (preg_match('#^unix://#', $host)) {
             $localSocket = $host;
-        }
-
-        if (empty($localSocket)) {
+        } else {
             throw new \UnexpectedValueException(
                 '"' . $host . '" does not match to a set of supported transports. ' .
-                'Supported transports are: IPv4, IPv6, unix:// and udg:// .'
+                'Supported transports are: IPv4, IPv6 and unix:// .'
                 , 1433253311);
         }
 
