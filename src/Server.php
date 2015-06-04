@@ -49,7 +49,7 @@ class Server extends EventEmitter implements ServerInterface
         // apply any socket options on the connection!
         foreach ($this->options as $socket_level => $options) {
             foreach($options as $option_name => $option_value) {
-                socket_set_option($socket, $option_level, $option_name, $option_value);
+                socket_set_option($socket, $socket_level, $option_name, $option_value);
             }
         }
 
@@ -79,8 +79,9 @@ class Server extends EventEmitter implements ServerInterface
 
     public function setOption($option_level, $option_name, $option_value)
     {
-        if (!is_array($this->options[$option_level]))
+        if (!is_array($this->options[$option_level])) {
             $this->options[$option_level] = array();
+        }
 
         $this->options[$option_level][$option_name] = $option_value;
 
