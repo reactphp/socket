@@ -4,7 +4,7 @@ namespace React\Socket;
 
 use Evenement\EventEmitterInterface;
 
-/** @event connection */
+/** Emits the connection event */
 interface ServerInterface extends EventEmitterInterface
 {
     public function listen($port, $host = '127.0.0.1');
