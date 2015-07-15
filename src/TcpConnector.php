@@ -8,32 +8,20 @@ use React\Stream\Stream;
 use React\Promise;
 use React\Promise\Deferred;
 
-class Connector implements ConnectorInterface
+class TcpConnector implements ConnectorInterface
 {
     private $loop;
-    private $resolver;
 
-    public function __construct(LoopInterface $loop, Resolver $resolver)
+    public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
-        $this->resolver = $resolver;
     }
 
-    public function create($host, $port)
-    {
-        return $this
-            ->resolveHostname($host)
-            ->then(function ($address) use ($port) {
-                return $this->createSocketForAddress($address, $port);
-            });
-    }
-
-    public function createSocketForAddress($address, $port)
+    public function create($address, $port)
     {
         $url = $this->getSocketUrl($address, $port);
 
-        $flags = STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT;
-        $socket = stream_socket_client($url, $errno, $errstr, 0, $flags);
+        $socket = stream_socket_client($url, $errno, $errstr, 0, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
 
         if (!$socket) {
             return Promise\reject(new \RuntimeException(
@@ -90,14 +78,5 @@ class Connector implements ConnectorInterface
             $host = '[' . $host . ']';
         }
         return sprintf('tcp://%s:%s', $host, $port);
-    }
-
-    protected function resolveHostname($host)
-    {
-        if (false !== filter_var($host, FILTER_VALIDATE_IP)) {
-            return Promise\resolve($host);
-        }
-
-        return $this->resolver->resolve($host);
     }
 }

@@ -22,28 +22,52 @@ order to complete:
 ## Usage
 
 In order to use this project, you'll need the following react boilerplate code
-to initialize the main loop and select your DNS server if you have not already
-set it up anyway.
+to initialize the main loop.
 
 ```php
 $loop = React\EventLoop\Factory::create();
-
-$dnsResolverFactory = new React\Dns\Resolver\Factory();
-$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 ```
 
 ### Async TCP/IP connections
 
-The `React\SocketClient\Connector` provides a single promise-based
-`create($host, $ip)` method which resolves as soon as the connection
+The `React\SocketClient\TcpConnector` provides a single promise-based
+`create($ip, $port)` method which resolves as soon as the connection
 succeeds or fails.
 
 ```php
-$connector = new React\SocketClient\Connector($loop, $dns);
+$tcpConnector = new React\SocketClient\TcpConnector($loop);
 
-$connector->create('www.google.com', 80)->then(function (React\Stream\Stream $stream) {
+$tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stream) {
     $stream->write('...');
-    $stream->close();
+    $stream->end();
+});
+
+$loop->run();
+```
+
+Note that this class only allows you to connect to IP/port combinations.
+If you want to connect to hostname/port combinations, see also the following chapter.
+
+### DNS resolution
+
+The `DnsConnector` class decorates a given `TcpConnector` instance by first
+looking up the given domain name and then establishing the underlying TCP/IP
+connection to the resolved IP address.
+
+It provides the same promise-based `create($host, $port)` method which resolves with
+a `Stream` instance that can be used just like above.
+
+Make sure to set up your DNS resolver and underlying TCP connector like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+
+$dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
+
+$dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream $stream) {
+    $stream->write('...');
+    $stream->end();
 });
 
 $loop->run();
@@ -52,12 +76,13 @@ $loop->run();
 ### Async SSL/TLS connections
 
 The `SecureConnector` class decorates a given `Connector` instance by enabling
-SSL/TLS encryption as soon as the raw TCP/IP connection succeeds. It provides
-the same promise- based `create($host, $ip)` method which resolves with
-a `Stream` instance that can be used just like any non-encrypted stream.
+SSL/TLS encryption as soon as the raw TCP/IP connection succeeds.
+
+It provides the same promise- based `create($host, $port)` method which resolves with
+a `Stream` instance that can be used just like any non-encrypted stream:
 
 ```php
-$secureConnector = new React\SocketClient\SecureConnector($connector, $loop);
+$secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop);
 
 $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Stream $stream) {
     $stream->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");

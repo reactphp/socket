@@ -4,18 +4,16 @@ namespace React\Tests\SocketClient;
 
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\Server;
-use React\SocketClient\Connector;
+use React\SocketClient\TcpConnector;
 
-class ConnectorTest extends TestCase
+class TcpConnectorTest extends TestCase
 {
     /** @test */
     public function connectionToEmptyPortShouldFail()
     {
         $loop = new StreamSelectLoop();
 
-        $dns = $this->createResolverMock();
-
-        $connector = new Connector($loop, $dns);
+        $connector = new TcpConnector($loop);
         $connector->create('127.0.0.1', 9999)
                 ->then($this->expectCallableNever(), $this->expectCallableOnce());
 
@@ -36,9 +34,7 @@ class ConnectorTest extends TestCase
         });
         $server->listen(9999);
 
-        $dns = $this->createResolverMock();
-
-        $connector = new Connector($loop, $dns);
+        $connector = new TcpConnector($loop);
         $connector->create('127.0.0.1', 9999)
                 ->then(function ($stream) use (&$capturedStream) {
                     $capturedStream = $stream;
@@ -55,9 +51,7 @@ class ConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $dns = $this->createResolverMock();
-
-        $connector = new Connector($loop, $dns);
+        $connector = new TcpConnector($loop);
         $connector
             ->create('::1', 9999)
             ->then($this->expectCallableNever(), $this->expectCallableOnce());
@@ -77,9 +71,7 @@ class ConnectorTest extends TestCase
         $server->on('connection', array($server, 'shutdown'));
         $server->listen(9999, '::1');
 
-        $dns = $this->createResolverMock();
-
-        $connector = new Connector($loop, $dns);
+        $connector = new TcpConnector($loop);
         $connector
             ->create('::1', 9999)
             ->then(function ($stream) use (&$capturedStream) {
@@ -90,12 +82,5 @@ class ConnectorTest extends TestCase
         $loop->run();
 
         $this->assertInstanceOf('React\Stream\Stream', $capturedStream);
-    }
-
-    private function createResolverMock()
-    {
-        return $this->getMockBuilder('React\Dns\Resolver\Resolver')
-                    ->disableOriginalConstructor()
-                    ->getMock();
     }
 }
