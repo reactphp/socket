@@ -1,0 +1,86 @@
+<?php
+
+namespace React\Tests\SocketClient;
+
+use React\SocketClient\TimeoutConnector;
+use React\Promise;
+use React\EventLoop\Factory;
+
+class TimeoutConnectorTest extends TestCase
+{
+    public function testRejectsOnTimeout()
+    {
+        $promise = new Promise\Promise(function () { });
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector->expects($this->once())->method('create')->with('google.com', 80)->will($this->returnValue($promise));
+
+        $loop = Factory::create();
+
+        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+
+        $timeout->create('google.com', 80)->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+
+        $loop->run();
+    }
+
+    public function testRejectsWhenConnectorRejects()
+    {
+        $promise = Promise\reject();
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector->expects($this->once())->method('create')->with('google.com', 80)->will($this->returnValue($promise));
+
+        $loop = Factory::create();
+
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
+
+        $timeout->create('google.com', 80)->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+
+        $loop->run();
+    }
+
+    public function testResolvesWhenConnectorResolves()
+    {
+        $promise = Promise\resolve();
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector->expects($this->once())->method('create')->with('google.com', 80)->will($this->returnValue($promise));
+
+        $loop = Factory::create();
+
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
+
+        $timeout->create('google.com', 80)->then(
+            $this->expectCallableOnce(),
+            $this->expectCallableNever()
+        );
+
+        $loop->run();
+    }
+
+    public function testRejectsAndCancelsPendingPromiseOnTimeout()
+    {
+        $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
+
+        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector->expects($this->once())->method('create')->with('google.com', 80)->will($this->returnValue($promise));
+
+        $loop = Factory::create();
+
+        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+
+        $timeout->create('google.com', 80)->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+
+        $loop->run();
+    }
+}

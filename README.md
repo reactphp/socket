@@ -123,6 +123,20 @@ $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, 
 ));
 ```
 
+### Connection timeouts
+
+The `TimeoutConnector` class decorates any given `Connector` instance.
+It provides the same `create()` method, but will automatically reject the
+underlying connection attempt if it takes too long.
+
+```php
+$timeoutConnector = new React\SocketClient\TimeoutConnector($connector, 3.0, $loop);
+
+$timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream $stream) {
+    // connection succeeded within 3.0 seconds
+});
+```
+
 ### Unix domain sockets
 
 Similarly, the `UnixConnector` class can be used to connect to Unix domain socket (UDS)
