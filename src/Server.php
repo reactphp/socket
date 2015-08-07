@@ -18,14 +18,24 @@ class Server extends EventEmitter implements ServerInterface
 
     public function listen($port, $host = '127.0.0.1')
     {
-        if (strpos($host, ':') !== false) {
+        $localSocket = '';
+        if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $localSocket = 'tcp://' . $host . ':' . $port;
+        } elseif (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             // enclose IPv6 addresses in square brackets before appending port
-            $host = '[' . $host . ']';
+            $localSocket = 'tcp://[' . $host . ']:' . $port;
+        } elseif (preg_match('#^unix://#', $host)) {
+            $localSocket = $host;
+        } else {
+            throw new \UnexpectedValueException(
+                '"' . $host . '" does not match to a set of supported transports. ' .
+                'Supported transports are: IPv4, IPv6 and unix:// .'
+                , 1433253311);
         }
 
-        $this->master = @stream_socket_server("tcp://$host:$port", $errno, $errstr);
+        $this->master = @stream_socket_server($localSocket, $errno, $errstr);
         if (false === $this->master) {
-            $message = "Could not bind to tcp://$host:$port: $errstr";
+            $message = "Could not bind to $localSocket . Error: $errstr";
             throw new ConnectionException($message, $errno);
         }
         stream_set_blocking($this->master, 0);
