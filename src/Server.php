@@ -5,7 +5,7 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 
-/** @event connection */
+/** Emits the connection event */
 class Server extends EventEmitter implements ServerInterface
 {
     public $master;
