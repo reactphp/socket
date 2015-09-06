@@ -7,6 +7,7 @@ use React\EventLoop\StreamSelectLoop;
 use React\Socket\Server;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
+use React\SocketClient\TcpConnector;
 use React\Stream\BufferedSink;
 use Clue\React\Block;
 
@@ -102,5 +103,21 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop);
         $conn->close();
+    }
+
+    public function testCancelPendingConnection()
+    {
+        $loop = new StreamSelectLoop();
+
+        $connector = new TcpConnector($loop);
+        $pending = $connector->create('8.8.8.8', 80);
+
+        $loop->addTimer(0.001, function () use ($pending) {
+            $pending->cancel();
+        });
+
+        $pending->then($this->expectCallableNever(), $this->expectCallableOnce());
+
+        $loop->run();
     }
 }

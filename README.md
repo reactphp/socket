@@ -45,6 +45,18 @@ $tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stre
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $tcpConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will close the underlying socket
+resource, thus cancelling the pending TCP/IP connection, and reject the
+resulting promise.
+
 You can optionally pass additional
 [socket context options](http://php.net/manual/en/context.socket.php)
 to the constructor like this:
