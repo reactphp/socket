@@ -83,4 +83,16 @@ class TcpConnectorTest extends TestCase
 
         $this->assertInstanceOf('React\Stream\Stream', $capturedStream);
     }
+
+    /** @test */
+    public function connectionToHostnameShouldFailImmediately()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $connector = new TcpConnector($loop);
+        $connector->create('www.google.com', 80)->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+    }
 }

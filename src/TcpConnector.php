@@ -17,15 +17,19 @@ class TcpConnector implements ConnectorInterface
         $this->loop = $loop;
     }
 
-    public function create($address, $port)
+    public function create($ip, $port)
     {
-        $url = $this->getSocketUrl($address, $port);
+        if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
+            return Promise\reject(new \InvalidArgumentException('Given parameter "' . $ip . '" is not a valid IP'));
+        }
+
+        $url = $this->getSocketUrl($ip, $port);
 
         $socket = stream_socket_client($url, $errno, $errstr, 0, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
 
         if (!$socket) {
             return Promise\reject(new \RuntimeException(
-                sprintf("connection to %s:%d failed: %s", $address, $port, $errstr),
+                sprintf("connection to %s:%d failed: %s", $ip, $port, $errstr),
                 $errno
             ));
         }
@@ -71,12 +75,12 @@ class TcpConnector implements ConnectorInterface
         return new Stream($socket, $this->loop);
     }
 
-    protected function getSocketUrl($host, $port)
+    protected function getSocketUrl($ip, $port)
     {
-        if (strpos($host, ':') !== false) {
+        if (strpos($ip, ':') !== false) {
             // enclose IPv6 addresses in square brackets before appending port
-            $host = '[' . $host . ']';
+            $ip = '[' . $ip . ']';
         }
-        return sprintf('tcp://%s:%s', $host, $port);
+        return sprintf('tcp://%s:%s', $ip, $port);
     }
 }
