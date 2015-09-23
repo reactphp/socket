@@ -8,8 +8,6 @@ use React\Socket\Server;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
 use React\Stream\BufferedSink;
-use React\SocketClient\TcpConnector;
-use React\SocketClient\DnsConnector;
 
 class IntegrationTest extends TestCase
 {
@@ -18,11 +16,9 @@ class IntegrationTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $connector = new TcpConnector($loop);
-
         $factory = new Factory();
         $dns = $factory->create('8.8.8.8', $loop);
-        $connector = new DnsConnector($connector, $dns);
+        $connector = new Connector($loop, $dns);
 
         $connected = false;
         $response = null;
@@ -48,8 +44,6 @@ class IntegrationTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $connector = new TcpConnector($loop);
-
         $factory = new Factory();
         $dns = $factory->create('8.8.8.8', $loop);
 
@@ -57,7 +51,7 @@ class IntegrationTest extends TestCase
         $response = null;
 
         $secureConnector = new SecureConnector(
-            new DnsConnector($connector, $dns),
+            new Connector($loop, $dns),
             $loop
         );
         $secureConnector->create('google.com', 443)

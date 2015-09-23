@@ -73,6 +73,16 @@ $dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream 
 $loop->run();
 ```
 
+The legacy `Connector` class can be used for backwards-compatiblity reasons.
+It works very much like the newer `DnsConnector` but instead has to be
+set up like this:
+
+```php
+$connector = new React\SocketClient\Connector($loop, $dns);
+
+$connector->create('www.google.com', 80)->then($callback);
+```
+
 ### Async SSL/TLS connections
 
 The `SecureConnector` class decorates a given `Connector` instance by enabling
