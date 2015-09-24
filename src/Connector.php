@@ -23,25 +23,17 @@ class Connector implements ConnectorInterface
     {
         return $this
             ->resolveHostname($host)
-            ->then(function ($address) use ($port, $host) {
-                return $this->createSocketForAddress($address, $port, $host);
+            ->then(function ($address) use ($port) {
+                return $this->createSocketForAddress($address, $port);
             });
     }
 
-    public function createSocketForAddress($address, $port, $hostName = null)
+    public function createSocketForAddress($address, $port)
     {
         $url = $this->getSocketUrl($address, $port);
 
-        $contextOpts = array();
-        if ($hostName !== null) {
-            $contextOpts['ssl']['SNI_enabled'] = true;
-            $contextOpts['ssl']['SNI_server_name'] = $hostName;
-            $contextOpts['ssl']['peer_name'] = $hostName;
-        }
-
         $flags = STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT;
-        $context = stream_context_create($contextOpts);
-        $socket = stream_socket_client($url, $errno, $errstr, 0, $flags, $context);
+        $socket = stream_socket_client($url, $errno, $errstr, 0, $flags);
 
         if (!$socket) {
             return Promise\reject(new \RuntimeException(
