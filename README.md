@@ -95,6 +95,17 @@ $dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream 
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $dnsConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying DNS lookup
+and/or the underlying TCP/IP connection and reject the resulting promise.
+
 The legacy `Connector` class can be used for backwards-compatiblity reasons.
 It works very much like the newer `DnsConnector` but instead has to be
 set up like this:
