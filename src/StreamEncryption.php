@@ -71,16 +71,20 @@ class StreamEncryption
         // get actual stream socket from stream instance
         $socket = $stream->stream;
 
-        $toggleCrypto = function () use ($socket, $deferred, $toggle) {
-            $this->toggleCrypto($socket, $deferred, $toggle);
+        $that = $this;
+        $toggleCrypto = function () use ($socket, $deferred, $toggle, $that) {
+            $that->toggleCrypto($socket, $deferred, $toggle);
         };
 
         $this->loop->addReadStream($socket, $toggleCrypto);
         $toggleCrypto();
 
-        return $deferred->promise()->then(function () use ($stream, $toggle) {
-            if ($toggle && $this->wrapSecure) {
-                return new SecureStream($stream, $this->loop);
+        $wrap = $this->wrapSecure && $toggle;
+        $loop = $this->loop;
+
+        return $deferred->promise()->then(function () use ($stream, $wrap, $loop) {
+            if ($wrap) {
+                return new SecureStream($stream, $loop);
             }
 
             $stream->resume();

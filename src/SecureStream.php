@@ -4,12 +4,11 @@ namespace React\SocketClient;
 
 use Evenement\EventEmitterTrait;
 use React\EventLoop\LoopInterface;
-use React\Stream\DuplexStreamInterface;
 use React\Stream\WritableStreamInterface;
 use React\Stream\Stream;
 use React\Stream\Util;
 
-class SecureStream extends Stream implements DuplexStreamInterface
+class SecureStream extends Stream
 {
 //    use EventEmitterTrait;
 
@@ -22,18 +21,19 @@ class SecureStream extends Stream implements DuplexStreamInterface
         $this->stream = $stream->stream;
         $this->decorating = $stream;
         $this->loop = $loop;
+        $that = $this;
 
-        $stream->on('error', function($error) {
-            $this->emit('error', [$error, $this]);
+        $stream->on('error', function($error) use ($that) {
+            $that->emit('error', array($error, $that));
         });
-        $stream->on('end', function() {
-            $this->emit('end', [$this]);
+        $stream->on('end', function() use ($that) {
+            $that->emit('end', array($that));
         });
-        $stream->on('close', function() {
-            $this->emit('close', [$this]);
+        $stream->on('close', function() use ($that) {
+            $that->emit('close', array($that));
         });
-        $stream->on('drain', function() {
-            $this->emit('drain', [$this]);
+        $stream->on('drain', function() use ($that) {
+            $that->emit('drain', array($that));
         });
 
         $stream->pause();
@@ -45,7 +45,7 @@ class SecureStream extends Stream implements DuplexStreamInterface
     {
         $data = stream_get_contents($stream);
 
-        $this->emit('data', [$data, $this]);
+        $this->emit('data', array($data, $this));
 
         if (!is_resource($stream) || feof($stream)) {
             $this->end();
@@ -60,7 +60,7 @@ class SecureStream extends Stream implements DuplexStreamInterface
     public function resume()
     {
         if ($this->isReadable()) {
-            $this->loop->addReadStream($this->decorating->stream, [$this, 'handleData']);
+            $this->loop->addReadStream($this->decorating->stream, array($this, 'handleData'));
         }
     }
 
