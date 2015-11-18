@@ -30,7 +30,7 @@ class DnsConnector implements ConnectorInterface
             });
     }
 
-    protected function resolveHostname($host)
+    private function resolveHostname($host)
     {
         if (false !== filter_var($host, FILTER_VALIDATE_IP)) {
             return Promise\resolve($host);

@@ -44,7 +44,7 @@ class TcpConnector implements ConnectorInterface
             ->then(array($this, 'handleConnectedSocket'));
     }
 
-    protected function waitForStreamOnce($stream)
+    private function waitForStreamOnce($stream)
     {
         $deferred = new Deferred();
 
@@ -59,6 +59,7 @@ class TcpConnector implements ConnectorInterface
         return $deferred->promise();
     }
 
+    /** @internal */
     public function checkConnectedSocket($socket)
     {
         // The following hack looks like the only way to
@@ -70,12 +71,13 @@ class TcpConnector implements ConnectorInterface
         return Promise\resolve($socket);
     }
 
+    /** @internal */
     public function handleConnectedSocket($socket)
     {
         return new Stream($socket, $this->loop);
     }
 
-    protected function getSocketUrl($ip, $port)
+    private function getSocketUrl($ip, $port)
     {
         if (strpos($ip, ':') !== false) {
             // enclose IPv6 addresses in square brackets before appending port
