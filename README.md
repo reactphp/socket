@@ -45,6 +45,16 @@ $tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stre
 $loop->run();
 ```
 
+You can optionally pass additional
+[socket context options](http://php.net/manual/en/context.socket.php)
+to the constructor like this:
+
+```php
+$tcpConnector = new React\SocketClient\TcpConnector($loop, array(
+    'bindto' => '192.168.0.1:0'
+));
+```
+
 Note that this class only allows you to connect to IP/port combinations.
 If you want to connect to hostname/port combinations, see also the following chapter.
 
@@ -100,6 +110,17 @@ $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Str
 });
 
 $loop->run();
+```
+
+You can optionally pass additional
+[SSL context options](http://php.net/manual/en/context.ssl.php)
+to the constructor like this:
+
+```php
+$secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, array(
+    'verify_peer' => false,
+    'verify_peer_name' => false
+));
 ```
 
 ### Unix domain sockets

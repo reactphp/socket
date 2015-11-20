@@ -8,6 +8,7 @@ use React\Socket\Server;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
 use React\Stream\BufferedSink;
+use Clue\React\Block;
 
 class IntegrationTest extends TestCase
 {
@@ -72,5 +73,46 @@ class IntegrationTest extends TestCase
 
         $this->assertTrue($connected);
         $this->assertRegExp('#^HTTP/1\.0#', $response);
+    }
+
+    /** @test */
+    public function testSelfSignedRejectsIfVerificationIsEnabled()
+    {
+        $loop = new StreamSelectLoop();
+
+        $factory = new Factory();
+        $dns = $factory->create('8.8.8.8', $loop);
+
+
+        $secureConnector = new SecureConnector(
+            new Connector($loop, $dns),
+            $loop,
+            array(
+                'verify_peer' => true
+            )
+        );
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop);
+    }
+
+    /** @test */
+    public function testSelfSignedResolvesIfVerificationIsDisabled()
+    {
+        $loop = new StreamSelectLoop();
+
+        $factory = new Factory();
+        $dns = $factory->create('8.8.8.8', $loop);
+
+        $secureConnector = new SecureConnector(
+            new Connector($loop, $dns),
+            $loop,
+            array(
+                'verify_peer' => false
+            )
+        );
+
+        $conn = Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop);
+        $conn->close();
     }
 }
