@@ -29,7 +29,7 @@ class TcpConnector implements ConnectorInterface
 
         if (!$socket) {
             return Promise\reject(new \RuntimeException(
-                sprintf("connection to %s:%d failed: %s", $ip, $port, $errstr),
+                sprintf("Connection to %s:%d failed: %s", $ip, $port, $errstr),
                 $errno
             ));
         }
