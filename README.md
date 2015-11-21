@@ -25,39 +25,44 @@ use the [`SocketClient`](https://github.com/reactphp/socket-client) component in
 ## Usage
 
 Here is a server that closes the connection if you send it anything.
+
 ```php
-    $loop = React\EventLoop\Factory::create();
+$loop = React\EventLoop\Factory::create();
 
-    $socket = new React\Socket\Server($loop);
-    $socket->on('connection', function ($conn) {
-        $conn->write("Hello there!\n");
-        $conn->write("Welcome to this amazing server!\n");
-        $conn->write("Here's a tip: don't say anything.\n");
+$socket = new React\Socket\Server($loop);
+$socket->on('connection', function ($conn) {
+    $conn->write("Hello there!\n");
+    $conn->write("Welcome to this amazing server!\n");
+    $conn->write("Here's a tip: don't say anything.\n");
 
-        $conn->on('data', function ($data) use ($conn) {
-            $conn->close();
-        });
+    $conn->on('data', function ($data) use ($conn) {
+        $conn->close();
     });
-    $socket->listen(1337);
+});
+$socket->listen(1337);
 
-    $loop->run();
-```    
+$loop->run();
+```
+
 You can change the host the socket is listening on through a second parameter 
 provided to the listen method:
+
 ```php
-    $socket->listen(1337, '192.168.0.1');
+$socket->listen(1337, '192.168.0.1');
 ```
+
 Here's a client that outputs the output of said server and then attempts to
 send it a string.
 For anything more complex, consider using the
 [`SocketClient`](https://github.com/reactphp/socket-client) component instead.
+
 ```php
-    $loop = React\EventLoop\Factory::create();
+$loop = React\EventLoop\Factory::create();
 
-    $client = stream_socket_client('tcp://127.0.0.1:1337');
-    $conn = new React\Stream\Stream($client, $loop);
-    $conn->pipe(new React\Stream\Stream(STDOUT, $loop));
-    $conn->write("Hello World!\n");
+$client = stream_socket_client('tcp://127.0.0.1:1337');
+$conn = new React\Stream\Stream($client, $loop);
+$conn->pipe(new React\Stream\Stream(STDOUT, $loop));
+$conn->write("Hello World!\n");
 
-    $loop->run();
+$loop->run();
 ```
