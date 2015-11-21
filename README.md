@@ -8,23 +8,9 @@ The socket component provides a more usable interface for a socket-layer
 server or client based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
 
-## Server
+## Quickstart example
 
-The server can listen on a port and will emit a `connection` event whenever a
-client connects.
-
-## Connection
-
-The `Connection` is a readable and writable [`Stream`](https://github.com/reactphp/stream).
-The incoming connection represents the server-side end of the connection.
-
-It MUST NOT be used to represent an outgoing connection in a client-side context.
-If you want to establish an outgoing connection,
-use the [`SocketClient`](https://github.com/reactphp/socket-client) component instead.
-
-## Usage
-
-Here is a server that closes the connection if you send it anything.
+Here is a server that closes the connection if you send it anything:
 
 ```php
 $loop = React\EventLoop\Factory::create();
@@ -66,3 +52,19 @@ $conn->write("Hello World!\n");
 
 $loop->run();
 ```
+
+## Usage
+
+### Server
+
+The server can listen on a port and will emit a `connection` event whenever a
+client connects.
+
+### Connection
+
+The `Connection` is a readable and writable [`Stream`](https://github.com/reactphp/stream).
+The incoming connection represents the server-side end of the connection.
+
+It MUST NOT be used to represent an outgoing connection in a client-side context.
+If you want to establish an outgoing connection,
+use the [`SocketClient`](https://github.com/reactphp/socket-client) component instead.
