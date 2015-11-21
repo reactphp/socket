@@ -18,11 +18,11 @@ class IntegrationTest extends TestCase
 
         $factory = new Factory();
         $dns = $factory->create('8.8.8.8', $loop);
+        $connector = new Connector($loop, $dns);
 
         $connected = false;
         $response = null;
 
-        $connector = new Connector($loop, $dns);
         $connector->create('google.com', 80)
             ->then(function ($conn) use (&$connected) {
                 $connected = true;
