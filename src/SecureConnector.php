@@ -4,6 +4,7 @@ namespace React\SocketClient;
 
 use React\EventLoop\LoopInterface;
 use React\Stream\Stream;
+use React\Promise;
 
 class SecureConnector implements ConnectorInterface
 {
@@ -18,6 +19,10 @@ class SecureConnector implements ConnectorInterface
 
     public function create($host, $port)
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'));
+        }
+
         return $this->connector->create($host, $port)->then(function (Stream $stream) use ($host) {
             // (unencrypted) TCP/IP connection succeeded
 
