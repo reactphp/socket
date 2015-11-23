@@ -18,14 +18,14 @@ class DnsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function create($host, $port)
+    public function connect($host, $port)
     {
         $that = $this;
 
         return $this
             ->resolveHostname($host)
             ->then(function ($ip) use ($that, $port) {
-                return $that->connect($ip, $port);
+                return $that->connectTcp($ip, $port);
             });
     }
 
@@ -55,9 +55,9 @@ class DnsConnector implements ConnectorInterface
     }
 
     /** @internal */
-    public function connect($ip, $port)
+    public function connectTcp($ip, $port)
     {
-        $promise = $this->connector->create($ip, $port);
+        $promise = $this->connector->connect($ip, $port);
 
         return new Promise\Promise(
             function ($resolve, $reject) use ($promise) {

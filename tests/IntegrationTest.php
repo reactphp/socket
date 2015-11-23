@@ -24,7 +24,7 @@ class IntegrationTest extends TestCase
         $dns = $factory->create('8.8.8.8', $loop);
         $connector = new Connector($loop, $dns);
 
-        $conn = Block\await($connector->create('google.com', 80), $loop);
+        $conn = Block\await($connector->connect('google.com', 80), $loop);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
@@ -50,7 +50,7 @@ class IntegrationTest extends TestCase
             $loop
         );
 
-        $conn = Block\await($secureConnector->create('google.com', 443), $loop);
+        $conn = Block\await($secureConnector->connect('google.com', 443), $loop);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
@@ -80,7 +80,7 @@ class IntegrationTest extends TestCase
         );
 
         $this->setExpectedException('RuntimeException');
-        Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
+        Block\await($secureConnector->connect('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
     }
 
     /** @test */
@@ -103,7 +103,7 @@ class IntegrationTest extends TestCase
             )
         );
 
-        $conn = Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
+        $conn = Block\await($secureConnector->connect('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
         $conn->close();
     }
 
@@ -112,7 +112,7 @@ class IntegrationTest extends TestCase
         $loop = new StreamSelectLoop();
 
         $connector = new TcpConnector($loop);
-        $pending = $connector->create('8.8.8.8', 80);
+        $pending = $connector->connect('8.8.8.8', 80);
 
         $loop->addTimer(0.001, function () use ($pending) {
             $pending->cancel();

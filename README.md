@@ -31,13 +31,13 @@ $loop = React\EventLoop\Factory::create();
 ### Async TCP/IP connections
 
 The `React\SocketClient\TcpConnector` provides a single promise-based
-`create($ip, $port)` method which resolves as soon as the connection
+`connect($ip, $port)` method which resolves as soon as the connection
 succeeds or fails.
 
 ```php
 $tcpConnector = new React\SocketClient\TcpConnector($loop);
 
-$tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stream) {
+$tcpConnector->connect('127.0.0.1', 80)->then(function (React\Stream\Stream $stream) {
     $stream->write('...');
     $stream->end();
 });
@@ -50,7 +50,7 @@ See also the [first example](examples).
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
-$promise = $tcpConnector->create($host, $port);
+$promise = $tcpConnector->connect($host, $port);
 
 $promise->cancel();
 ```
@@ -78,18 +78,18 @@ The `DnsConnector` class decorates a given `TcpConnector` instance by first
 looking up the given domain name and then establishing the underlying TCP/IP
 connection to the resolved IP address.
 
-It provides the same promise-based `create($host, $port)` method which resolves with
+It provides the same promise-based `connect($host, $port)` method which resolves with
 a `Stream` instance that can be used just like above.
 
 Make sure to set up your DNS resolver and underlying TCP connector like this:
 
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
-$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+$dns = $dnsResolverFactory->connectCached('8.8.8.8', $loop);
 
 $dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
 
-$dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream $stream) {
+$dnsConnector->connect('www.google.com', 80)->then(function (React\Stream\Stream $stream) {
     $stream->write('...');
     $stream->end();
 });
@@ -102,7 +102,7 @@ See also the [first example](examples).
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
-$promise = $dnsConnector->create($host, $port);
+$promise = $dnsConnector->connect($host, $port);
 
 $promise->cancel();
 ```
@@ -117,7 +117,7 @@ set up like this:
 ```php
 $connector = new React\SocketClient\Connector($loop, $dns);
 
-$connector->create('www.google.com', 80)->then($callback);
+$connector->connect('www.google.com', 80)->then($callback);
 ```
 
 ### Async SSL/TLS connections
@@ -125,13 +125,13 @@ $connector->create('www.google.com', 80)->then($callback);
 The `SecureConnector` class decorates a given `Connector` instance by enabling
 SSL/TLS encryption as soon as the raw TCP/IP connection succeeds.
 
-It provides the same promise- based `create($host, $port)` method which resolves with
+It provides the same promise- based `connect($host, $port)` method which resolves with
 a `Stream` instance that can be used just like any non-encrypted stream:
 
 ```php
 $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop);
 
-$secureConnector->create('www.google.com', 443)->then(function (React\Stream\Stream $stream) {
+$secureConnector->connect('www.google.com', 443)->then(function (React\Stream\Stream $stream) {
     $stream->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
     ...
 });
@@ -144,7 +144,7 @@ See also the [second example](examples).
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
-$promise = $secureConnector->create($host, $port);
+$promise = $secureConnector->connect($host, $port);
 
 $promise->cancel();
 ```
@@ -174,13 +174,13 @@ stream resources will use a single, shared *default context* resource otherwise.
 ### Connection timeouts
 
 The `TimeoutConnector` class decorates any given `Connector` instance.
-It provides the same `create()` method, but will automatically reject the
+It provides the same `connect()` method, but will automatically reject the
 underlying connection attempt if it takes too long.
 
 ```php
 $timeoutConnector = new React\SocketClient\TimeoutConnector($connector, 3.0, $loop);
 
-$timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream $stream) {
+$timeoutConnector->connect('google.com', 80)->then(function (React\Stream\Stream $stream) {
     // connection succeeded within 3.0 seconds
 });
 ```
@@ -190,7 +190,7 @@ See also any of the [examples](examples).
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
-$promise = $timeoutConnector->create($host, $port);
+$promise = $timeoutConnector->connect($host, $port);
 
 $promise->cancel();
 ```
@@ -206,7 +206,7 @@ paths like this:
 ```php
 $connector = new React\SocketClient\UnixConnector($loop);
 
-$connector->create('/tmp/demo.sock')->then(function (React\Stream\Stream $stream) {
+$connector->connect('/tmp/demo.sock')->then(function (React\Stream\Stream $stream) {
     $stream->write("HELLO\n");
 });
 

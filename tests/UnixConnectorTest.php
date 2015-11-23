@@ -17,7 +17,7 @@ class UnixConnectorTest extends TestCase
 
     public function testInvalid()
     {
-        $promise = $this->connector->create('google.com', 80);
+        $promise = $this->connector->connect('google.com', 80);
         $promise->then(null, $this->expectCallableOnce());
     }
 
@@ -36,7 +36,7 @@ class UnixConnectorTest extends TestCase
         }
 
         // tests succeeds if we get notified of successful connection
-        $promise = $this->connector->create($path, 0);
+        $promise = $this->connector->connect($path, 0);
         $promise->then($this->expectCallableOnce());
 
         // clean up server

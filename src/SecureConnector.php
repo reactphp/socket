@@ -20,7 +20,7 @@ class SecureConnector implements ConnectorInterface
         $this->context = $context;
     }
 
-    public function create($host, $port)
+    public function connect($host, $port)
     {
         if (!function_exists('stream_socket_enable_crypto')) {
             return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'));
@@ -40,7 +40,7 @@ class SecureConnector implements ConnectorInterface
         }
 
         $encryption = $this->streamEncryption;
-        return $this->connect($host, $port)->then(function (Stream $stream) use ($context, $encryption) {
+        return $this->connectTcp($host, $port)->then(function (Stream $stream) use ($context, $encryption) {
             // (unencrypted) TCP/IP connection succeeded
 
             // set required SSL/TLS context options
@@ -57,9 +57,9 @@ class SecureConnector implements ConnectorInterface
         });
     }
 
-    private function connect($host, $port)
+    private function connectTcp($host, $port)
     {
-        $promise = $this->connector->create($host, $port);
+        $promise = $this->connector->connect($host, $port);
 
         return new Promise\Promise(
             function ($resolve, $reject) use ($promise) {

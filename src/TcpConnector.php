@@ -19,7 +19,7 @@ class TcpConnector implements ConnectorInterface
         $this->context = $context;
     }
 
-    public function create($ip, $port)
+    public function connect($ip, $port)
     {
         if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
             return Promise\reject(new \InvalidArgumentException('Given parameter "' . $ip . '" is not a valid IP'));
