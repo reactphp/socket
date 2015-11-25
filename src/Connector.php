@@ -17,8 +17,8 @@ class Connector implements ConnectorInterface
         $this->connector = new DnsConnector(new TcpConnector($loop), $resolver);
     }
 
-    public function connect($host, $port)
+    public function connect($uri)
     {
-        return $this->connector->connect($host, $port);
+        return $this->connector->connect($uri);
     }
 }

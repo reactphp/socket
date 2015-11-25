@@ -13,13 +13,13 @@ class TimeoutConnectorTest extends TestCase
         $promise = new Promise\Promise(function () { });
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $timeout->connect('google.com', 80)->then(
+        $timeout->connect('google.com:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
@@ -32,13 +32,13 @@ class TimeoutConnectorTest extends TestCase
         $promise = Promise\reject(new \RuntimeException());
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $timeout->connect('google.com', 80)->then(
+        $timeout->connect('google.com:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
@@ -51,13 +51,13 @@ class TimeoutConnectorTest extends TestCase
         $promise = Promise\resolve();
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $timeout->connect('google.com', 80)->then(
+        $timeout->connect('google.com:80')->then(
             $this->expectCallableOnce(),
             $this->expectCallableNever()
         );
@@ -70,13 +70,13 @@ class TimeoutConnectorTest extends TestCase
         $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $timeout->connect('google.com', 80)->then(
+        $timeout->connect('google.com:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
@@ -89,13 +89,13 @@ class TimeoutConnectorTest extends TestCase
         $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $out = $timeout->connect('google.com', 80);
+        $out = $timeout->connect('google.com:80');
         $out->cancel();
 
         $out->then($this->expectCallableNever(), $this->expectCallableOnce());
@@ -111,13 +111,13 @@ class TimeoutConnectorTest extends TestCase
         });
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com', 80)->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
 
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $out = $timeout->connect('google.com', 80);
+        $out = $timeout->connect('google.com:80');
         $out->cancel();
 
         $out->then($this->expectCallableNever(), $this->expectCallableOnce());

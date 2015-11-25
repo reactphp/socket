@@ -18,14 +18,28 @@ class DnsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function connect($host, $port)
+    public function connect($uri)
     {
         $that = $this;
 
+        $parts = parse_url('tcp://' . $uri);
+        if (!$parts || !isset($parts['host'], $parts['port'])) {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+        }
+
+        $host = trim($parts['host'], '[]');
+
         return $this
             ->resolveHostname($host)
-            ->then(function ($ip) use ($that, $port) {
-                return $that->connectTcp($ip, $port);
+            ->then(function ($ip) use ($that, $parts) {
+                if (strpos($ip, ':') !== false) {
+                    // enclose IPv6 addresses in square brackets before appending port
+                    $ip = '[' . $ip . ']';
+                }
+
+                return $that->connectTcp(
+                    $ip . ':' . $parts['port']
+                );
             });
     }
 
@@ -55,9 +69,9 @@ class DnsConnector implements ConnectorInterface
     }
 
     /** @internal */
-    public function connectTcp($ip, $port)
+    public function connectTcp($uri)
     {
-        $promise = $this->connector->connect($ip, $port);
+        $promise = $this->connector->connect($uri);
 
         return new Promise\Promise(
             function ($resolve, $reject) use ($promise) {

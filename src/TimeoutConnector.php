@@ -22,9 +22,9 @@ class TimeoutConnector implements ConnectorInterface
         $this->loop = $loop;
     }
 
-    public function connect($host, $port)
+    public function connect($uri)
     {
-        $promise = $this->connector->connect($host, $port);
+        $promise = $this->connector->connect($uri);
 
         return Timer\timeout(new Promise(
             function ($resolve, $reject) use ($promise) {

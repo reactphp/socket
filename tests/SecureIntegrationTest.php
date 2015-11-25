@@ -53,7 +53,7 @@ class SecureIntegrationTest extends TestCase
 
     public function testConnectToServer()
     {
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         $client->close();
@@ -63,7 +63,7 @@ class SecureIntegrationTest extends TestCase
     {
         $promiseServer = $this->createPromiseForEvent($this->server, 'connection', $this->expectCallableOnce());
 
-        $promiseClient = $this->connector->connect('127.0.0.1', $this->portSecure);
+        $promiseClient = $this->connector->connect('127.0.0.1:' . $this->portSecure);
 
         list($_, $client) = Block\awaitAll(array($promiseServer, $promiseClient), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
@@ -81,7 +81,7 @@ class SecureIntegrationTest extends TestCase
             });
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         $client->write('hello');
@@ -107,7 +107,7 @@ class SecureIntegrationTest extends TestCase
             });
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         $data = str_repeat('a', 200000);
@@ -128,7 +128,7 @@ class SecureIntegrationTest extends TestCase
             });
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         $data = str_repeat('d', 200000);
@@ -148,7 +148,7 @@ class SecureIntegrationTest extends TestCase
             $peer->write('hello');
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         // await client to report one "data" event
@@ -165,7 +165,7 @@ class SecureIntegrationTest extends TestCase
             $peer->end($data);
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         // await data from client until it closes
@@ -181,7 +181,7 @@ class SecureIntegrationTest extends TestCase
             $peer->write($data);
         });
 
-        $client = Block\await($this->connector->connect('127.0.0.1', $this->portSecure), $this->loop);
+        $client = Block\await($this->connector->connect('127.0.0.1:' . $this->portSecure), $this->loop);
         /* @var $client Stream */
 
         // buffer incoming data for 0.1s (should be plenty of time)

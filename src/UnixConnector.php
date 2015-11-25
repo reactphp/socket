@@ -23,7 +23,7 @@ class UnixConnector implements ConnectorInterface
         $this->loop = $loop;
     }
 
-    public function connect($path, $unusedPort = 0)
+    public function connect($path)
     {
         $resource = @stream_socket_client('unix://' . $path, $errno, $errstr, 1.0);
 

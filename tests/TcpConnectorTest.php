@@ -17,7 +17,7 @@ class TcpConnectorTest extends TestCase
         $loop = new StreamSelectLoop();
 
         $connector = new TcpConnector($loop);
-        $connector->connect('127.0.0.1', 9999)
+        $connector->connect('127.0.0.1:9999')
                 ->then($this->expectCallableNever(), $this->expectCallableOnce());
 
         $loop->run();
@@ -37,7 +37,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->connect('127.0.0.1', 9999), $loop, self::TIMEOUT);
+        $stream = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Stream\Stream', $stream);
 
@@ -51,7 +51,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
         $connector
-            ->connect('::1', 9999)
+            ->connect('[::1]:9999')
             ->then($this->expectCallableNever(), $this->expectCallableOnce());
 
         $loop->run();
@@ -69,7 +69,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->connect('::1', 9999), $loop, self::TIMEOUT);
+        $stream = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Stream\Stream', $stream);
 
@@ -82,7 +82,7 @@ class TcpConnectorTest extends TestCase
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
         $connector = new TcpConnector($loop);
-        $connector->connect('www.google.com', 80)->then(
+        $connector->connect('www.google.com:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
@@ -94,7 +94,7 @@ class TcpConnectorTest extends TestCase
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
         $connector = new TcpConnector($loop);
-        $connector->connect('255.255.255.255', 12345678)->then(
+        $connector->connect('255.255.255.255:12345678')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
@@ -109,7 +109,7 @@ class TcpConnectorTest extends TestCase
         $server = new Server($loop);
         $server->listen(0);
 
-        $promise = $connector->connect('127.0.0.1', $server->getPort());
+        $promise = $connector->connect('127.0.0.1:' . $server->getPort());
         $promise->cancel();
 
         $this->setExpectedException('RuntimeException', 'Cancelled');

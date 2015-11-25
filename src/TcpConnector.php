@@ -19,16 +19,20 @@ class TcpConnector implements ConnectorInterface
         $this->context = $context;
     }
 
-    public function connect($ip, $port)
+    public function connect($uri)
     {
+        $parts = parse_url('tcp://' . $uri);
+        if (!$parts || !isset($parts['host'], $parts['port'])) {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+        }
+        $ip = trim($parts['host'], '[]');
+
         if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
-            return Promise\reject(new \InvalidArgumentException('Given parameter "' . $ip . '" is not a valid IP'));
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
         }
 
-        $url = $this->getSocketUrl($ip, $port);
-
         $socket = @stream_socket_client(
-            $url,
+            $uri,
             $errno,
             $errstr,
             0,
@@ -38,7 +42,7 @@ class TcpConnector implements ConnectorInterface
 
         if (false === $socket) {
             return Promise\reject(new \RuntimeException(
-                sprintf("Connection to %s:%d failed: %s", $ip, $port, $errstr),
+                sprintf("Connection to %s failed: %s", $uri, $errstr),
                 $errno
             ));
         }
@@ -89,14 +93,5 @@ class TcpConnector implements ConnectorInterface
     public function handleConnectedSocket($socket)
     {
         return new Stream($socket, $this->loop);
-    }
-
-    private function getSocketUrl($ip, $port)
-    {
-        if (strpos($ip, ':') !== false) {
-            // enclose IPv6 addresses in square brackets before appending port
-            $ip = '[' . $ip . ']';
-        }
-        return sprintf('tcp://%s:%s', $ip, $port);
     }
 }
