@@ -27,9 +27,16 @@ class SecureConnector implements ConnectorInterface
 
         $context = $this->context + array(
             'SNI_enabled' => true,
-            'SNI_server_name' => $host,
             'peer_name' => $host
         );
+
+        // legacy PHP < 5.6 ignores peer_name and requires legacy context options instead
+        if (PHP_VERSION_ID < 50600) {
+            $context += array(
+                'SNI_server_name' => $host,
+                'CN_match' => $host
+            );
+        }
 
         return $this->connector->create($host, $port)->then(function (Stream $stream) use ($context) {
             // (unencrypted) TCP/IP connection succeeded
