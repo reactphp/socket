@@ -42,6 +42,10 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingEncryptedStuffFromGoogleShouldWork()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on HHVM');
+        }
+
         $loop = new StreamSelectLoop();
 
         $factory = new Factory();
