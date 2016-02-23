@@ -25,9 +25,9 @@ class TcpConnector implements ConnectorInterface
 
         $url = $this->getSocketUrl($ip, $port);
 
-        $socket = stream_socket_client($url, $errno, $errstr, 0, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
+        $socket = @stream_socket_client($url, $errno, $errstr, 0, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
 
-        if (!$socket) {
+        if (false === $socket) {
             return Promise\reject(new \RuntimeException(
                 sprintf("Connection to %s:%d failed: %s", $ip, $port, $errstr),
                 $errno

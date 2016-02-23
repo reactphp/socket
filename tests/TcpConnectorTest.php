@@ -95,4 +95,16 @@ class TcpConnectorTest extends TestCase
             $this->expectCallableOnce()
         );
     }
+
+    /** @test */
+    public function connectionToInvalidAddressShouldFailImmediately()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $connector = new TcpConnector($loop);
+        $connector->create('255.255.255.255', 12345678)->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+    }
 }
