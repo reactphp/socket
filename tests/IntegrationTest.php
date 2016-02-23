@@ -78,6 +78,10 @@ class IntegrationTest extends TestCase
     /** @test */
     public function testSelfSignedRejectsIfVerificationIsEnabled()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on HHVM');
+        }
+
         $loop = new StreamSelectLoop();
 
         $factory = new Factory();
@@ -99,6 +103,10 @@ class IntegrationTest extends TestCase
     /** @test */
     public function testSelfSignedResolvesIfVerificationIsDisabled()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on HHVM');
+        }
+
         $loop = new StreamSelectLoop();
 
         $factory = new Factory();

@@ -35,7 +35,9 @@ class SecureConnector implements ConnectorInterface
             // (unencrypted) TCP/IP connection succeeded
 
             // set required SSL/TLS context options
-            stream_context_set_option($stream->stream, array('ssl' => $context));
+            foreach ($context as $name => $value) {
+                stream_context_set_option($stream->stream, 'ssl', $name, $value);
+            }
 
             // try to enable encryption
             return $this->streamEncryption->enable($stream)->then(null, function ($error) use ($stream) {
