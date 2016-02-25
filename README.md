@@ -8,6 +8,15 @@ The socket component provides a more usable interface for a socket-layer
 server or client based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
 
+**Table of Contents**
+
+* [Quickstart example](#quickstart-example)
+* [Usage](#usage)
+  * [Server](#server)
+  * [Connection](#connection)
+* [Install](#install)
+* [License](#license)
+
 ## Quickstart example
 
 Here is a server that closes the connection if you send it anything:
