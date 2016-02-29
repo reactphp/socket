@@ -10,6 +10,7 @@ class Server extends EventEmitter implements ServerInterface
 {
     public $master;
     private $loop;
+    private $options = array();
 
     public function __construct(LoopInterface $loop)
     {
@@ -47,6 +48,13 @@ class Server extends EventEmitter implements ServerInterface
     {
         stream_set_blocking($socket, 0);
 
+        // apply any socket options on the connection!
+        foreach ($this->options as $socket_level => $options) {
+            foreach($options as $option_name => $option_value) {
+                socket_set_option($socket, $socket_level, $option_name, $option_value);
+            }
+        }
+
         $client = $this->createConnection($socket);
 
         $this->emit('connection', array($client));
@@ -69,5 +77,26 @@ class Server extends EventEmitter implements ServerInterface
     public function createConnection($socket)
     {
         return new Connection($socket, $this->loop);
+    }
+
+    public function setOption($option_level, $option_name, $option_value)
+    {
+        if (!is_array($this->options[$option_level])) {
+            $this->options[$option_level] = array();
+        }
+
+        $this->options[$option_level][$option_name] = $option_value;
+
+        return true;
+    }
+
+    public function setSocketOption($option_name, $option_value)
+    {
+        return $this->setOption(SOL_SOCKET, $option_name, $option_value);
+    }
+
+    public function setTCPOption($option_name, $option_value)
+    {
+        return $this->setOption(SOL_TCP, $option_name, $option_value);
     }
 }
