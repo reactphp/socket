@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.3 (2016-03-01)
+
+* Bug fix: Suppress errors on stream_socket_accept to prevent PHP from crashing
+* Support for PHP7 and HHVM
+* Support PHP 5.3 again
+
+## 0.4.2 (2014-05-25)
+
+* Verify stream is a valid resource in Connection
+
 ## 0.4.1 (2014-04-13)
 
 * Bug fix: Check read buffer for data before shutdown signal and end emit (@ArtyDev)
