@@ -11,10 +11,12 @@ use React\Promise\Deferred;
 class TcpConnector implements ConnectorInterface
 {
     private $loop;
+    private $context;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct(LoopInterface $loop, array $context = array())
     {
         $this->loop = $loop;
+        $this->context = $context;
     }
 
     public function create($ip, $port)
@@ -25,7 +27,14 @@ class TcpConnector implements ConnectorInterface
 
         $url = $this->getSocketUrl($ip, $port);
 
-        $socket = @stream_socket_client($url, $errno, $errstr, 0, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
+        $socket = @stream_socket_client(
+            $url,
+            $errno,
+            $errstr,
+            0,
+            STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
+            stream_context_create(array('socket' => $this->context))
+        );
 
         if (false === $socket) {
             return Promise\reject(new \RuntimeException(

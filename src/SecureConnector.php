@@ -10,11 +10,13 @@ class SecureConnector implements ConnectorInterface
 {
     private $connector;
     private $streamEncryption;
+    private $context;
 
-    public function __construct(ConnectorInterface $connector, LoopInterface $loop)
+    public function __construct(ConnectorInterface $connector, LoopInterface $loop, array $context = array())
     {
         $this->connector = $connector;
         $this->streamEncryption = new StreamEncryption($loop);
+        $this->context = $context;
     }
 
     public function create($host, $port)
@@ -23,14 +25,19 @@ class SecureConnector implements ConnectorInterface
             return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'));
         }
 
-        return $this->connector->create($host, $port)->then(function (Stream $stream) use ($host) {
+        $context = $this->context + array(
+            'SNI_enabled' => true,
+            'SNI_server_name' => $host,
+            'peer_name' => $host
+        );
+
+        return $this->connector->create($host, $port)->then(function (Stream $stream) use ($context) {
             // (unencrypted) TCP/IP connection succeeded
 
             // set required SSL/TLS context options
-            $resource = $stream->stream;
-            stream_context_set_option($resource, 'ssl', 'SNI_enabled', true);
-            stream_context_set_option($resource, 'ssl', 'SNI_server_name', $host);
-            stream_context_set_option($resource, 'ssl', 'peer_name', $host);
+            foreach ($context as $name => $value) {
+                stream_context_set_option($stream->stream, 'ssl', $name, $value);
+            }
 
             // try to enable encryption
             return $this->streamEncryption->enable($stream)->then(null, function ($error) use ($stream) {
