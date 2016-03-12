@@ -117,6 +117,29 @@ class SecureIntegrationTest extends TestCase
         $this->assertEquals($data, $received);
     }
 
+    public function testSendDataWithoutEndingToServerReceivesAllData()
+    {
+        $received = '';
+        $this->server->on('connection', function (Stream $peer) use (&$received) {
+            $peer->on('data', function ($chunk) use (&$received) {
+                $received .= $chunk;
+            });
+        });
+
+        $client = Block\await($this->connector->create('127.0.0.1', $this->portSecure), $this->loop);
+        /* @var $client Stream */
+
+        $data = str_repeat('d', 200000);
+        $client->write($data);
+
+        // buffer incoming data for 0.1s (should be plenty of time)
+        Block\sleep(0.1, $this->loop);
+
+        $client->close();
+
+        $this->assertEquals($data, $received);
+    }
+
     public function testConnectToServerWhichSendsSmallDataReceivesOneChunk()
     {
         $this->server->on('connection', function (Stream $peer) {
@@ -145,6 +168,28 @@ class SecureIntegrationTest extends TestCase
 
         // await data from client until it closes
         $received = Block\await(BufferedSink::createPromise($client), $this->loop);
+
+        $this->assertEquals($data, $received);
+    }
+
+    public function testConnectToServerWhichSendsDataWithoutEndingReceivesAllData()
+    {
+        $data = str_repeat('c', 100000);
+        $this->server->on('connection', function (Stream $peer) use ($data) {
+            $peer->write($data);
+        });
+
+        $client = Block\await($this->connector->create('127.0.0.1', $this->portSecure), $this->loop);
+        /* @var $client Stream */
+
+        // buffer incoming data for 0.1s (should be plenty of time)
+        $received = '';
+        $client->on('data', function ($chunk) use (&$received) {
+            $received .= $chunk;
+        });
+        Block\sleep(0.1, $this->loop);
+
+        $client->close();
 
         $this->assertEquals($data, $received);
     }
