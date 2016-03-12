@@ -24,6 +24,10 @@ class SecureIntegrationTest extends TestCase
 
     public function setUp()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on HHVM');
+        }
+
         $this->portSecure = getenv('TEST_SECURE');
         $this->portPlain = getenv('TEST_PLAIN');
 
@@ -34,7 +38,7 @@ class SecureIntegrationTest extends TestCase
         $this->loop = LoopFactory::create();
         $this->server = new Server($this->loop);
         $this->server->listen($this->portPlain);
-        $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));;
+        $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));
     }
 
     public function tearDown()
@@ -68,9 +72,11 @@ class SecureIntegrationTest extends TestCase
     public function testSendSmallDataToServerReceivesOneChunk()
     {
         // server expects one connection which emits one data event
-        $receiveOnce = $this->expectCallableOnceWith('hello');
-        $this->server->on('connection', function (Stream $peer) use ($receiveOnce) {
-            $peer->on('data', $receiveOnce);
+        $received = new Deferred();
+        $this->server->on('connection', function (Stream $peer) use ($received) {
+            $peer->on('data', function ($chunk) use ($received) {
+                $received->resolve($chunk);
+            });
         });
 
         $client = Block\await($this->connector->create('127.0.0.1', $this->portSecure), $this->loop);
@@ -78,9 +84,12 @@ class SecureIntegrationTest extends TestCase
 
         $client->write('hello');
 
-        Block\sleep(0.01, $this->loop);
+        // await server to report one "data" event
+        $data = Block\await($received->promise(), $this->loop);
 
         $client->close();
+
+        $this->assertEquals('hello', $data);
     }
 
     public function testSendDataWithEndToServerReceivesAllData()
@@ -117,9 +126,9 @@ class SecureIntegrationTest extends TestCase
         $client = Block\await($this->connector->create('127.0.0.1', $this->portSecure), $this->loop);
         /* @var $client Stream */
 
-        $client->on('data', $this->expectCallableOnceWith('hello'));
-
-        Block\sleep(0.01, $this->loop);
+        // await client to report one "data" event
+        $receive = $this->createPromiseForEvent($client, 'data', $this->expectCallableOnceWith('hello'));
+        Block\await($receive, $this->loop);
 
         $client->close();
     }
