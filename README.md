@@ -147,9 +147,9 @@ $ phpunit
 ```
 
 The test suite also contains some optional integration tests which operate on a
-TCP/IP socket server and an optional TLS/SSL proxy in front of it.
+TCP/IP socket server and an optional TLS/SSL terminating proxy in front of it.
 The underlying TCP/IP socket server will be started automatically, whereas the
-TLS/SSL proxy has to be started and enabled like this:
+TLS/SSL terminating proxy has to be started and enabled like this:
 
 ```bash
 $ stunnel -f -p stunnel.pem -d 6001 -r 6000 &
@@ -157,4 +157,5 @@ $ TEST_SECURE=6001 TEST_PLAIN=6000 phpunit
 ```
 
 See also the [Travis configuration](.travis.yml) for details on how to set up
-the required certificate file (`stunnel.pem`) if you're unsure.
+the TLS/SSL terminating proxy and the required certificate file (`stunnel.pem`)
+if you're unsure.

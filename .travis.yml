@@ -11,16 +11,42 @@ php:
 sudo: false
 
 env:
-  - TEST_SECURE=6001
-  - TEST_PLAIN=6000
+  - TEST_SECURE=6001 TEST_PLAIN=6000
+
+# install required system packages, see 'install' below for details
+# Travis' containers require this, otherwise use this:
+# sudo apt-get install openssl build-essential libev-dev libssl-dev
+addons:
+  apt:
+    packages:
+    - openssl
+    - build-essential
+    - libev-dev
+    - libssl-dev
 
 install:
+  # install this library plus its dependencies
   - composer install --prefer-source --no-interaction
-  - sudo apt-get install -y openssl stunnel
+
+  # we need openssl and either stunnel or stud
+  # unfortunately these are not available in Travis' containers
+  # sudo apt-get install -y openssl stud
+  # sudo apt-get install -y openssl stunnel4
+
+  # instead, let's install stud from source
+  # build dependencies are already installed, see 'addons.apt.packages' above
+  # sudo apt-get install openssl build-essential libev-dev libssl-dev
+  - git clone https://github.com/bumptech/stud.git
+  - (cd stud && make)
+
+  # create self-signed certificate
   - openssl genrsa 1024 > stunnel.key
   - openssl req -batch -subj '/CN=127.0.0.1' -new -x509 -nodes -sha1 -days 3650 -key stunnel.key > stunnel.cert
   - cat stunnel.cert stunnel.key > stunnel.pem
-  - stunnel -f -p stunnel.pem -d $TEST_SECURE -r $TEST_PLAIN 2>/dev/null &
+
+  # start TLS/SSL terminating proxy
+  # stunnel -f -p stunnel.pem -d $TEST_SECURE -r $TEST_PLAIN 2>/dev/null &
+  - ./stud/stud --daemon -f 127.0.0.1,$TEST_SECURE -b 127.0.0.1,$TEST_PLAIN stunnel.pem
 
 script:
   - phpunit --coverage-text
