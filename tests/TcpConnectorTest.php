@@ -5,6 +5,7 @@ namespace React\Tests\SocketClient;
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\Server;
 use React\SocketClient\TcpConnector;
+use Clue\React\Block;
 
 class TcpConnectorTest extends TestCase
 {
@@ -23,8 +24,6 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceed()
     {
-        $capturedStream = null;
-
         $loop = new StreamSelectLoop();
 
         $server = new Server($loop);
@@ -35,15 +34,12 @@ class TcpConnectorTest extends TestCase
         $server->listen(9999);
 
         $connector = new TcpConnector($loop);
-        $connector->create('127.0.0.1', 9999)
-                ->then(function ($stream) use (&$capturedStream) {
-                    $capturedStream = $stream;
-                    $stream->end();
-                });
 
-        $loop->run();
+        $stream = Block\await($connector->create('127.0.0.1', 9999), $loop);
 
-        $this->assertInstanceOf('React\Stream\Stream', $capturedStream);
+        $this->assertInstanceOf('React\Stream\Stream', $stream);
+
+        $stream->close();
     }
 
     /** @test */
@@ -62,8 +58,6 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToIp6TcpServerShouldSucceed()
     {
-        $capturedStream = null;
-
         $loop = new StreamSelectLoop();
 
         $server = new Server($loop);
@@ -72,16 +66,12 @@ class TcpConnectorTest extends TestCase
         $server->listen(9999, '::1');
 
         $connector = new TcpConnector($loop);
-        $connector
-            ->create('::1', 9999)
-            ->then(function ($stream) use (&$capturedStream) {
-                $capturedStream = $stream;
-                $stream->end();
-            });
 
-        $loop->run();
+        $stream = Block\await($connector->create('::1', 9999), $loop);
 
-        $this->assertInstanceOf('React\Stream\Stream', $capturedStream);
+        $this->assertInstanceOf('React\Stream\Stream', $stream);
+
+        $stream->close();
     }
 
     /** @test */

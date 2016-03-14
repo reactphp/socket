@@ -21,22 +21,12 @@ class IntegrationTest extends TestCase
         $dns = $factory->create('8.8.8.8', $loop);
         $connector = new Connector($loop, $dns);
 
-        $connected = false;
-        $response = null;
+        $conn = Block\await($connector->create('google.com', 80), $loop);
 
-        $connector->create('google.com', 80)
-            ->then(function ($conn) use (&$connected) {
-                $connected = true;
-                $conn->write("GET / HTTP/1.0\r\n\r\n");
-                return BufferedSink::createPromise($conn);
-            })
-            ->then(function ($data) use (&$response) {
-                $response = $data;
-            });
+        $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $loop->run();
+        $response = Block\await(BufferedSink::createPromise($conn), $loop);
 
-        $this->assertTrue($connected);
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
 
@@ -52,26 +42,17 @@ class IntegrationTest extends TestCase
         $factory = new Factory();
         $dns = $factory->create('8.8.8.8', $loop);
 
-        $connected = false;
-        $response = null;
-
         $secureConnector = new SecureConnector(
             new Connector($loop, $dns),
             $loop
         );
-        $secureConnector->create('google.com', 443)
-            ->then(function ($conn) use (&$connected) {
-                $connected = true;
-                $conn->write("GET / HTTP/1.0\r\n\r\n");
-                return BufferedSink::createPromise($conn);
-            })
-            ->then(function ($data) use (&$response) {
-                $response = $data;
-            });
 
-        $loop->run();
+        $conn = Block\await($secureConnector->create('google.com', 443), $loop);
 
-        $this->assertTrue($connected);
+        $conn->write("GET / HTTP/1.0\r\n\r\n");
+
+        $response = Block\await(BufferedSink::createPromise($conn), $loop);
+
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
 
@@ -86,7 +67,6 @@ class IntegrationTest extends TestCase
 
         $factory = new Factory();
         $dns = $factory->create('8.8.8.8', $loop);
-
 
         $secureConnector = new SecureConnector(
             new Connector($loop, $dns),
