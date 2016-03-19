@@ -138,6 +138,25 @@ $connector->create('/tmp/demo.sock')->then(function (React\Stream\Stream $stream
 $loop->run();
 ```
 
+## Install
+
+The recommended way to install this library is [through Composer](http://getcomposer.org).
+[New to Composer?](http://getcomposer.org/doc/00-intro.md)
+
+This will install the latest supported version:
+
+```bash
+$ composer require react/socket-client:^0.5
+```
+
+If you care a lot about BC, you may also want to look into supporting legacy versions:
+
+```bash
+$ composer require "react/socket-client:^0.5||^0.4||^0.3"
+```
+
+More details and upgrade guides can be found in the [CHANGELOG](CHANGELOG.md).
+
 ## Tests
 
 To run the test suite, you need PHPUnit. Go to the project root and run:

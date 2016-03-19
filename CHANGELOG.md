@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.5.0 (2016-03-19)
+
+* Feature / BC break: Support Connector without DNS
+  (#46 by @clue)
+
+  BC break: The `Connector` class now serves as a BC layer only.
+  The `TcpConnector` and `DnsConnector` classes replace its functionality.
+  If you're merely *using* this class, then you're *recommended* to upgrade as
+  per the below snippet – existing code will still work unchanged.
+  If you're `extend`ing the `Connector` (generally not recommended), then you
+  may have to rework your class hierarchy.
+
+  ```php
+// old (still supported, but marked deprecated)
+$connector = new Connector($loop, $resolver);
+
+// new equivalent
+$connector = new DnsConnector(new TcpConnector($loop), $resolver);
+
+// new feature: supports connecting to IP addresses only
+$connector = new TcpConnector($loop);
+```
+
+* Feature: Add socket and SSL/TLS context options to connectors
+  (#52 by @clue)
+
+* Fix: PHP 5.6+ uses new SSL/TLS context options
+  (#61 by @clue)
+
+* Fix: Move SSL/TLS context options to SecureConnector
+  (#43 by @clue)
+
+* Fix: Fix error reporting for invalid addresses
+  (#47 by @clue)
+
+* Fix: Close stream resource if connection fails
+  (#48 by @clue)
+
+* First class support for PHP 5.3 through PHP 7 and HHVM
+  (#53, #54 by @clue)
+
+* Add integration tests for SSL/TLS sockets
+  (#62 by @clue)
+
 ## 0.4.4 (2015-09-23)
 
 * Feature: Add support for Unix domain sockets (UDS) (#41 by @clue)
