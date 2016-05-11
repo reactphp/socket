@@ -10,7 +10,6 @@ class Server extends EventEmitter implements ServerInterface
 {
     public $master;
     private $loop;
-    private $isSecure = false;
 
     public function __construct(LoopInterface $loop)
     {
@@ -19,12 +18,15 @@ class Server extends EventEmitter implements ServerInterface
 
     public function listen($port, $host = '127.0.0.1', $streamContext = array())
     {
+        if (isset($streamContext['ssl']) && PHP_VERSION_ID < 50600) {
+            throw new \RuntimeException(
+                'Secure connections are not available before PHP 5.6.0'
+            );
+        }
+
         if (strpos($host, ':') !== false) {
             // enclose IPv6 addresses in square brackets before appending port
             $host = '[' . $host . ']';
-        }
-        if (isset($streamContext['ssl'])) {
-            $this->isSecure = true;
         }
 
         $this->master = @stream_socket_server(
@@ -38,7 +40,7 @@ class Server extends EventEmitter implements ServerInterface
             $message = "Could not bind to tcp://$host:$port: $errstr";
             throw new ConnectionException($message, $errno);
         }
-        stream_set_blocking($this->master, (int) $this->isSecure);
+        stream_set_blocking($this->master, 0);
 
         $that = $this;
 
@@ -55,10 +57,6 @@ class Server extends EventEmitter implements ServerInterface
 
     public function handleConnection($socket)
     {
-        if ($this->isSecure) {
-            $this->enableConnectionSecurity($socket);
-        }
-
         stream_set_blocking($socket, 0);
 
         $client = $this->createConnection($socket);
@@ -82,37 +80,57 @@ class Server extends EventEmitter implements ServerInterface
 
     public function createConnection($socket)
     {
-        return new Connection($socket, $this->loop);
+        $connection = null;
+        $context = stream_context_get_options($socket);
+
+        if (! isset($context['ssl'])) {
+            $connection = new Connection($socket, $this->loop);
+        } else {
+            $connection = new SecureConnection($socket, $this->loop);
+            $connection->setProtocol($this->getSecureProtocolNumber($context));
+            $scope = $this;
+            $connection->on('connection', function ($dataConn) use ($scope) {
+                $scope->emit('connection', array($dataConn));
+            });
+        }
+
+        return $connection;
     }
 
     /**
-     * Turn on encryption for the supplied socket.  If the socket does not have
-     * a stream context with a value for ['ssl']['crypto_method'] then a default
-     * crypto method is used.  For PHP before 5.6 this means only SSLv2, SSLv3
-     * and TLSv1.0 are enabled and only if PHP was built with an OpenSSL that
-     * supports those protocols.  You might find that only TLSv1.0 is made
-     * available, for example with an Ubuntu packaged PHP 5.5.9.  For PHP 5.6
-     * and above, any protocol made available to PHP by OpenSSL will be enabled.
+     * Get the STREAM_CRYPTO_METHOD_*_SERVER flags suitable for enabling TLS
+     * on a server socket.
      *
-     * @param resource $socket
+     * Used the supplied $streamContext['ssl']['crypto_method'] or a default set
+     * which will support as many SSL/TLS protocols as possible.
+     *
+     * @param array $streamContext
+     *
+     * @return int
      */
-    private function enableConnectionSecurity($socket)
+    public function getSecureProtocolNumber($streamContext)
     {
-        $context = stream_context_get_options($socket);
-
-        if (! isset($context['ssl']['crypto_method'])) {
-
-            $defaultCrypto = defined('STREAM_CRYPTO_METHOD_ANY_SERVER')
-                ? STREAM_CRYPTO_METHOD_ANY_SERVER
-                : STREAM_CRYPTO_METHOD_SSLv23_SERVER|STREAM_CRYPTO_METHOD_TLS_SERVER
-            ;
-            stream_socket_enable_crypto($socket, true, $defaultCrypto);
-
-        } else if (PHP_VERSION_ID < 50600) {
-            # "When enabling encryption you must specify the crypto type"
-            stream_socket_enable_crypto($socket, true, $context['ssl']['crypto_method']);
-        } else {
-            stream_socket_enable_crypto($socket, true);
+        if (isset($streamContext['ssl']['crypto_method'])) {
+            return $streamContext['ssl']['crypto_method'];
+        } elseif (defined('STREAM_CRYPTO_METHOD_ANY_SERVER')) {
+            return constant('STREAM_CRYPTO_METHOD_ANY_SERVER');
         }
+        $protoNum = 0;
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER')) {
+            $protoNum |= constant('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER');
+        }
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER')) {
+            $protoNum |= constant('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER');
+        }
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER')) {
+            $protoNum |= constant('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER');
+        }
+        if (defined('STREAM_CRYPTO_METHOD_SSLv3_SERVER')) {
+            $protoNum |= constant('STREAM_CRYPTO_METHOD_SSLv3_SERVER');
+        }
+        if (defined('STREAM_CRYPTO_METHOD_SSLv2_SERVER')) {
+            $protoNum |= constant('STREAM_CRYPTO_METHOD_SSLv2_SERVER');
+        }
+        return $protoNum;
     }
 }
