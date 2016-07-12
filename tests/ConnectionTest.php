@@ -72,6 +72,6 @@ class ConnectionTest extends TestCase
 
     private function createLoopMock()
     {
-        return $this->getMock('React\EventLoop\LoopInterface');
+        return $this->createMock('React\EventLoop\LoopInterface');
     }
 }
