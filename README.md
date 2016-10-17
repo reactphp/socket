@@ -161,6 +161,10 @@ $connector->create('/tmp/demo.sock')->then(function (React\Stream\Stream $stream
 $loop->run();
 ```
 
+Connecting to Unix domain sockets is an atomic operation, i.e. its promise will
+settle (either resolve or reject) immediately.
+As such, calling `cancel()` on the resulting promise has no effect.
+
 ## Install
 
 The recommended way to install this library is [through Composer](http://getcomposer.org).
