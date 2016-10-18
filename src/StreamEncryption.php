@@ -66,7 +66,10 @@ class StreamEncryption
 
         // TODO: add write() event to make sure we're not sending any excessive data
 
-        $deferred = new Deferred();
+        $deferred = new Deferred(function ($_, $reject) use ($toggle) {
+            // cancelling this leaves this stream in an inconsistent state…
+            $reject(new \RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
+        });
 
         // get actual stream socket from stream instance
         $socket = $stream->stream;
@@ -82,7 +85,9 @@ class StreamEncryption
         $wrap = $this->wrapSecure && $toggle;
         $loop = $this->loop;
 
-        return $deferred->promise()->then(function () use ($stream, $wrap, $loop) {
+        return $deferred->promise()->then(function () use ($stream, $socket, $wrap, $loop) {
+            $loop->removeReadStream($socket);
+
             if ($wrap) {
                 return new SecureStream($stream, $loop);
             }
@@ -90,7 +95,8 @@ class StreamEncryption
             $stream->resume();
 
             return $stream;
-        }, function($error) use ($stream) {
+        }, function($error) use ($stream, $socket, $loop) {
+            $loop->removeReadStream($socket);
             $stream->resume();
             throw $error;
         });
@@ -103,12 +109,8 @@ class StreamEncryption
         restore_error_handler();
 
         if (true === $result) {
-            $this->loop->removeReadStream($socket);
-
             $deferred->resolve();
         } else if (false === $result) {
-            $this->loop->removeReadStream($socket);
-
             $deferred->reject(new UnexpectedValueException(
                 sprintf("Unable to complete SSL/TLS handshake: %s", $this->errstr),
                 $this->errno

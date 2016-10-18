@@ -135,6 +135,17 @@ $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Str
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $secureConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying TCP/IP
+connection and/or the SSL/TLS negonation and reject the resulting promise.
+
 You can optionally pass additional
 [SSL context options](http://php.net/manual/en/context.ssl.php)
 to the constructor like this:
