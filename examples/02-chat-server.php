@@ -5,16 +5,30 @@
 //
 // $ php examples/02-chat-server.php 8000
 // $ telnet localhost 8000
+//
+// You can also run a secure TLS chat server like this:
+//
+// $ php examples/02-chat-server.php 8000 examples/localhost.pem
+// $ openssl s_client -connect localhost:8000
 
 use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
+use React\Socket\SecureServer;
 
 require __DIR__ . '/../vendor/autoload.php';
 
 $loop = Factory::create();
 
 $server = new Server($loop);
+
+// secure TLS mode if certificate is given as second parameter
+if (isset($argv[2])) {
+    $server = new SecureServer($server, $loop, array(
+        'local_cert' => $argv[2]
+    ));
+}
+
 $server->listen(isset($argv[1]) ? $argv[1] : 0, '0.0.0.0');
 
 $clients = array();
@@ -43,6 +57,8 @@ $server->on('connection', function (ConnectionInterface $client) use (&$clients)
         }
     });
 });
+
+$server->on('error', 'printf');
 
 echo 'Listening on ' . $server->getPort() . PHP_EOL;
 

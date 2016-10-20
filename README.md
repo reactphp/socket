@@ -13,6 +13,7 @@ and [`Stream`](https://github.com/reactphp/stream) components.
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
   * [Server](#server)
+  * [SecureServer](#secureserver)
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
 * [Install](#install)
@@ -77,7 +78,57 @@ instance implementing [`ConnectionInterface`](#connectioninterface):
 
 ```php
 $server->on('connection', function (ConnectionInterface $connection) {
+    echo 'Plaintext connection from ' . $connection->getRemoteAddress() . PHP_EOL;
+    
+    $connection->write('hello there!' . PHP_EOL);
     …
+});
+```
+
+### SecureServer
+
+The `SecureServer` class implements the `ServerInterface` and is responsible
+for providing a secure TLS (formerly known as SSL) server.
+
+It does so by wrapping a [`Server`](#server) instance which waits for plaintext
+TCP/IP connections and then performs a TLS handshake for each connection.
+It thus requires valid [TLS context options](http://php.net/manual/en/context.ssl.php),
+which in its most basic form may look something like this if you're using a
+PEM encoded certificate file:
+
+```php
+$server = new Server($loop);
+
+$server = new SecureServer($server, $loop, array(
+    'local_cert' => 'server.pem'
+));
+
+$server->listen(8000);
+```
+
+> Note that the certificate file will not be loaded on instantiation but when an
+incoming connection initializes its TLS context.
+This implies that any invalid certificate file paths or contents will only cause
+an `error` event at a later time.
+
+Whenever a client completes the TLS handshake, it will emit a `connection` event
+with a connection instance implementing [`ConnectionInterface`](#connectioninterface):
+
+```php
+$server->on('connection', function (ConnectionInterface $connection) {
+    echo 'Secure connection from' . $connection->getRemoteAddress() . PHP_EOL;
+    
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+Whenever a client fails to perform a successful TLS handshake, it will emit an
+`error` event and then close the underlying TCP/IP connection:
+
+```php
+$server->on('error', function (Exception $e) {
+    echo 'Error' . $e->getMessage() . PHP_EOL;
 });
 ```
 
