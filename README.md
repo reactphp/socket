@@ -46,6 +46,8 @@ provided to the listen method:
 $socket->listen(1337, '192.168.0.1');
 ```
 
+See also the [examples](examples).
+
 Here's a client that outputs the output of said server and then attempts to
 send it a string.
 For anything more complex, consider using the
