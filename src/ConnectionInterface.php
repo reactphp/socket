@@ -2,11 +2,9 @@
 
 namespace React\Socket;
 
-use Evenement\EventEmitterInterface;
-use React\Stream\ReadableStreamInterface;
-use React\Stream\WritableStreamInterface;
+use React\Stream\DuplexStreamInterface;
 
-interface ConnectionInterface extends ReadableStreamInterface, WritableStreamInterface
+interface ConnectionInterface extends DuplexStreamInterface
 {
     public function getRemoteAddress();
 }

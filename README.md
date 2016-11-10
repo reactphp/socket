@@ -25,7 +25,7 @@ Here is a server that closes the connection if you send it anything:
 $loop = React\EventLoop\Factory::create();
 
 $socket = new React\Socket\Server($loop);
-$socket->on('connection', function ($conn) {
+$socket->on('connection', function (ConnectionInterface $conn) {
     $conn->write("Hello there!\n");
     $conn->write("Welcome to this amazing server!\n");
     $conn->write("Here's a tip: don't say anything.\n");
@@ -71,7 +71,7 @@ client connects.
 
 ### Connection
 
-The `Connection` is a readable and writable [`Stream`](https://github.com/reactphp/stream).
+The `Connection` is a duplex (readable and writable) [`Stream`](https://github.com/reactphp/stream).
 The incoming connection represents the server-side end of the connection.
 
 It MUST NOT be used to represent an outgoing connection in a client-side context.
