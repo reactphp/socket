@@ -4,6 +4,11 @@ namespace React\Socket;
 
 use React\Stream\Stream;
 
+/**
+ * The actual connection implementation for ConnectionInterface
+ *
+ * @see ConnectionInterface
+ */
 class Connection extends Stream implements ConnectionInterface
 {
     public function handleData($stream)
