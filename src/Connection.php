@@ -7,7 +7,10 @@ use React\Stream\Stream;
 /**
  * The actual connection implementation for ConnectionInterface
  *
+ * This class should only be used internally, see ConnectionInterface instead.
+ *
  * @see ConnectionInterface
+ * @internal
  */
 class Connection extends Stream implements ConnectionInterface
 {
