@@ -26,5 +26,10 @@ use React\Stream\DuplexStreamInterface;
  */
 interface ConnectionInterface extends DuplexStreamInterface
 {
+    /**
+     * Returns the remote address (client IP) where this connection has been established from
+     *
+     * @return string|null remote address (client IP) or null if unknown
+     */
     public function getRemoteAddress();
 }

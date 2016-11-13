@@ -14,6 +14,7 @@ and [`Stream`](https://github.com/reactphp/stream) components.
 * [Usage](#usage)
   * [Server](#server)
   * [ConnectionInterface](#connectioninterface)
+    * [getRemoteAddress()](#getremoteaddress)
 * [Install](#install)
 * [License](#license)
 
@@ -26,7 +27,7 @@ $loop = React\EventLoop\Factory::create();
 
 $socket = new React\Socket\Server($loop);
 $socket->on('connection', function (ConnectionInterface $conn) {
-    $conn->write("Hello there!\n");
+    $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
     $conn->write("Here's a tip: don't say anything.\n");
 
@@ -114,6 +115,19 @@ $connection->close();
 
 For more details, see the
 [`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+
+#### getRemoteAddress()
+
+The `getRemoteAddress(): ?string` method returns the remote address
+(client IP) where this connection has been established from.
+
+```php
+$ip = $connection->getRemoteAddress();
+```
+
+It will return the remote address as a string value.
+If the remote address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
 
 ## Install
 
