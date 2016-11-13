@@ -11,7 +11,7 @@
 
 use React\EventLoop\Factory;
 use React\Socket\Server;
-use React\Socket\Connection;
+use React\Socket\ConnectionInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -20,7 +20,7 @@ $loop = Factory::create();
 $server = new Server($loop);
 $server->listen(isset($argv[1]) ? $argv[1] : 0);
 
-$server->on('connection', function (Connection $conn) use ($loop) {
+$server->on('connection', function (ConnectionInterface $conn) use ($loop) {
     echo '[connected]' . PHP_EOL;
 
     // count the number of bytes received from this connection
