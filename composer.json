@@ -17,6 +17,6 @@
         }
     },
     "require-dev": {
-        "clue/block-react": "~1.0"
+        "clue/block-react": "^1.1"
     }
 }

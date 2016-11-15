@@ -9,6 +9,8 @@ use Clue\React\Block;
 
 class TcpConnectorTest extends TestCase
 {
+    const TIMEOUT = 0.1;
+
     /** @test */
     public function connectionToEmptyPortShouldFail()
     {
@@ -35,7 +37,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->create('127.0.0.1', 9999), $loop);
+        $stream = Block\await($connector->create('127.0.0.1', 9999), $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Stream\Stream', $stream);
 
@@ -67,7 +69,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->create('::1', 9999), $loop);
+        $stream = Block\await($connector->create('::1', 9999), $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Stream\Stream', $stream);
 
