@@ -4,6 +4,7 @@ namespace React\Tests\Socket;
 
 use React\Socket\Server;
 use React\EventLoop\StreamSelectLoop;
+use React\Stream\Stream;
 
 class ServerTest extends TestCase
 {
@@ -131,6 +132,65 @@ class ServerTest extends TestCase
         $this->loop->tick();
     }
 
+    public function testLoopWillEndWhenServerIsShutDown()
+    {
+        // explicitly unset server because we already call shutdown()
+        $this->server->shutdown();
+        $this->server = null;
+
+        $this->loop->run();
+    }
+
+    public function testLoopWillEndWhenServerIsShutDownAfterSingleConnection()
+    {
+        $client = stream_socket_client('tcp://localhost:' . $this->port);
+
+        // explicitly unset server because we only accept a single connection
+        // and then already call shutdown()
+        $server = $this->server;
+        $this->server = null;
+
+        $server->on('connection', function ($conn) use ($server) {
+            $conn->close();
+            $server->shutdown();
+        });
+
+        $this->loop->run();
+    }
+
+    public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
+    {
+        $client = stream_socket_client('tcp://localhost:' . $this->port);
+        $stream = new Stream($client, $this->loop);
+
+        $bytes = 1024 * 1024;
+        $stream->end(str_repeat('*', $bytes));
+
+        $mock = $this->expectCallableOnce();
+
+        // explicitly unset server because we only accept a single connection
+        // and then already call shutdown()
+        $server = $this->server;
+        $this->server = null;
+
+        $received = 0;
+        $server->on('connection', function ($conn) use ($mock, &$received, $server) {
+            // count number of bytes received
+            $conn->on('data', function ($data) use (&$received) {
+                $received += strlen($data);
+            });
+
+            $conn->on('end', $mock);
+
+            // do not await any further connections in order to let the loop terminate
+            $server->shutdown();
+        });
+
+        $this->loop->run();
+
+        $this->assertEquals($bytes, $received);
+    }
+
     /**
      * @covers React\EventLoop\StreamSelectLoop::tick
      */
@@ -164,6 +224,15 @@ class ServerTest extends TestCase
         });
         $this->loop->tick();
         $this->loop->tick();
+    }
+
+    /**
+     * @expectedException React\Socket\ConnectionException
+     */
+    public function testListenOnBusyPortThrows()
+    {
+        $another = new Server($this->loop);
+        $another->listen($this->port);
     }
 
     /**
