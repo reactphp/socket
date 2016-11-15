@@ -13,6 +13,10 @@ class SecureConnectorTest extends TestCase
 
     public function setUp()
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
         $this->loop = $this->getMock('React\EventLoop\LoopInterface');
         $this->tcp = $this->getMock('React\SocketClient\ConnectorInterface');
         $this->connector = new SecureConnector($this->tcp, $this->loop);

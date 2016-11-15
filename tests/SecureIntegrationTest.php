@@ -24,8 +24,8 @@ class SecureIntegrationTest extends TestCase
 
     public function setUp()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
         $this->portSecure = getenv('TEST_SECURE');

@@ -104,7 +104,10 @@ class TcpConnectorTest extends TestCase
         $loop = new StreamSelectLoop();
         $connector = new TcpConnector($loop);
 
-        $promise = $connector->create('127.0.0.1', 9999);
+        $server = new Server($loop);
+        $server->listen(0);
+
+        $promise = $connector->create('127.0.0.1', $server->getPort());
         $promise->cancel();
 
         $this->setExpectedException('RuntimeException', 'Cancelled');

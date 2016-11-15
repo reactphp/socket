@@ -34,8 +34,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingEncryptedStuffFromGoogleShouldWork()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
         $loop = new StreamSelectLoop();
@@ -60,8 +60,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function testSelfSignedRejectsIfVerificationIsEnabled()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
         $loop = new StreamSelectLoop();
@@ -84,8 +84,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function testSelfSignedResolvesIfVerificationIsDisabled()
     {
-        if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('Not supported on HHVM');
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
         $loop = new StreamSelectLoop();
