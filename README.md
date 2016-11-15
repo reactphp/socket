@@ -137,6 +137,17 @@ $timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream 
 });
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $timeoutConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying connection
+attempt, abort the timer and reject the resulting promise.
+
 ### Unix domain sockets
 
 Similarly, the `UnixConnector` class can be used to connect to Unix domain socket (UDS)
