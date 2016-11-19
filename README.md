@@ -157,6 +157,31 @@ $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, 
 ));
 ```
 
+### Connection timeouts
+
+The `TimeoutConnector` class decorates any given `Connector` instance.
+It provides the same `create()` method, but will automatically reject the
+underlying connection attempt if it takes too long.
+
+```php
+$timeoutConnector = new React\SocketClient\TimeoutConnector($connector, 3.0, $loop);
+
+$timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream $stream) {
+    // connection succeeded within 3.0 seconds
+});
+```
+
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $timeoutConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying connection
+attempt, abort the timer and reject the resulting promise.
+
 ### Unix domain sockets
 
 Similarly, the `UnixConnector` class can be used to connect to Unix domain socket (UDS)

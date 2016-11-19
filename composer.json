@@ -8,7 +8,8 @@
         "react/dns": "0.4.*|0.3.*",
         "react/event-loop": "0.4.*|0.3.*",
         "react/stream": "0.4.*|0.3.*",
-        "react/promise": "^2.1 || ^1.2"
+        "react/promise": "^2.1 || ^1.2",
+        "react/promise-timer": "~1.0"
     },
     "autoload": {
         "psr-4": {
