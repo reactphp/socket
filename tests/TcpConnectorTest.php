@@ -97,4 +97,20 @@ class TcpConnectorTest extends TestCase
             $this->expectCallableOnce()
         );
     }
+
+    /** @test */
+    public function cancellingConnectionShouldRejectPromise()
+    {
+        $loop = new StreamSelectLoop();
+        $connector = new TcpConnector($loop);
+
+        $server = new Server($loop);
+        $server->listen(0);
+
+        $promise = $connector->create('127.0.0.1', $server->getPort());
+        $promise->cancel();
+
+        $this->setExpectedException('RuntimeException', 'Cancelled');
+        Block\await($promise, $loop);
+    }
 }

@@ -45,6 +45,18 @@ $tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stre
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $tcpConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will close the underlying socket
+resource, thus cancelling the pending TCP/IP connection, and reject the
+resulting promise.
+
 You can optionally pass additional
 [socket context options](http://php.net/manual/en/context.socket.php)
 to the constructor like this:
@@ -83,6 +95,17 @@ $dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream 
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $dnsConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying DNS lookup
+and/or the underlying TCP/IP connection and reject the resulting promise.
+
 The legacy `Connector` class can be used for backwards-compatiblity reasons.
 It works very much like the newer `DnsConnector` but instead has to be
 set up like this:
@@ -112,6 +135,17 @@ $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Str
 $loop->run();
 ```
 
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $secureConnector->create($host, $port);
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying TCP/IP
+connection and/or the SSL/TLS negonation and reject the resulting promise.
+
 You can optionally pass additional
 [SSL context options](http://php.net/manual/en/context.ssl.php)
 to the constructor like this:
@@ -137,6 +171,10 @@ $connector->create('/tmp/demo.sock')->then(function (React\Stream\Stream $stream
 
 $loop->run();
 ```
+
+Connecting to Unix domain sockets is an atomic operation, i.e. its promise will
+settle (either resolve or reject) immediately.
+As such, calling `cancel()` on the resulting promise has no effect.
 
 ## Install
 

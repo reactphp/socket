@@ -5,6 +5,7 @@ namespace React\SocketClient;
 use React\EventLoop\LoopInterface;
 use React\Stream\Stream;
 use React\Promise;
+use React\Promise\CancellablePromiseInterface;
 
 class SecureConnector implements ConnectorInterface
 {
@@ -39,7 +40,7 @@ class SecureConnector implements ConnectorInterface
         }
 
         $encryption = $this->streamEncryption;
-        return $this->connector->create($host, $port)->then(function (Stream $stream) use ($context, $encryption) {
+        return $this->connect($host, $port)->then(function (Stream $stream) use ($context, $encryption) {
             // (unencrypted) TCP/IP connection succeeded
 
             // set required SSL/TLS context options
@@ -54,5 +55,31 @@ class SecureConnector implements ConnectorInterface
                 throw $error;
             });
         });
+    }
+
+    private function connect($host, $port)
+    {
+        $promise = $this->connector->create($host, $port);
+
+        return new Promise\Promise(
+            function ($resolve, $reject) use ($promise) {
+                // resolve/reject with result of TCP/IP connection
+                $promise->then($resolve, $reject);
+            },
+            function ($_, $reject) use ($promise) {
+                // cancellation should reject connection attempt
+                $reject(new \RuntimeException('Connection attempt cancelled during TCP/IP connection'));
+
+                // forefully close TCP/IP connection if it completes despite cancellation
+                $promise->then(function (Stream $stream) {
+                    $stream->close();
+                });
+
+                // (try to) cancel pending TCP/IP connection
+                if ($promise instanceof CancellablePromiseInterface) {
+                    $promise->cancel();
+                }
+            }
+        );
     }
 }
