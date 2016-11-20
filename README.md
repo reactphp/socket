@@ -209,7 +209,7 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket-client:^0.5
+$ composer require react/socket-client:^0.5.1
 ```
 
 If you care a lot about BC, you may also want to look into supporting legacy versions:
