@@ -4,7 +4,7 @@
     "keywords": ["socket"],
     "license": "MIT",
     "require": {
-        "php": ">=5.3.0",
+        "php": ">=5.5.0",
         "evenement/evenement": "~2.0|~1.0",
         "react/event-loop": "0.4.*|0.3.*",
         "react/stream": "0.4.*|0.3.*"

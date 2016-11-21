@@ -11,11 +11,26 @@ class Server extends EventEmitter implements ServerInterface
     public $master;
     private $loop;
 
-    public function __construct(LoopInterface $loop)
+    /**
+     * @var ConnectionFactoryInterface
+     */
+    protected $factory;
+
+    /**
+     * Server constructor.
+     * @param LoopInterface $loop
+     * @param ConnectionFactoryInterface|null $factory The factory to use for creating connections.
+     * Uses a default factory if none is passed for backwards compatibility.
+     */
+    public function __construct(LoopInterface $loop, ConnectionFactoryInterface $factory = null)
     {
         $this->loop = $loop;
+        $this->factory = $factory ?: new ConnectionFactory();
     }
 
+    /**
+     * @inheritdoc
+     */
     public function listen($port, $host = '127.0.0.1')
     {
         if (strpos($host, ':') !== false) {
@@ -43,6 +58,12 @@ class Server extends EventEmitter implements ServerInterface
         });
     }
 
+    /**
+     * Handles a new connection by configuring the socket,
+     * constructing the connection object and emitting the connection event.
+     * @todo Check if this should be protected instead of public.
+     * @param resource $socket
+     */
     public function handleConnection($socket)
     {
         stream_set_blocking($socket, 0);
@@ -66,8 +87,14 @@ class Server extends EventEmitter implements ServerInterface
         $this->removeAllListeners();
     }
 
+    /**
+     * Constructs a connection object given a socket.
+     * @todo Check if this should be protected instead of public.
+     * @param resource $socket The PHP stream resource.
+     * @return ConnectionInterface
+     */
     public function createConnection($socket)
     {
-        return new Connection($socket, $this->loop);
+        return $this->factory->createConnection($socket, $this->loop);
     }
 }
