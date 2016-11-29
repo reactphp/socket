@@ -21,6 +21,12 @@ class UnixConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnce());
     }
 
+    public function testInvalidScheme()
+    {
+        $promise = $this->connector->connect('tcp://google.com:80');
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
     public function testValid()
     {
         // random unix domain socket path

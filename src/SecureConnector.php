@@ -26,7 +26,17 @@ class SecureConnector implements ConnectorInterface
             return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'));
         }
 
-        $host = trim(parse_url('tcp://' . $uri, PHP_URL_HOST), '[]');
+        if (strpos($uri, '://') === false) {
+            $uri = 'tls://' . $uri;
+        }
+
+        $parts = parse_url($uri);
+        if (!$parts || !isset($parts['host']) || $parts['scheme'] !== 'tls') {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+        }
+
+        $uri = str_replace('tls://', '', $uri);
+        $host = trim($parts['host'], '[]');
 
         $context = $this->context + array(
             'SNI_enabled' => true,

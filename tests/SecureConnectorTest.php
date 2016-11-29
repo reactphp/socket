@@ -32,6 +32,23 @@ class SecureConnectorTest extends TestCase
         $this->assertInstanceOf('React\Promise\PromiseInterface', $promise);
     }
 
+    public function testConnectionWithCompleteUriWillBePassedThroughExpectForScheme()
+    {
+        $pending = new Promise\Promise(function () { });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80/path?query#fragment'))->will($this->returnValue($pending));
+
+        $this->connector->connect('tls://example.com:80/path?query#fragment');
+    }
+
+    public function testConnectionToInvalidSchemeWillReject()
+    {
+        $this->tcp->expects($this->never())->method('connect');
+
+        $promise = $this->connector->connect('tcp://example.com:80');
+
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
     public function testCancelDuringTcpConnectionCancelsTcpConnection()
     {
         $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());

@@ -21,12 +21,16 @@ class TcpConnector implements ConnectorInterface
 
     public function connect($uri)
     {
-        $parts = parse_url('tcp://' . $uri);
-        if (!$parts || !isset($parts['host'], $parts['port'])) {
+        if (strpos($uri, '://') === false) {
+            $uri = 'tcp://' . $uri;
+        }
+
+        $parts = parse_url($uri);
+        if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
-        $ip = trim($parts['host'], '[]');
 
+        $ip = trim($parts['host'], '[]');
         if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
         }

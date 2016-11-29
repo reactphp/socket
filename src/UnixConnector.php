@@ -25,7 +25,13 @@ class UnixConnector implements ConnectorInterface
 
     public function connect($path)
     {
-        $resource = @stream_socket_client('unix://' . $path, $errno, $errstr, 1.0);
+        if (strpos($path, '://') === false) {
+            $path = 'unix://' . $path;
+        } elseif (substr($path, 0, 7) !== 'unix://') {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $path . '" is invalid'));
+        }
+
+        $resource = @stream_socket_client($path, $errno, $errstr, 1.0);
 
         if (!$resource) {
             return Promise\reject(new RuntimeException('Unable to connect to unix domain socket "' . $path . '": ' . $errstr, $errno));

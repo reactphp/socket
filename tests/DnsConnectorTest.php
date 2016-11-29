@@ -35,6 +35,32 @@ class DnsConnectorTest extends TestCase
         $this->connector->connect('google.com:80');
     }
 
+    public function testPassThroughResolverIfGivenHostWhichResolvesToIpv6()
+    {
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('google.com'))->will($this->returnValue(Promise\resolve('::1')));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80'))->will($this->returnValue(Promise\reject()));
+
+        $this->connector->connect('google.com:80');
+    }
+
+    public function testPassByResolverIfGivenCompleteUri()
+    {
+        $this->resolver->expects($this->never())->method('resolve');
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject()));
+
+        $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment');
+    }
+
+    public function testRejectsImmediatelyIfUriIsInvalid()
+    {
+        $this->resolver->expects($this->never())->method('resolve');
+        $this->tcp->expects($this->never())->method('connect');
+
+        $promise = $this->connector->connect('////');
+
+        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+    }
+
     public function testSkipConnectionIfDnsFails()
     {
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->will($this->returnValue(Promise\reject()));

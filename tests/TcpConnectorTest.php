@@ -89,12 +89,38 @@ class TcpConnectorTest extends TestCase
     }
 
     /** @test */
-    public function connectionToInvalidAddressShouldFailImmediately()
+    public function connectionToInvalidPortShouldFailImmediately()
     {
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
         $connector = new TcpConnector($loop);
         $connector->connect('255.255.255.255:12345678')->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+    }
+
+    /** @test */
+    public function connectionToInvalidSchemeShouldFailImmediately()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $connector = new TcpConnector($loop);
+        $connector->connect('tls://google.com:443')->then(
+            $this->expectCallableNever(),
+            $this->expectCallableOnce()
+        );
+    }
+
+    /** @test */
+    public function connectionWithInvalidContextShouldFailImmediately()
+    {
+        $this->markTestIncomplete();
+
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $connector = new TcpConnector($loop, array('bindto' => 'invalid.invalid:123456'));
+        $connector->connect('127.0.0.1:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
