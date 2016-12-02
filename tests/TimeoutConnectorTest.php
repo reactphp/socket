@@ -86,29 +86,7 @@ class TimeoutConnectorTest extends TestCase
 
     public function testCancelsPendingPromiseOnCancel()
     {
-        $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
-
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
-
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 0.01, $loop);
-
-        $out = $timeout->connect('google.com:80');
-        $out->cancel();
-
-        $out->then($this->expectCallableNever(), $this->expectCallableOnce());
-    }
-
-    public function testCancelClosesStreamIfTcpResolvesDespiteCancellation()
-    {
-        $stream = $this->getMockBuilder('React\Stream\Stream')->disableOriginalConstructor()->setMethods(array('close'))->getMock();
-        $stream->expects($this->once())->method('close');
-
-        $promise = new Promise\Promise(function () { }, function ($resolve) use ($stream) {
-            $resolve($stream);
-        });
+        $promise = new Promise\Promise(function () { }, function () { throw new \Exception(); });
 
         $connector = $this->getMock('React\SocketClient\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));

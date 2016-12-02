@@ -25,8 +25,8 @@ interface ConnectorInterface
      * The Promise resolves with a `React\Stream\Stream` instance on success or
      * rejects with an `Exception` if the connection is not successful.
      *
-     * The returned Promise SHOULD be implemented in such a way that it can be
-     * cancelled when it is still pending. Cancelling a pending promise SHOULD
+     * The returned Promise MUST be implemented in such a way that it can be
+     * cancelled when it is still pending. Cancelling a pending promise MUST
      * reject its value with an Exception. It SHOULD clean up any underlying
      * resources and references as applicable.
      *

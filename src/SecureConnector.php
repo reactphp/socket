@@ -52,7 +52,7 @@ class SecureConnector implements ConnectorInterface
         }
 
         $encryption = $this->streamEncryption;
-        return $this->connectTcp($uri)->then(function (Stream $stream) use ($context, $encryption) {
+        return $this->connector->connect($uri)->then(function (Stream $stream) use ($context, $encryption) {
             // (unencrypted) TCP/IP connection succeeded
 
             // set required SSL/TLS context options
@@ -67,31 +67,5 @@ class SecureConnector implements ConnectorInterface
                 throw $error;
             });
         });
-    }
-
-    private function connectTcp($uri)
-    {
-        $promise = $this->connector->connect($uri);
-
-        return new Promise\Promise(
-            function ($resolve, $reject) use ($promise) {
-                // resolve/reject with result of TCP/IP connection
-                $promise->then($resolve, $reject);
-            },
-            function ($_, $reject) use ($promise) {
-                // cancellation should reject connection attempt
-                $reject(new \RuntimeException('Connection attempt cancelled during TCP/IP connection'));
-
-                // forefully close TCP/IP connection if it completes despite cancellation
-                $promise->then(function (Stream $stream) {
-                    $stream->close();
-                });
-
-                // (try to) cancel pending TCP/IP connection
-                if ($promise instanceof CancellablePromiseInterface) {
-                    $promise->cancel();
-                }
-            }
-        );
     }
 }

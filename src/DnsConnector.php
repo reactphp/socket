@@ -33,10 +33,11 @@ class DnsConnector implements ConnectorInterface
 
         $that = $this;
         $host = trim($parts['host'], '[]');
+        $connector = $this->connector;
 
         return $this
             ->resolveHostname($host)
-            ->then(function ($ip) use ($that, $parts) {
+            ->then(function ($ip) use ($connector, $parts) {
                 $uri = '';
 
                 // prepend original scheme if known
@@ -71,7 +72,7 @@ class DnsConnector implements ConnectorInterface
                     $uri .= '#' . $parts['fragment'];
                 }
 
-                return $that->connectTcp($uri);
+                return $connector->connect($uri);
             });
     }
 
@@ -93,33 +94,6 @@ class DnsConnector implements ConnectorInterface
                 $reject(new \RuntimeException('Connection attempt cancelled during DNS lookup'));
 
                 // (try to) cancel pending DNS lookup
-                if ($promise instanceof CancellablePromiseInterface) {
-                    $promise->cancel();
-                }
-            }
-        );
-    }
-
-    /** @internal */
-    public function connectTcp($uri)
-    {
-        $promise = $this->connector->connect($uri);
-
-        return new Promise\Promise(
-            function ($resolve, $reject) use ($promise) {
-                // resolve/reject with result of TCP/IP connection
-                $promise->then($resolve, $reject);
-            },
-            function ($_, $reject) use ($promise) {
-                // cancellation should reject connection attempt
-                $reject(new \RuntimeException('Connection attempt cancelled during TCP/IP connection'));
-
-                // forefully close TCP/IP connection if it completes despite cancellation
-                $promise->then(function (Stream $stream) {
-                    $stream->close();
-                });
-
-                // (try to) cancel pending TCP/IP connection
                 if ($promise instanceof CancellablePromiseInterface) {
                     $promise->cancel();
                 }
