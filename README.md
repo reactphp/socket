@@ -177,6 +177,8 @@ $timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream 
 });
 ```
 
+See also any of the [examples](examples).
+
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php

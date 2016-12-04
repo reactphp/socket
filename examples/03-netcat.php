@@ -4,6 +4,7 @@ use React\EventLoop\Factory;
 use React\SocketClient\TcpConnector;
 use React\SocketClient\DnsConnector;
 use React\Stream\Stream;
+use React\SocketClient\TimeoutConnector;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -19,6 +20,9 @@ $resolver = $factory->create('8.8.8.8', $loop);
 
 $tcp = new TcpConnector($loop);
 $dns = new DnsConnector($tcp, $resolver);
+
+// time out connection attempt in 3.0s
+$dns = new TimeoutConnector($dns, 3.0, $loop);
 
 $stdin = new Stream(STDIN, $loop);
 $stdin->pause();
