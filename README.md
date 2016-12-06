@@ -157,6 +157,14 @@ $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, 
 ));
 ```
 
+> Advanced usage: Internally, the `SecureConnector` has to set the required
+*context options* on the underlying stream resource.
+It should therefor be used with a `TcpConnector` somewhere in the connector
+stack so that it can allocate an empty *context* resource for each stream
+resource.
+Failing to do so may result in some hard to trace race conditions, because all
+stream resources will use a single, shared *default context* resource otherwise.
+
 ### Connection timeouts
 
 The `TimeoutConnector` class decorates any given `Connector` instance.
