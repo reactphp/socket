@@ -225,16 +225,10 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket-client:^0.5.1
+$ composer require react/socket-client:^0.5.2
 ```
 
-If you care a lot about BC, you may also want to look into supporting legacy versions:
-
-```bash
-$ composer require "react/socket-client:^0.5||^0.4||^0.3"
-```
-
-More details and upgrade guides can be found in the [CHANGELOG](CHANGELOG.md).
+More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
 
 ## Tests
 
