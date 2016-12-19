@@ -57,10 +57,6 @@ class StreamEncryption
 
     public function toggle(Stream $stream, $toggle)
     {
-        if (__NAMESPACE__ . '\SecureStream' === get_class($stream)) {
-            $stream = $stream->decorating;
-        }
-
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
 
@@ -89,7 +85,7 @@ class StreamEncryption
             $loop->removeReadStream($socket);
 
             if ($wrap) {
-                return new SecureStream($stream, $loop);
+                $stream->bufferSize = null;
             }
 
             $stream->resume();

@@ -13,6 +13,8 @@ use Clue\React\Block;
 
 class IntegrationTest extends TestCase
 {
+    const TIMEOUT = 5.0;
+
     /** @test */
     public function gettingStuffFromGoogleShouldWork()
     {
@@ -26,7 +28,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop);
+        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
 
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
@@ -52,7 +54,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop);
+        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
 
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
@@ -78,7 +80,7 @@ class IntegrationTest extends TestCase
         );
 
         $this->setExpectedException('RuntimeException');
-        Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop);
+        Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
     }
 
     /** @test */
@@ -101,7 +103,7 @@ class IntegrationTest extends TestCase
             )
         );
 
-        $conn = Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop);
+        $conn = Block\await($secureConnector->create('self-signed.badssl.com', 443), $loop, self::TIMEOUT);
         $conn->close();
     }
 
