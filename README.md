@@ -139,16 +139,10 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:~0.4.0
+$ composer require react/socket:^0.4.4
 ```
 
-If you care a lot about BC, you may also want to look into supporting legacy versions:
-
-```bash
-$ composer require "react/socket:~0.4.0|~0.3.0"
-```
-
-More details and upgrade guides can be found in the [CHANGELOG](CHANGELOG.md).
+More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
 
 ## License
 
