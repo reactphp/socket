@@ -45,6 +45,8 @@ $tcpConnector->create('127.0.0.1', 80)->then(function (React\Stream\Stream $stre
 $loop->run();
 ```
 
+See also the [first example](examples).
+
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
@@ -95,6 +97,8 @@ $dnsConnector->create('www.google.com', 80)->then(function (React\Stream\Stream 
 $loop->run();
 ```
 
+See also the [first example](examples).
+
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
 ```php
@@ -134,6 +138,8 @@ $secureConnector->create('www.google.com', 443)->then(function (React\Stream\Str
 
 $loop->run();
 ```
+
+See also the [second example](examples).
 
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
@@ -178,6 +184,8 @@ $timeoutConnector->create('google.com', 80)->then(function (React\Stream\Stream 
     // connection succeeded within 3.0 seconds
 });
 ```
+
+See also any of the [examples](examples).
 
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
