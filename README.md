@@ -13,7 +13,8 @@ and [`Stream`](https://github.com/reactphp/stream) components.
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
   * [Server](#server)
-  * [Connection](#connection)
+  * [ConnectionInterface](#connectioninterface)
+    * [getRemoteAddress()](#getremoteaddress)
 * [Install](#install)
 * [License](#license)
 
@@ -25,8 +26,8 @@ Here is a server that closes the connection if you send it anything:
 $loop = React\EventLoop\Factory::create();
 
 $socket = new React\Socket\Server($loop);
-$socket->on('connection', function ($conn) {
-    $conn->write("Hello there!\n");
+$socket->on('connection', function (ConnectionInterface $conn) {
+    $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
     $conn->write("Here's a tip: don't say anything.\n");
 
@@ -68,17 +69,67 @@ $loop->run();
 
 ### Server
 
-The server can listen on a port and will emit a `connection` event whenever a
-client connects.
+The `Server` class is responsible for listening on a port and waiting for new connections.
 
-### Connection
+Whenever a client connects, it will emit a `connection` event with a connection
+instance implementing [`ConnectionInterface`](#connectioninterface):
 
-The `Connection` is a readable and writable [`Stream`](https://github.com/reactphp/stream).
-The incoming connection represents the server-side end of the connection.
+```php
+$server->on('connection', function (ConnectionInterface $connection) {
+    …
+});
+```
 
+### ConnectionInterface
+
+The `ConnectionInterface` is used to represent any incoming connection.
+
+An incoming connection is a duplex stream (both readable and writable) that
+implements React's
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
+and contains only a single additional property, the remote address (client IP)
+where this connection has been established from.
+
+> Note that this interface is only to be used to represent the server-side end
+of an incoming connection.
 It MUST NOT be used to represent an outgoing connection in a client-side context.
 If you want to establish an outgoing connection,
 use the [`SocketClient`](https://github.com/reactphp/socket-client) component instead.
+
+Because the `ConnectionInterface` implements the underlying
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
+you can use any of its events and methods as usual:
+
+```php
+$connection->on('data', function ($chunk) {
+    echo $data;
+});
+
+$conenction->on('close', function () {
+    echo 'closed';
+});
+
+$connection->write($data);
+$connection->end($data = null);
+$connection->close();
+// …
+```
+
+For more details, see the
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+
+#### getRemoteAddress()
+
+The `getRemoteAddress(): ?string` method returns the remote address
+(client IP) where this connection has been established from.
+
+```php
+$ip = $connection->getRemoteAddress();
+```
+
+It will return the remote address as a string value.
+If the remote address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
 
 ## Install
 
