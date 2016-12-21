@@ -28,6 +28,52 @@ to initialize the main loop.
 $loop = React\EventLoop\Factory::create();
 ```
 
+### ConnectorInterface
+
+The `ConnectorInterface` is responsible for providing an interface for
+establishing streaming connections, such as a normal TCP/IP connection.
+
+This is the main interface defined in this package and it is used throughout
+React's vast ecosystem.
+
+Most higher-level components (such as HTTP, database or other networking
+service clients) accept an instance implementing this interface to create their
+TCP/IP connection to the underlying networking service.
+This is usually done via dependency injection, so it's fairly simple to actually
+swap this implementation against any other implementation of this interface.
+
+The interface only offers a single method:
+
+#### create()
+
+The `create(string $host, int $port): PromiseInterface<Stream, Exception>` method
+can be used to establish a streaming connection.
+It returns a [Promise](https://github.com/reactphp/promise) which either
+fulfills with a [Stream](https://github.com/reactphp/stream) or
+rejects with an `Exception`:
+
+```php
+$connector->create('google.com', 443)->then(
+    function (Stream $stream) {
+        // connection successfully established
+    },
+    function (Exception $error) {
+        // failed to connect due to $error
+    }
+);
+```
+
+The returned Promise SHOULD be implemented in such a way that it can be
+cancelled when it is still pending. Cancelling a pending promise SHOULD
+reject its value with an `Exception`. It SHOULD clean up any underlying
+resources and references as applicable:
+
+```php
+$promise = $connector->create($host, $port);
+
+$promise->cancel();
+```
+
 ### Async TCP/IP connections
 
 The `React\SocketClient\TcpConnector` provides a single promise-based
