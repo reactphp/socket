@@ -65,7 +65,12 @@ class TcpConnectorTest extends TestCase
         $server = new Server($loop);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('connection', array($server, 'shutdown'));
-        $server->listen(9999, '::1');
+
+        try {
+            $server->listen(9999, '::1');
+        } catch (\Exception $e) {
+            $this->markTestSkipped('Unable to start IPv6 server socket (IPv6 not supported on this system?)');
+        }
 
         $connector = new TcpConnector($loop);
 
