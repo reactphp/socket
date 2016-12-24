@@ -28,11 +28,57 @@ to initialize the main loop.
 $loop = React\EventLoop\Factory::create();
 ```
 
+### ConnectorInterface
+
+The `ConnectorInterface` is responsible for providing an interface for
+establishing streaming connections, such as a normal TCP/IP connection.
+
+This is the main interface defined in this package and it is used throughout
+React's vast ecosystem.
+
+Most higher-level components (such as HTTP, database or other networking
+service clients) accept an instance implementing this interface to create their
+TCP/IP connection to the underlying networking service.
+This is usually done via dependency injection, so it's fairly simple to actually
+swap this implementation against any other implementation of this interface.
+
+The interface only offers a single method:
+
+#### create()
+
+The `create(string $host, int $port): PromiseInterface<Stream, Exception>` method
+can be used to establish a streaming connection.
+It returns a [Promise](https://github.com/reactphp/promise) which either
+fulfills with a [Stream](https://github.com/reactphp/stream) or
+rejects with an `Exception`:
+
+```php
+$connector->create('google.com', 443)->then(
+    function (Stream $stream) {
+        // connection successfully established
+    },
+    function (Exception $error) {
+        // failed to connect due to $error
+    }
+);
+```
+
+The returned Promise SHOULD be implemented in such a way that it can be
+cancelled when it is still pending. Cancelling a pending promise SHOULD
+reject its value with an `Exception`. It SHOULD clean up any underlying
+resources and references as applicable:
+
+```php
+$promise = $connector->create($host, $port);
+
+$promise->cancel();
+```
+
 ### Async TCP/IP connections
 
-The `React\SocketClient\TcpConnector` provides a single promise-based
-`create($ip, $port)` method which resolves as soon as the connection
-succeeds or fails.
+The `React\SocketClient\TcpConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
+TCP/IP connections to any IP-port-combination:
 
 ```php
 $tcpConnector = new React\SocketClient\TcpConnector($loop);
@@ -69,17 +115,18 @@ $tcpConnector = new React\SocketClient\TcpConnector($loop, array(
 ));
 ```
 
-Note that this class only allows you to connect to IP/port combinations.
-If you want to connect to hostname/port combinations, see also the following chapter.
+Note that this class only allows you to connect to IP-port-combinations.
+If you want to connect to hostname-port-combinations, see also the following chapter.
 
 ### DNS resolution
 
-The `DnsConnector` class decorates a given `TcpConnector` instance by first
-looking up the given domain name and then establishing the underlying TCP/IP
-connection to the resolved IP address.
+The `DnsConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
+TCP/IP connections to any hostname-port-combination.
 
-It provides the same promise-based `create($host, $port)` method which resolves with
-a `Stream` instance that can be used just like above.
+It does so by decorating a given `TcpConnector` instance so that it first
+looks up the given domain name via DNS (if applicable) and then establishes the
+underlying TCP/IP connection to the resolved target IP address.
 
 Make sure to set up your DNS resolver and underlying TCP connector like this:
 
@@ -122,11 +169,13 @@ $connector->create('www.google.com', 80)->then($callback);
 
 ### Async SSL/TLS connections
 
-The `SecureConnector` class decorates a given `Connector` instance by enabling
-SSL/TLS encryption as soon as the raw TCP/IP connection succeeds.
+The `SecureConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create secure
+TLS (formerly known as SSL) connections to any hostname-port-combination.
 
-It provides the same promise- based `create($host, $port)` method which resolves with
-a `Stream` instance that can be used just like any non-encrypted stream:
+It does so by decorating a given `DnsConnector` instance so that it first
+creates a plaintext TCP/IP connection and then enables TLS encryption on this
+stream.
 
 ```php
 $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop);
@@ -173,8 +222,12 @@ stream resources will use a single, shared *default context* resource otherwise.
 
 ### Connection timeouts
 
-The `TimeoutConnector` class decorates any given `Connector` instance.
-It provides the same `create()` method, but will automatically reject the
+The `TimeoutConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to add timeout
+handling to any existing connector instance.
+
+It does so by decorating any given [`ConnectorInterface`](#connectorinterface)
+instance and starting a timer that will automatically reject and abort any
 underlying connection attempt if it takes too long.
 
 ```php
@@ -200,8 +253,9 @@ attempt, abort the timer and reject the resulting promise.
 
 ### Unix domain sockets
 
-Similarly, the `UnixConnector` class can be used to connect to Unix domain socket (UDS)
-paths like this:
+The `UnixConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to connect to
+Unix domain socket (UDS) paths like this:
 
 ```php
 $connector = new React\SocketClient\UnixConnector($loop);
