@@ -16,6 +16,7 @@ and [`Stream`](https://github.com/reactphp/stream) components.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
 * [Install](#install)
+* [Tests](#tests)
 * [License](#license)
 
 ## Quickstart example
@@ -143,6 +144,23 @@ $ composer require react/socket:^0.4.4
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
+
+## Tests
+
+To run the test suite, you first need to clone this repo and then install all
+dependencies [through Composer](http://getcomposer.org).
+Because the test suite contains some circular dependencies, you may have to
+manually specify the root package version like this:
+
+```bash
+$ COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install
+```
+
+To run the test suite, you need PHPUnit. Go to the project root and run:
+
+```bash
+$ phpunit
+```
 
 ## License
 

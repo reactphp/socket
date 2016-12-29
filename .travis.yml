@@ -11,7 +11,7 @@ php:
 sudo: false
 
 install:
-  - composer install --prefer-source --no-interaction
+  - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
 
 script:
   - phpunit --coverage-text
