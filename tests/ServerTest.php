@@ -49,6 +49,24 @@ class ServerTest extends TestCase
      * @covers React\Socket\Server::handleConnection
      * @covers React\Socket\Server::createConnection
      */
+    public function testUnixConnection()
+    {
+        $unixSocket = 'unix://./server.sock';
+
+        $server = new Server($this->loop);
+        $server->bind($unixSocket);
+
+        $client = stream_socket_client($unixSocket);
+
+        $server->on('connection', $this->expectCallableOnce());
+        $this->loop->tick();
+    }
+
+    /**
+     * @covers React\EventLoop\StreamSelectLoop::tick
+     * @covers React\Socket\Server::handleConnection
+     * @covers React\Socket\Server::createConnection
+     */
     public function testConnectionWithManyClients()
     {
         $client1 = stream_socket_client('tcp://localhost:'.$this->port);
