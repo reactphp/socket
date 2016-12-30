@@ -9,6 +9,10 @@
         "react/event-loop": "0.4.*|0.3.*",
         "react/stream": "^0.4.2"
     },
+    "require-dev": {
+        "react/socket-client": "^0.5.1",
+        "clue/block-react": "^1.1"
+    },
     "autoload": {
         "psr-4": {
             "React\\Socket\\": "src"
