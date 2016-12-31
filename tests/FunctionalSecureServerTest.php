@@ -27,6 +27,30 @@ class FunctionalSecureServerTest extends TestCase
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
+        $server->on('error', 'var_dump');
+        $server->on('connection', $this->expectCallableOnce());
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsConnectionForNewConnectionWithEncryptedCertificate()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
+            'passphrase' => 'swordfish'
+        ));
         $server->on('connection', $this->expectCallableOnce());
         $server->listen(0);
         $port = $server->getPort();
@@ -48,6 +72,53 @@ class FunctionalSecureServerTest extends TestCase
         $server = new Server($loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => 'invalid.pem'
+        ));
+        $server->on('connection', $this->expectCallableNever());
+        $server->on('error', $this->expectCallableOnce());
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then(null, $this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsErrorForServerWithEncryptedCertificateMissingPassphrase()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem'
+        ));
+        $server->on('connection', $this->expectCallableNever());
+        $server->on('error', $this->expectCallableOnce());
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then(null, $this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsErrorForServerWithEncryptedCertificateWithInvalidPassphrase()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
+            'passphrase' => 'nope'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());

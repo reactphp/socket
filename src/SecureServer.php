@@ -23,6 +23,16 @@ use React\Socket\ConnectionInterface;
  * );
  * ```
  *
+ * If your private key is encrypted with a passphrase, you have to specify it
+ * like this:
+ *
+ * ```php
+ * $context = array(
+ *     'local_cert' => 'server.pem',
+ *     'passphrase' => 'secret'
+ * );
+ * ```
+ *
  * @see Server
  * @link http://php.net/manual/en/context.ssl.php for TLS context options
  */
@@ -35,6 +45,11 @@ class SecureServer extends EventEmitter implements ServerInterface
 
     public function __construct(Server $tcp, LoopInterface $loop, array $context)
     {
+        // default to empty passphrase to surpress blocking passphrase prompt
+        $context += array(
+            'passphrase' => ''
+        );
+
         $this->tcp = $tcp;
         $this->context = $context;
         $this->loop = $loop;

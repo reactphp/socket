@@ -111,6 +111,16 @@ incoming connection initializes its TLS context.
 This implies that any invalid certificate file paths or contents will only cause
 an `error` event at a later time.
 
+If your private key is encrypted with a passphrase, you have to specify it
+like this:
+
+```php
+$server = new SecureServer($server, $loop, array(
+    'local_cert' => 'server.pem',
+    'passphrase' => 'secret'
+));
+```
+
 Whenever a client completes the TLS handshake, it will emit a `connection` event
 with a connection instance implementing [`ConnectionInterface`](#connectioninterface):
 
