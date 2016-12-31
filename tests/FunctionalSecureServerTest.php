@@ -12,6 +12,8 @@ use React\Stream\Stream;
 
 class FunctionalSecureServerTest extends TestCase
 {
+    const TIMEOUT = 0.5;
+
     public function setUp()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -27,7 +29,6 @@ class FunctionalSecureServerTest extends TestCase
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
-        $server->on('error', 'var_dump');
         $server->on('connection', $this->expectCallableOnce());
         $server->listen(0);
         $port = $server->getPort();
@@ -37,9 +38,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->create('127.0.0.1', $port);
 
-        $promise->then($this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     public function testEmitsConnectionForNewConnectionWithEncryptedCertificate()
@@ -60,9 +59,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->create('127.0.0.1', $port);
 
-        $promise->then($this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     public function testEmitsErrorForServerWithInvalidCertificate()
@@ -83,9 +80,8 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->create('127.0.0.1', $port);
 
-        $promise->then(null, $this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        $this->setExpectedException('RuntimeException', 'handshake');
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     public function testEmitsErrorForServerWithEncryptedCertificateMissingPassphrase()
@@ -106,9 +102,8 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->create('127.0.0.1', $port);
 
-        $promise->then(null, $this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        $this->setExpectedException('RuntimeException', 'handshake');
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     public function testEmitsErrorForServerWithEncryptedCertificateWithInvalidPassphrase()
@@ -130,9 +125,8 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->create('127.0.0.1', $port);
 
-        $promise->then(null, $this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        $this->setExpectedException('RuntimeException', 'handshake');
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     public function testEmitsErrorForConnectionWithPeerVerification()
@@ -154,8 +148,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->create('127.0.0.1', $port);
 
         $promise->then(null, $this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        Block\sleep(self::TIMEOUT, $loop);
     }
 
     public function testEmitsErrorIfConnectionIsCancelled()
@@ -178,8 +171,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise->cancel();
 
         $promise->then(null, $this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        Block\sleep(self::TIMEOUT, $loop);
     }
 
     public function testEmitsNothingIfConnectionIsIdle()
@@ -199,8 +191,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->create('127.0.0.1', $port);
 
         $promise->then($this->expectCallableOnce());
-
-        Block\sleep(0.1, $loop);
+        Block\sleep(self::TIMEOUT, $loop);
     }
 
     public function testEmitsErrorIfConnectionIsNotSecureHandshake()
@@ -223,6 +214,6 @@ class FunctionalSecureServerTest extends TestCase
             $stream->write("GET / HTTP/1.0\r\n\r\n");
         });
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(self::TIMEOUT, $loop);
     }
 }
