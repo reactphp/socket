@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.3 (2016-12-24)
+
+* Fix: Skip IPv6 tests if not supported by the system
+  (#76 by @clue)
+
+* Documentation for `ConnectorInterface`
+  (#77 by @clue)
+
+## 0.5.2 (2016-12-19)
+
+* Feature: Replace `SecureStream` with unlimited read buffer from react/stream v0.4.5
+  (#72 by @clue)
+
+* Feature: Add examples
+  (#75 by @clue)
+
 ## 0.5.1 (2016-11-20)
 
 * Feature: Support Promise cancellation for all connectors
