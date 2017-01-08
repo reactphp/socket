@@ -4,12 +4,12 @@ namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
 use React\SocketClient\TcpConnector;
-use React\Socket\Server;
 use Clue\React\Block;
 use React\Socket\SecureServer;
 use React\SocketClient\SecureConnector;
 use React\Stream\Stream;
 use React\Socket\ConnectionInterface;
+use React\Socket\Server;
 
 class FunctionalSecureServerTest extends TestCase
 {
@@ -26,12 +26,11 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -46,12 +45,11 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $server->on('connection', function (ConnectionInterface $conn) {
@@ -75,14 +73,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
-
 
         $server->on('connection', function (ConnectionInterface $conn) {
             $conn->write(str_repeat('*', 400000));
@@ -110,12 +106,11 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $once = $this->expectCallableOnceWith('foo');
@@ -140,12 +135,11 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $received = 0;
@@ -174,12 +168,11 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $server->on('connection', function (ConnectionInterface $conn) use (&$received) {
@@ -210,13 +203,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'swordfish'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -231,13 +223,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => 'invalid.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -253,13 +244,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -275,14 +265,13 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'nope'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -298,13 +287,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -320,13 +308,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
@@ -343,13 +330,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableNever());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -363,13 +349,12 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);

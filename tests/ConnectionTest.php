@@ -14,8 +14,7 @@ class ConnectionTest extends TestCase
     public function testGetRemoteAddress()
     {
         $loop   = new StreamSelectLoop();
-        $server = new Server($loop);
-        $server->listen(0);
+        $server = new Server(0, $loop);
 
         $class  = new \ReflectionClass('React\\Socket\\Server');
         $master = $class->getProperty('master');

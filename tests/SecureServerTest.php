@@ -17,6 +17,7 @@ class SecureServerTest extends TestCase
     {
         $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->getMock();
         $tcp->expects($this->once())->method('getPort')->willReturn(1234);
+        $tcp->master = stream_socket_server('tcp://localhost:0');
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
@@ -29,6 +30,7 @@ class SecureServerTest extends TestCase
     {
         $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->getMock();
         $tcp->expects($this->once())->method('shutdown');
+        $tcp->master = stream_socket_server('tcp://localhost:0');
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 

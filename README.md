@@ -15,7 +15,6 @@ and [`Stream`](https://github.com/reactphp/stream) components.
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
     * [error event](#error-event)
-    * [listen()](#listen)
     * [getPort()](#getport)
     * [shutdown()](#shutdown)
   * [Server](#server)
@@ -33,7 +32,7 @@ Here is a server that closes the connection if you send it anything:
 ```php
 $loop = React\EventLoop\Factory::create();
 
-$socket = new React\Socket\Server($loop);
+$socket = new React\Socket\Server(8080, $loop);
 $socket->on('connection', function (ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
@@ -43,7 +42,6 @@ $socket->on('connection', function (ConnectionInterface $conn) {
         $conn->close();
     });
 });
-$socket->listen(1337);
 
 $loop->run();
 ```
@@ -58,7 +56,7 @@ For anything more complex, consider using the
 ```php
 $loop = React\EventLoop\Factory::create();
 
-$client = stream_socket_client('tcp://127.0.0.1:1337');
+$client = stream_socket_client('tcp://127.0.0.1:8080');
 $conn = new React\Stream\Stream($client, $loop);
 $conn->pipe(new React\Stream\Stream(STDOUT, $loop));
 $conn->write("Hello World!\n");
@@ -112,28 +110,6 @@ $server->on('error', function (Exception $e) {
 Note that this is not a fatal error event, i.e. the server keeps listening for
 new connections even after this event.
 
-#### listen()
-
-The `listen(int $port, string $host = '127.0.0.1'): void` method can be used to
-start listening on the given address.
-
-This starts accepting new incoming connections on the given address.
-See also the [connection event](#connection-event) for more details.
-
-```php
-$server->listen(8080);
-```
-
-By default, the server will listen on the localhost address and will not be
-reachable from the outside.
-You can change the host the socket is listening on through a second parameter 
-provided to the listen method:
-
-```php
-$socket->listen(1337, '192.168.0.1');
-```
-
-This method MUST NOT be called more than once on the same instance.
 
 #### getPort()
 
@@ -145,7 +121,6 @@ $port = $server->getPort();
 echo 'Server listening on port ' . $port . PHP_EOL;
 ```
 
-This method MUST NOT be called before calling [`listen()`](#listen).
 This method MUST NOT be called after calling [`shutdown()`](#shutdown).
 
 #### shutdown()
@@ -160,13 +135,25 @@ echo 'Shutting down server socket' . PHP_EOL;
 $server->shutdown();
 ```
 
-This method MUST NOT be called before calling [`listen()`](#listen).
-This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+This method MUST NOT be called more than once on the same instance.
 
 ### Server
 
 The `Server` class implements the [`ServerInterface`](#serverinterface) and
 is responsible for accepting plaintext TCP/IP connections.
+
+```php
+$server = new Server(8080, $loop);
+```
+
+By default, the server will listen on the localhost address and will not be
+reachable from the outside.
+You can change the host the socket is listening on through a first parameter 
+provided to the constructor:
+
+```php
+$server = new Server('192.168.0.1:8080', $loop);
+```
 
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
@@ -198,13 +185,10 @@ which in its most basic form may look something like this if you're using a
 PEM encoded certificate file:
 
 ```php
-$server = new Server($loop);
-
+$server = new Server(8000, $loop);
 $server = new SecureServer($server, $loop, array(
     'local_cert' => 'server.pem'
 ));
-
-$server->listen(8000);
 ```
 
 > Note that the certificate file will not be loaded on instantiation but when an
@@ -216,6 +200,7 @@ If your private key is encrypted with a passphrase, you have to specify it
 like this:
 
 ```php
+$server = new Server(8000, $loop);
 $server = new SecureServer($server, $loop, array(
     'local_cert' => 'server.pem',
     'passphrase' => 'secret'

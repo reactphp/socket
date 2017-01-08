@@ -13,9 +13,8 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -30,9 +29,8 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
