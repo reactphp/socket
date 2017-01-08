@@ -1,6 +1,6 @@
 {
     "name": "react/socket",
-    "description": "Library for building an evented socket server.",
+    "description": "Async, streaming plaintext TCP/IP and secure TLS socket server for React PHP",
     "keywords": ["socket"],
     "license": "MIT",
     "require": {

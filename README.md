@@ -2,10 +2,10 @@
 
 [![Build Status](https://secure.travis-ci.org/reactphp/socket.png?branch=master)](http://travis-ci.org/reactphp/socket)
 
-Library for building an evented socket server.
+Async, streaming plaintext TCP/IP and secure TLS socket server for React PHP
 
 The socket component provides a more usable interface for a socket-layer
-server or client based on the [`EventLoop`](https://github.com/reactphp/event-loop)
+server based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
 
 **Table of Contents**
@@ -201,7 +201,7 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:^0.4.4
+$ composer require react/socket:^0.4.5
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).

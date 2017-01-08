@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.5 (2017-01-08)
+
+* Feature: Add `SecureServer` for secure TLS connections
+  (#55 by @clue)
+
+* Add functional integration tests
+  (#54 by @clue)
+
 ## 0.4.4 (2016-12-19)
 
 * Feature / Fix: `ConnectionInterface` should extend `DuplexStreamInterface` + documentation
