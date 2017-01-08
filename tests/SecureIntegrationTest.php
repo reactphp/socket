@@ -4,6 +4,7 @@ namespace React\Tests\SocketClient;
 
 use React\EventLoop\Factory as LoopFactory;
 use React\Socket\Server;
+use React\Socket\SecureServer;
 use React\SocketClient\TcpConnector;
 use React\SocketClient\SecureConnector;
 use React\Stream\Stream;
@@ -17,12 +18,10 @@ class SecureIntegrationTest extends TestCase
 {
     const TIMEOUT = 0.5;
 
-    private $portSecure;
-    private $portPlain;
-
     private $loop;
     private $server;
     private $connector;
+    private $portSecure;
 
     public function setUp()
     {
@@ -30,16 +29,13 @@ class SecureIntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $this->portSecure = getenv('TEST_SECURE');
-        $this->portPlain = getenv('TEST_PLAIN');
-
-        if ($this->portSecure === false || $this->portPlain === false) {
-            $this->markTestSkipped('Needs TEST_SECURE=X and TEST_PLAIN=Y environment variables to run, see README.md');
-        }
-
         $this->loop = LoopFactory::create();
         $this->server = new Server($this->loop);
-        $this->server->listen($this->portPlain);
+        $this->server = new SecureServer($this->server, $this->loop, array(
+            'local_cert' => __DIR__ . '/localhost.pem'
+        ));
+        $this->server->listen(0);
+        $this->portSecure = $this->server->getPort();
         $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));
     }
 

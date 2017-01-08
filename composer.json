@@ -17,6 +17,7 @@
         }
     },
     "require-dev": {
-        "clue/block-react": "^1.1"
+        "clue/block-react": "^1.1",
+        "react/socket": "^0.4.5"
     }
 }
