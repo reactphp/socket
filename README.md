@@ -4,6 +4,10 @@
 
 Async Connector to open TCP/IP and SSL/TLS based connections.
 
+> The master branch contains the code for the upcoming 0.6 release.
+For the code of the current stable 0.5.x release, checkout the
+[0.5 branch](https://github.com/reactphp/socket-client/tree/0.5).
+
 ## Introduction
 
 Think of this library as an async version of
