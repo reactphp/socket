@@ -113,7 +113,7 @@ new connections even after this event.
 
 #### getPort()
 
-The `getPort(): int` method can be used to
+The `getPort(): ?int` method can be used to
 return the port this server is currently listening on.
 
 ```php
@@ -121,7 +121,8 @@ $port = $server->getPort();
 echo 'Server listening on port ' . $port . PHP_EOL;
 ```
 
-This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+It will return the port number or `NULL` if it is unknown (not applicable to
+this server socket or already closed).
 
 #### shutdown()
 
@@ -135,7 +136,7 @@ echo 'Shutting down server socket' . PHP_EOL;
 $server->shutdown();
 ```
 
-This method MUST NOT be called more than once on the same instance.
+Calling this method more than once on the same instance is a NO-OP.
 
 ### Server
 

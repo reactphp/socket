@@ -139,6 +139,18 @@ class ServerTest extends TestCase
         $this->loop->run();
     }
 
+    public function testShutDownTwiceIsNoOp()
+    {
+        $this->server->shutdown();
+        $this->server->shutdown();
+    }
+
+    public function testGetPortAfterShutDownReturnsNull()
+    {
+        $this->server->shutdown();
+        $this->assertNull($this->server->getPort());
+    }
+
     public function testLoopWillEndWhenServerIsShutDownAfterSingleConnection()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);

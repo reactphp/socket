@@ -51,9 +51,7 @@ interface ServerInterface extends EventEmitterInterface
     /**
      * Returns the port this server is currently listening on
      *
-     * This method MUST NOT be called after calling shutdown().
-     *
-     * @return int the port number
+     * @return ?int the port number or NULL if it is unknown (not applicable to this server socket or already closed)
      */
     public function getPort();
 
@@ -62,7 +60,7 @@ interface ServerInterface extends EventEmitterInterface
      *
      * This will stop listening for new incoming connections on this socket.
      *
-     * This method MUST NOT be called more than once on the same instance.
+     * Calling this method more than once on the same instance is a NO-OP.
      *
      * @return void
      */

@@ -130,6 +130,10 @@ class Server extends EventEmitter implements ServerInterface
 
     public function getPort()
     {
+        if (!is_resource($this->master)) {
+            return null;
+        }
+
         $name = stream_socket_get_name($this->master, false);
 
         return (int) substr(strrchr($name, ':'), 1);
@@ -137,9 +141,11 @@ class Server extends EventEmitter implements ServerInterface
 
     public function shutdown()
     {
-        $this->loop->removeStream($this->master);
-        fclose($this->master);
-        $this->removeAllListeners();
+        if (is_resource($this->master)) {
+            $this->loop->removeStream($this->master);
+            fclose($this->master);
+            $this->removeAllListeners();
+        }
     }
 
     public function createConnection($socket)

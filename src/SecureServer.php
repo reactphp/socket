@@ -43,6 +43,10 @@ class SecureServer extends EventEmitter implements ServerInterface
 
     public function __construct(Server $tcp, LoopInterface $loop, array $context)
     {
+        if (!is_resource($tcp->master)) {
+            throw new ConnectionException('TCP server already shut down');
+        }
+
         // default to empty passphrase to surpress blocking passphrase prompt
         $context += array(
             'passphrase' => ''

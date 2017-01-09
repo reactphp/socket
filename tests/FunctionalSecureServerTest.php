@@ -366,4 +366,17 @@ class FunctionalSecureServerTest extends TestCase
 
         Block\sleep(self::TIMEOUT, $loop);
     }
+
+    /**
+     * @expectedException React\Socket\ConnectionException
+     */
+    public function testFailsToCreateSecureServerOnClosedSocket()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+        $server->shutdown();
+
+        new SecureServer($server, $loop, array());
+    }
 }
