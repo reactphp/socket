@@ -15,7 +15,7 @@ namespace React\SocketClient;
  * This is usually done via dependency injection, so it's fairly simple to actually
  * swap this implementation against any other implementation of this interface.
  *
- * The interface only offers a single `create()` method.
+ * The interface only offers a single `connect()` method.
  */
 interface ConnectorInterface
 {
@@ -30,9 +30,8 @@ interface ConnectorInterface
      * reject its value with an Exception. It SHOULD clean up any underlying
      * resources and references as applicable.
      *
-     * @param string $host
-     * @param int    $port
+     * @param string $uri
      * @return React\Promise\PromiseInterface resolves with a Stream on success or rejects with an Exception on error
      */
-    public function create($host, $port);
+    public function connect($uri);
 }

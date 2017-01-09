@@ -18,14 +18,60 @@ class DnsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function create($host, $port)
+    public function connect($uri)
     {
+        if (strpos($uri, '://') === false) {
+            $parts = parse_url('tcp://' . $uri);
+            unset($parts['scheme']);
+        } else {
+            $parts = parse_url($uri);
+        }
+
+        if (!$parts || !isset($parts['host'])) {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+        }
+
         $that = $this;
+        $host = trim($parts['host'], '[]');
 
         return $this
             ->resolveHostname($host)
-            ->then(function ($ip) use ($that, $port) {
-                return $that->connect($ip, $port);
+            ->then(function ($ip) use ($that, $parts) {
+                $uri = '';
+
+                // prepend original scheme if known
+                if (isset($parts['scheme'])) {
+                    $uri .= $parts['scheme'] . '://';
+                }
+
+                if (strpos($ip, ':') !== false) {
+                    // enclose IPv6 addresses in square brackets before appending port
+                    $uri .= '[' . $ip . ']';
+                } else {
+                    $uri .= $ip;
+                }
+
+                // append original port if known
+                if (isset($parts['port'])) {
+                    $uri .= ':' . $parts['port'];
+                }
+
+                // append orignal path if known
+                if (isset($parts['path'])) {
+                    $uri .= $parts['path'];
+                }
+
+                // append original query if known
+                if (isset($parts['query'])) {
+                    $uri .= '?' . $parts['query'];
+                }
+
+                // append original fragment if known
+                if (isset($parts['fragment'])) {
+                    $uri .= '#' . $parts['fragment'];
+                }
+
+                return $that->connectTcp($uri);
             });
     }
 
@@ -55,9 +101,9 @@ class DnsConnector implements ConnectorInterface
     }
 
     /** @internal */
-    public function connect($ip, $port)
+    public function connectTcp($uri)
     {
-        $promise = $this->connector->create($ip, $port);
+        $promise = $this->connector->connect($uri);
 
         return new Promise\Promise(
             function ($resolve, $reject) use ($promise) {
