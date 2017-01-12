@@ -51,24 +51,7 @@ class SecureConnectorTest extends TestCase
 
     public function testCancelDuringTcpConnectionCancelsTcpConnection()
     {
-        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->will($this->returnValue($pending));
-
-        $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
-
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
-    }
-
-    public function testCancelClosesStreamIfTcpResolvesDespiteCancellation()
-    {
-        $stream = $this->getMockBuilder('React\Stream\Stream')->disableOriginalConstructor()->setMethods(array('close'))->getMock();
-        $stream->expects($this->once())->method('close');
-
-        $pending = new Promise\Promise(function () { }, function ($resolve) use ($stream) {
-            $resolve($stream);
-        });
-
+        $pending = new Promise\Promise(function () { }, function () { throw new \Exception(); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->will($this->returnValue($pending));
 
         $promise = $this->connector->connect('example.com:80');

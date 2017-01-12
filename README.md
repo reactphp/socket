@@ -67,8 +67,8 @@ $connector->connect('google.com:443')->then(
 );
 ```
 
-The returned Promise SHOULD be implemented in such a way that it can be
-cancelled when it is still pending. Cancelling a pending promise SHOULD
+The returned Promise MUST be implemented in such a way that it can be
+cancelled when it is still pending. Cancelling a pending promise MUST
 reject its value with an `Exception`. It SHOULD clean up any underlying
 resources and references as applicable:
 
