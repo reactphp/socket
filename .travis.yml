@@ -14,4 +14,4 @@ install:
   - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
 
 script:
-  - phpunit --coverage-text
+  - ./vendor/bin/phpunit --coverage-text

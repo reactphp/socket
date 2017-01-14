@@ -12,7 +12,8 @@
     },
     "require-dev": {
         "react/socket-client": "^0.5.1",
-        "clue/block-react": "^1.1"
+        "clue/block-react": "^1.1",
+        "phpunit/phpunit": "~4.8"
     },
     "autoload": {
         "psr-4": {
