@@ -27,9 +27,27 @@ use React\Stream\DuplexStreamInterface;
 interface ConnectionInterface extends DuplexStreamInterface
 {
     /**
-     * Returns the remote address (client IP) where this connection has been established from
+     * Returns the remote address (client IP and port) where this connection has been established from
      *
-     * @return string|null remote address (client IP) or null if unknown
+     * ```php
+     * $address = $connection->getRemoteAddress();
+     * echo 'Connection from ' . $address . PHP_EOL;
+     * ```
+     *
+     * If the remote address can not be determined or is unknown at this time (such as
+     * after the connection has been closed), it MAY return a `NULL` value instead.
+     *
+     * Otherwise, it will return the full remote address as a string value.
+     * If this is a TCP/IP based connection and you only want the remote IP, you may
+     * use something like this:
+     *
+     * ```php
+     * $address = $connection->getRemoteAddress();
+     * $ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+     * echo 'Connection from ' . $ip . PHP_EOL;
+     * ```
+     *
+     * @return string|null remote address (client IP and port) or null if unknown
      */
     public function getRemoteAddress();
 }

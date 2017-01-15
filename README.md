@@ -182,16 +182,26 @@ For more details, see the
 
 #### getRemoteAddress()
 
-The `getRemoteAddress(): ?string` method returns the remote address
-(client IP) where this connection has been established from.
+The `getRemoteAddress(): ?string` method returns the full remote address
+(client IP and port) where this connection has been established from.
 
 ```php
-$ip = $connection->getRemoteAddress();
+$address = $connection->getRemoteAddress();
+echo 'Connection from ' . $address . PHP_EOL;
 ```
 
-It will return the remote address as a string value.
 If the remote address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full remote address as a string value.
+If this is a TCP/IP based connection and you only want the remote IP, you may
+use something like this:
+
+```php
+$address = $connection->getRemoteAddress();
+$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+echo 'Connection from ' . $ip . PHP_EOL;
+```
 
 ## Install
 
