@@ -5,7 +5,30 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 
-/** Emits the connection event */
+/**
+ * The `Server` class implements the `ServerInterface` and
+ * is responsible for accepting plaintext TCP/IP connections.
+ *
+ * Whenever a client connects, it will emit a `connection` event with a connection
+ * instance implementing `ConnectionInterface`:
+ *
+ * ```php
+ * $server->on('connection', function (ConnectionInterface $connection) {
+ *     echo 'Plaintext connection from ' . $connection->getRemoteAddress() . PHP_EOL;
+ *     $connection->write('hello there!' . PHP_EOL);
+ *     …
+ * });
+ * ```
+ *
+ * See also the `ServerInterface` for more details.
+ *
+ * Note that the `Server` class is a concrete implementation for TCP/IP sockets.
+ * If you want to typehint in your higher-level protocol implementation, you SHOULD
+ * use the generic `ServerInterface` instead.
+ *
+ * @see ServerInterface
+ * @see ConnectionInterface
+ */
 class Server extends EventEmitter implements ServerInterface
 {
     public $master;

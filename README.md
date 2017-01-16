@@ -12,6 +12,12 @@ and [`Stream`](https://github.com/reactphp/stream) components.
 
 * [Quickstart example](#quickstart-example)
 * [Usage](#usage)
+  * [ServerInterface](#serverinterface)
+    * [connection event](#connection-event)
+    * [error event](#error-event)
+    * [listen()](#listen)
+    * [getPort()](#getport)
+    * [shutdown()](#shutdown)
   * [Server](#server)
   * [SecureServer](#secureserver)
   * [ConnectionInterface](#connectioninterface)
@@ -42,13 +48,6 @@ $socket->listen(1337);
 $loop->run();
 ```
 
-You can change the host the socket is listening on through a second parameter 
-provided to the listen method:
-
-```php
-$socket->listen(1337, '192.168.0.1');
-```
-
 See also the [examples](examples).
 
 Here's a client that outputs the output of said server and then attempts to
@@ -69,9 +68,105 @@ $loop->run();
 
 ## Usage
 
+### ServerInterface
+
+The `ServerInterface` is responsible for providing an interface for accepting
+incoming streaming connections, such as a normal TCP/IP connection.
+
+Most higher-level components (such as a HTTP server) accept an instance
+implementing this interface to accept incoming streaming connections.
+This is usually done via dependency injection, so it's fairly simple to actually
+swap this implementation against any other implementation of this interface.
+This means that you SHOULD typehint against this interface instead of a concrete
+implementation of this interface.
+
+Besides defining a few methods, this interface also implements the
+[`EventEmitterInterface`](https://github.com/igorw/evenement)
+which allows you to react to certain events.
+
+#### connection event
+
+The `connection` event will be emitted whenever a new connection has been
+established, i.e. a new client connects to this server socket:
+
+```php
+$server->on('connection', function (ConnectionInterface $connection) {
+    echo 'new connection' . PHP_EOL;
+});
+```
+
+See also the [`ConnectionInterface`](#connectioninterface) for more details
+about handling the incoming connection.
+
+#### error event
+
+The `error` event will be emitted whenever there's an error accepting a new
+connection from a client.
+
+```php
+$server->on('error', function (Exception $e) {
+    echo 'error: ' . $e->getMessage() . PHP_EOL;
+});
+```
+
+Note that this is not a fatal error event, i.e. the server keeps listening for
+new connections even after this event.
+
+#### listen()
+
+The `listen(int $port, string $host = '127.0.0.1'): void` method can be used to
+start listening on the given address.
+
+This starts accepting new incoming connections on the given address.
+See also the [connection event](#connection-event) for more details.
+
+```php
+$server->listen(8080);
+```
+
+By default, the server will listen on the localhost address and will not be
+reachable from the outside.
+You can change the host the socket is listening on through a second parameter 
+provided to the listen method:
+
+```php
+$socket->listen(1337, '192.168.0.1');
+```
+
+This method MUST NOT be called more than once on the same instance.
+
+#### getPort()
+
+The `getPort(): int` method can be used to
+return the port this server is currently listening on.
+
+```php
+$port = $server->getPort();
+echo 'Server listening on port ' . $port . PHP_EOL;
+```
+
+This method MUST NOT be called before calling [`listen()`](#listen).
+This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+
+#### shutdown()
+
+The `shutdown(): void` method can be used to
+shut down this listening socket.
+
+This will stop listening for new incoming connections on this socket.
+
+```php
+echo 'Shutting down server socket' . PHP_EOL;
+$server->shutdown();
+```
+
+This method MUST NOT be called before calling [`listen()`](#listen).
+This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+
 ### Server
 
-The `Server` class is responsible for listening on a port and waiting for new connections.
+The `Server` class implements the [`ServerInterface`](#serverinterface) and
+is responsible for accepting plaintext TCP/IP connections.
 
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
@@ -85,10 +180,16 @@ $server->on('connection', function (ConnectionInterface $connection) {
 });
 ```
 
+See also the [`ServerInterface`](#serverinterface) for more details.
+
+Note that the `Server` class is a concrete implementation for TCP/IP sockets.
+If you want to typehint in your higher-level protocol implementation, you SHOULD
+use the generic [`ServerInterface`](#serverinterface) instead.
+
 ### SecureServer
 
-The `SecureServer` class implements the `ServerInterface` and is responsible
-for providing a secure TLS (formerly known as SSL) server.
+The `SecureServer` class implements the [`ServerInterface`](#serverinterface)
+and is responsible for providing a secure TLS (formerly known as SSL) server.
 
 It does so by wrapping a [`Server`](#server) instance which waits for plaintext
 TCP/IP connections and then performs a TLS handshake for each connection.
@@ -141,6 +242,8 @@ $server->on('error', function (Exception $e) {
     echo 'Error' . $e->getMessage() . PHP_EOL;
 });
 ```
+
+See also the [`ServerInterface`](#serverinterface) for more details.
 
 ### ConnectionInterface
 
