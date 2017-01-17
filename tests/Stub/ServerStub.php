@@ -16,7 +16,7 @@ class ServerStub extends EventEmitter implements ServerInterface
         return 80;
     }
 
-    public function shutdown()
+    public function close()
     {
     }
 }
