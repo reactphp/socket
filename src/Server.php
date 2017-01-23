@@ -141,11 +141,13 @@ class Server extends EventEmitter implements ServerInterface
 
     public function shutdown()
     {
-        if (is_resource($this->master)) {
-            $this->loop->removeStream($this->master);
-            fclose($this->master);
-            $this->removeAllListeners();
+        if (!is_resource($this->master)) {
+            return;
         }
+
+        $this->loop->removeStream($this->master);
+        fclose($this->master);
+        $this->removeAllListeners();
     }
 
     public function createConnection($socket)

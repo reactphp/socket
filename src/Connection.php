@@ -16,12 +16,14 @@ class Connection extends Stream implements ConnectionInterface
 {
     public function handleClose()
     {
-        if (is_resource($this->stream)) {
-            // http://chat.stackoverflow.com/transcript/message/7727858#7727858
-            stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
-            stream_set_blocking($this->stream, false);
-            fclose($this->stream);
+        if (!is_resource($this->stream)) {
+            return;
         }
+
+        // http://chat.stackoverflow.com/transcript/message/7727858#7727858
+        stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
+        stream_set_blocking($this->stream, false);
+        fclose($this->stream);
     }
 
     public function getRemoteAddress()
