@@ -6,6 +6,8 @@ use React\EventLoop\Factory;
 use React\SocketClient\TcpConnector;
 use React\Socket\Server;
 use Clue\React\Block;
+use React\Socket\ConnectionException;
+use React\Socket\ConnectionInterface;
 
 class FunctionalServerTest extends TestCase
 {
@@ -26,6 +28,76 @@ class FunctionalServerTest extends TestCase
         Block\sleep(0.1, $loop);
     }
 
+    public function testEmitsConnectionWithRemoteIp()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $peer = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
+            $peer = $conn->getRemoteAddress();
+        });
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('127.0.0.1', $peer);
+    }
+
+    public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $peer = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
+            $conn->on('close', function () use ($conn, &$peer) {
+                $peer = $conn->getRemoteAddress();
+            });
+        });
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $client = Block\await($promise, $loop, 0.1);
+        $client->end();
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('127.0.0.1', $peer);
+    }
+
+    public function testEmitsConnectionWithRemoteNullAddressAfterConnectionIsClosedLocally()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $peer = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
+            $conn->close();
+            $peer = $conn->getRemoteAddress();
+        });
+        $server->listen(0);
+        $port = $server->getPort();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertNull($peer);
+    }
+
     public function testEmitsConnectionEvenIfConnectionIsCancelled()
     {
         $loop = Factory::create();
@@ -42,5 +114,52 @@ class FunctionalServerTest extends TestCase
         $promise->then(null, $this->expectCallableOnce());
 
         Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsConnectionForNewIpv6Connection()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $server->on('connection', $this->expectCallableOnce());
+        try {
+            $server->listen(0, '::1');
+        } catch (ConnectionException $e) {
+            $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
+        }
+        $port = $server->getPort();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('::1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsConnectionWithRemoteIpv6()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop);
+        $peer = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
+            $peer = $conn->getRemoteAddress();
+        });
+        try {
+            $server->listen(0, '::1');
+        } catch (ConnectionException $e) {
+            $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
+        }
+        $port = $server->getPort();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('::1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('::1', $peer);
     }
 }
