@@ -165,6 +165,11 @@ class FunctionalServerTest extends TestCase
 
     public function testAppliesContextOptionsToSocketStreamResource()
     {
+        if (defined('HHVM_VERSION') && version_compare(HHVM_VERSION, '3.13', '<')) {
+            // https://3v4l.org/hB4Tc
+            $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
+        }
+
         $loop = Factory::create();
 
         $server = new Server($loop, array(
