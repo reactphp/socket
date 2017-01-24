@@ -162,4 +162,19 @@ class FunctionalServerTest extends TestCase
 
         $this->assertEquals('::1', $peer);
     }
+
+    public function testAppliesContextOptionsToSocketStreamResource()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($loop, array(
+            'backlog' => 4
+        ));
+
+        $server->listen(0);
+
+        $all = stream_context_get_options($server->master);
+
+        $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
+    }
 }
