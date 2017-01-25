@@ -26,11 +26,15 @@ class Connection extends Stream implements ConnectionInterface
 
     public function getRemoteAddress()
     {
-        return $this->parseAddress(stream_socket_get_name($this->stream, true));
+        return $this->parseAddress(@stream_socket_get_name($this->stream, true));
     }
 
     private function parseAddress($address)
     {
+        if ($address === false) {
+            return null;
+        }
+
         return trim(substr($address, 0, strrpos($address, ':')), '[]');
     }
 }
