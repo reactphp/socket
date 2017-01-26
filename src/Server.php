@@ -33,10 +33,42 @@ class Server extends EventEmitter implements ServerInterface
 {
     public $master;
     private $loop;
+    private $context;
 
-    public function __construct(LoopInterface $loop)
+    /**
+     * Creates a plaintext TCP/IP server.
+     *
+     * ```php
+     * $server = new Server($loop);
+     *
+     * $server->listen(8080);
+     * ```
+     *
+     * Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+     * for the underlying stream socket resource like this:
+     *
+     * ```php
+     * $server = new Server($loop, array(
+     *     'backlog' => 200,
+     *     'so_reuseport' => true,
+     *     'ipv6_v6only' => true
+     * ));
+     *
+     * $server->listen(8080, '::1');
+     * ```
+     *
+     * Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+     * their defaults and effects of changing these may vary depending on your system
+     * and/or PHP version.
+     * Passing unknown context options has no effect.
+     *
+     * @param LoopInterface $loop
+     * @param array $context
+     */
+    public function __construct(LoopInterface $loop, array $context = array())
     {
         $this->loop = $loop;
+        $this->context = $context;
     }
 
     public function listen($port, $host = '127.0.0.1')
@@ -51,7 +83,7 @@ class Server extends EventEmitter implements ServerInterface
             $errno,
             $errstr,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
-            stream_context_create()
+            stream_context_create(array('socket' => $this->context))
         );
         if (false === $this->master) {
             $message = "Could not bind to tcp://$host:$port: $errstr";

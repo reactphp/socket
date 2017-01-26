@@ -168,6 +168,30 @@ This method MUST NOT be called after calling [`shutdown()`](#shutdown).
 The `Server` class implements the [`ServerInterface`](#serverinterface) and
 is responsible for accepting plaintext TCP/IP connections.
 
+```php
+$server = new Server($loop);
+
+$server->listen(8080);
+```
+
+Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+for the underlying stream socket resource like this:
+
+```php
+$server = new Server($loop, array(
+    'backlog' => 200,
+    'so_reuseport' => true,
+    'ipv6_v6only' => true
+));
+
+$server->listen(8080, '::1');
+```
+
+> Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+their defaults and effects of changing these may vary depending on your system
+and/or PHP version.
+Passing unknown context options has no effect.
+
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
 

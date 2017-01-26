@@ -162,4 +162,24 @@ class FunctionalServerTest extends TestCase
 
         $this->assertEquals('::1', $peer);
     }
+
+    public function testAppliesContextOptionsToSocketStreamResource()
+    {
+        if (defined('HHVM_VERSION') && version_compare(HHVM_VERSION, '3.13', '<')) {
+            // https://3v4l.org/hB4Tc
+            $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
+        }
+
+        $loop = Factory::create();
+
+        $server = new Server($loop, array(
+            'backlog' => 4
+        ));
+
+        $server->listen(0);
+
+        $all = stream_context_get_options($server->master);
+
+        $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
+    }
 }
