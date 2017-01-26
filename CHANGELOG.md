@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.6 (2017-01-26)
+
+* Feature: Support socket context options passed to `Server`
+  (#64 by @clue)
+
+* Fix: Properly return `null` for unknown addresses
+  (#63 by @clue)
+
+* Improve documentation for `ServerInterface` and lock test suite requirements
+  (#60 by @clue, #57 by @shaunbramley)
+
 ## 0.4.5 (2017-01-08)
 
 * Feature: Add `SecureServer` for secure TLS connections

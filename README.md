@@ -328,7 +328,7 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:^0.4.5
+$ composer require react/socket:^0.4.6
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
@@ -344,10 +344,10 @@ manually specify the root package version like this:
 $ COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install
 ```
 
-To run the test suite, you need PHPUnit. Go to the project root and run:
+To run the test suite, go to the project root and run:
 
 ```bash
-$ phpunit
+$ php vendor/bin/phpunit
 ```
 
 ## License
