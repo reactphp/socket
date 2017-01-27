@@ -47,7 +47,7 @@ class FunctionalServerTest extends TestCase
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('127.0.0.1', $peer);
+        $this->assertContains('127.0.0.1:', $peer);
     }
 
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
@@ -72,7 +72,7 @@ class FunctionalServerTest extends TestCase
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('127.0.0.1', $peer);
+        $this->assertContains('127.0.0.1:', $peer);
     }
 
     public function testEmitsConnectionWithRemoteNullAddressAfterConnectionIsClosedLocally()
@@ -160,7 +160,7 @@ class FunctionalServerTest extends TestCase
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('::1', $peer);
+        $this->assertContains('[::1]:', $peer);
     }
 
     public function testAppliesContextOptionsToSocketStreamResource()
