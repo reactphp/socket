@@ -120,7 +120,7 @@ class Server extends EventEmitter implements ServerInterface
         return (int) substr(strrchr($name, ':'), 1);
     }
 
-    public function shutdown()
+    public function close()
     {
         $this->loop->removeStream($this->master);
         fclose($this->master);

@@ -17,7 +17,7 @@ and [`Stream`](https://github.com/reactphp/stream) components.
     * [error event](#error-event)
     * [listen()](#listen)
     * [getPort()](#getport)
-    * [shutdown()](#shutdown)
+    * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
   * [ConnectionInterface](#connectioninterface)
@@ -146,22 +146,22 @@ echo 'Server listening on port ' . $port . PHP_EOL;
 ```
 
 This method MUST NOT be called before calling [`listen()`](#listen).
-This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+This method MUST NOT be called after calling [`close()`](#close).
 
-#### shutdown()
+#### close()
 
-The `shutdown(): void` method can be used to
+The `close(): void` method can be used to
 shut down this listening socket.
 
 This will stop listening for new incoming connections on this socket.
 
 ```php
 echo 'Shutting down server socket' . PHP_EOL;
-$server->shutdown();
+$server->close();
 ```
 
 This method MUST NOT be called before calling [`listen()`](#listen).
-This method MUST NOT be called after calling [`shutdown()`](#shutdown).
+This method MUST NOT be called after calling [`close()`](#close).
 
 ### Server
 

@@ -72,7 +72,7 @@ interface ServerInterface extends EventEmitterInterface
      * Returns the port this server is currently listening on
      *
      * This method MUST NOT be called before calling listen().
-     * This method MUST NOT be called after calling shutdown().
+     * This method MUST NOT be called after calling close().
      *
      * @return int the port number
      */
@@ -84,9 +84,9 @@ interface ServerInterface extends EventEmitterInterface
      * This will stop listening for new incoming connections on this socket.
      *
      * This method MUST NOT be called before calling listen().
-     * This method MUST NOT be called after calling shutdown().
+     * This method MUST NOT be called after calling close().
      *
      * @return void
      */
-    public function shutdown();
+    public function close();
 }

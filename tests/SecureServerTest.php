@@ -25,15 +25,15 @@ class SecureServerTest extends TestCase
         $this->assertEquals(1234, $server->getPort());
     }
 
-    public function testShutdownWillBePassedThroughToTcpServer()
+    public function testCloseWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->getMock();
-        $tcp->expects($this->once())->method('shutdown');
+        $tcp->expects($this->once())->method('close');
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
         $server = new SecureServer($tcp, $loop, array());
 
-        $server->shutdown();
+        $server->close();
     }
 }
