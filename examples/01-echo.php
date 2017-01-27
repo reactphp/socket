@@ -20,7 +20,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $loop = Factory::create();
 
-$server = new Server($loop);
+$server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop);
 
 // secure TLS mode if certificate is given as second parameter
 if (isset($argv[2])) {
@@ -28,8 +28,6 @@ if (isset($argv[2])) {
         'local_cert' => $argv[2]
     ));
 }
-
-$server->listen(isset($argv[1]) ? $argv[1] : 0);
 
 $server->on('connection', function (ConnectionInterface $conn) use ($loop) {
     echo '[connected]' . PHP_EOL;

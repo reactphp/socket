@@ -39,20 +39,24 @@ use React\Socket\ConnectionInterface;
 class SecureServer extends EventEmitter implements ServerInterface
 {
     private $tcp;
-    private $context;
-    private $loop;
     private $encryption;
 
     public function __construct(Server $tcp, LoopInterface $loop, array $context)
     {
+        if (!is_resource($tcp->master)) {
+            throw new ConnectionException('TCP server already shut down');
+        }
+
         // default to empty passphrase to surpress blocking passphrase prompt
         $context += array(
             'passphrase' => ''
         );
 
+        foreach ($context as $name => $value) {
+            stream_context_set_option($tcp->master, 'ssl', $name, $value);
+        }
+
         $this->tcp = $tcp;
-        $this->context = $context;
-        $this->loop = $loop;
         $this->encryption = new StreamEncryption($loop);
 
         $that = $this;
@@ -62,15 +66,6 @@ class SecureServer extends EventEmitter implements ServerInterface
         $this->tcp->on('error', function ($error) use ($that) {
             $that->emit('error', array($error));
         });
-    }
-
-    public function listen($port, $host = '127.0.0.1')
-    {
-        $this->tcp->listen($port, $host);
-
-        foreach ($this->context as $name => $value) {
-            stream_context_set_option($this->tcp->master, 'ssl', $name, $value);
-        }
     }
 
     public function getPort()

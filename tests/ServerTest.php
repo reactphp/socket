@@ -19,14 +19,12 @@ class ServerTest extends TestCase
 
     /**
      * @covers React\Socket\Server::__construct
-     * @covers React\Socket\Server::listen
      * @covers React\Socket\Server::getPort
      */
     public function setUp()
     {
         $this->loop = $this->createLoop();
-        $this->server = new Server($this->loop);
-        $this->server->listen(0);
+        $this->server = new Server(0, $this->loop);
 
         $this->port = $this->server->getPort();
     }
@@ -141,6 +139,18 @@ class ServerTest extends TestCase
         $this->loop->run();
     }
 
+    public function testCloseTwiceIsNoOp()
+    {
+        $this->server->close();
+        $this->server->close();
+    }
+
+    public function testGetPortAfterCloseReturnsNull()
+    {
+        $this->server->close();
+        $this->assertNull($this->server->getPort());
+    }
+
     public function testLoopWillEndWhenServerIsClosedAfterSingleConnection()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
@@ -231,8 +241,7 @@ class ServerTest extends TestCase
      */
     public function testListenOnBusyPortThrows()
     {
-        $another = new Server($this->loop);
-        $another->listen($this->port);
+        $another = new Server($this->port, $this->loop);
     }
 
     /**

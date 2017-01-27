@@ -4,10 +4,15 @@ namespace React\Socket;
 
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
+use InvalidArgumentException;
 
 /**
  * The `Server` class implements the `ServerInterface` and
  * is responsible for accepting plaintext TCP/IP connections.
+ *
+ * ```php
+ * $server = new Server(8080, $loop);
+ * ```
  *
  * Whenever a client connects, it will emit a `connection` event with a connection
  * instance implementing `ConnectionInterface`:
@@ -33,28 +38,36 @@ class Server extends EventEmitter implements ServerInterface
 {
     public $master;
     private $loop;
-    private $context;
 
     /**
-     * Creates a plaintext TCP/IP server.
+     * Creates a plaintext TCP/IP socket server and starts listening on the given address
+     *
+     * This starts accepting new incoming connections on the given address.
+     * See also the `connection event` documented in the `ServerInterface`
+     * for more details.
      *
      * ```php
-     * $server = new Server($loop);
+     * $server = new Server(8080, $loop);
+     * ```
      *
-     * $server->listen(8080);
+     * By default, the server will listen on the localhost address and will not be
+     * reachable from the outside.
+     * You can change the host the socket is listening on through the first parameter
+     * provided to the constructor.
+     *
+     * ```php
+     * $server = new Server('192.168.0.1:8080', $loop);
      * ```
      *
      * Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
      * for the underlying stream socket resource like this:
      *
      * ```php
-     * $server = new Server($loop, array(
+     * $server = new Server('[::1]:8080', $loop, array(
      *     'backlog' => 200,
      *     'so_reuseport' => true,
      *     'ipv6_v6only' => true
      * ));
-     *
-     * $server->listen(8080, '::1');
      * ```
      *
      * Note that available [socket context options](http://php.net/manual/en/context.socket.php),
@@ -62,31 +75,50 @@ class Server extends EventEmitter implements ServerInterface
      * and/or PHP version.
      * Passing unknown context options has no effect.
      *
+     * @param string        $uri
      * @param LoopInterface $loop
-     * @param array $context
+     * @param array         $context
+     * @throws InvalidArgumentException if the listening address is invalid
+     * @throws ConnectionException if listening on this address fails (already in use etc.)
      */
-    public function __construct(LoopInterface $loop, array $context = array())
+    public function __construct($uri, LoopInterface $loop, array $context = array())
     {
         $this->loop = $loop;
-        $this->context = $context;
-    }
 
-    public function listen($port, $host = '127.0.0.1')
-    {
-        if (strpos($host, ':') !== false) {
-            // enclose IPv6 addresses in square brackets before appending port
-            $host = '[' . $host . ']';
+        // a single port has been given => assume localhost
+        if ((string)(int)$uri === (string)$uri) {
+            $uri = '127.0.0.1:' . $uri;
+        }
+
+        // assume default scheme if none has been given
+        if (strpos($uri, '://') === false) {
+            $uri = 'tcp://' . $uri;
+        }
+
+        // parse_url() does not accept null ports (random port assignment) => manually remove
+        if (substr($uri, -2) === ':0') {
+            $parts = parse_url(substr($uri, 0, -2));
+            if ($parts) {
+                $parts['port'] = 0;
+            }
+        } else {
+            $parts = parse_url($uri);
+        }
+
+        // ensure URI contains TCP scheme, host and port
+        if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
+            throw new InvalidArgumentException('Invalid URI "' . $uri . '" given');
         }
 
         $this->master = @stream_socket_server(
-            "tcp://$host:$port",
+            $uri,
             $errno,
             $errstr,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
-            stream_context_create(array('socket' => $this->context))
+            stream_context_create(array('socket' => $context))
         );
         if (false === $this->master) {
-            $message = "Could not bind to tcp://$host:$port: $errstr";
+            $message = "Could not bind to $uri: $errstr";
             throw new ConnectionException($message, $errno);
         }
         stream_set_blocking($this->master, 0);
@@ -115,6 +147,10 @@ class Server extends EventEmitter implements ServerInterface
 
     public function getPort()
     {
+        if (!is_resource($this->master)) {
+            return null;
+        }
+
         $name = stream_socket_get_name($this->master, false);
 
         return (int) substr(strrchr($name, ':'), 1);
@@ -122,6 +158,10 @@ class Server extends EventEmitter implements ServerInterface
 
     public function close()
     {
+        if (!is_resource($this->master)) {
+            return;
+        }
+
         $this->loop->removeStream($this->master);
         fclose($this->master);
         $this->removeAllListeners();

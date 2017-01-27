@@ -49,32 +49,9 @@ use Evenement\EventEmitterInterface;
 interface ServerInterface extends EventEmitterInterface
 {
     /**
-     * Starts listening on the given address
-     *
-     * This starts accepting new incoming connections on the given address.
-     * See also the `connection event` above for more details.
-     *
-     * By default, the server will listen on the localhost address and will not be
-     * reachable from the outside.
-     * You can change the host the socket is listening on through a second parameter
-     * provided to the listen method.
-     *
-     * This method MUST NOT be called more than once on the same instance.
-     *
-     * @param int    $port port to listen on
-     * @param string $host optional host to listen on, defaults to localhost IP
-     * @return void
-     * @throws Exception if listening on this address fails (invalid or already in use etc.)
-     */
-    public function listen($port, $host = '127.0.0.1');
-
-    /**
      * Returns the port this server is currently listening on
      *
-     * This method MUST NOT be called before calling listen().
-     * This method MUST NOT be called after calling close().
-     *
-     * @return int the port number
+     * @return ?int the port number or NULL if it is unknown (not applicable to this server socket or already closed)
      */
     public function getPort();
 
@@ -83,8 +60,7 @@ interface ServerInterface extends EventEmitterInterface
      *
      * This will stop listening for new incoming connections on this socket.
      *
-     * This method MUST NOT be called before calling listen().
-     * This method MUST NOT be called after calling close().
+     * Calling this method more than once on the same instance is a NO-OP.
      *
      * @return void
      */

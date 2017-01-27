@@ -15,9 +15,8 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -32,12 +31,11 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $peer = $conn->getRemoteAddress();
         });
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -54,14 +52,13 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $conn->on('close', function () use ($conn, &$peer) {
                 $peer = $conn->getRemoteAddress();
             });
         });
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -79,13 +76,12 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $conn->close();
             $peer = $conn->getRemoteAddress();
         });
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -102,9 +98,8 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $server->listen(0);
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -120,13 +115,13 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
-        $server->on('connection', $this->expectCallableOnce());
         try {
-            $server->listen(0, '::1');
+            $server = new Server('[::1]:0', $loop);
         } catch (ConnectionException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
+
+        $server->on('connection', $this->expectCallableOnce());
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -141,16 +136,16 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server($loop);
+        try {
+            $server = new Server('[::1]:0', $loop);
+        } catch (ConnectionException $e) {
+            $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
+        }
+
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $peer = $conn->getRemoteAddress();
         });
-        try {
-            $server->listen(0, '::1');
-        } catch (ConnectionException $e) {
-            $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
-        }
         $port = $server->getPort();
 
         $connector = new TcpConnector($loop);
@@ -172,11 +167,9 @@ class FunctionalServerTest extends TestCase
 
         $loop = Factory::create();
 
-        $server = new Server($loop, array(
+        $server = new Server(0, $loop, array(
             'backlog' => 4
         ));
-
-        $server->listen(0);
 
         $all = stream_context_get_options($server->master);
 
