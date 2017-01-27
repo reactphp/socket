@@ -8,6 +8,10 @@ The socket component provides a more usable interface for a socket-layer
 server based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
 
+> The master branch contains the code for the upcoming 0.5 release.
+For the code of the current stable 0.4.x release, checkout the
+[0.4 branch](https://github.com/reactphp/socket-client/tree/0.4).
+
 **Table of Contents**
 
 * [Quickstart example](#quickstart-example)
