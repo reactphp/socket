@@ -130,39 +130,39 @@ class ServerTest extends TestCase
         $this->loop->tick();
     }
 
-    public function testLoopWillEndWhenServerIsShutDown()
+    public function testLoopWillEndWhenServerIsClosed()
     {
-        // explicitly unset server because we already call shutdown()
-        $this->server->shutdown();
+        // explicitly unset server because we already call close()
+        $this->server->close();
         $this->server = null;
 
         $this->loop->run();
     }
 
-    public function testShutDownTwiceIsNoOp()
+    public function testCloseTwiceIsNoOp()
     {
-        $this->server->shutdown();
-        $this->server->shutdown();
+        $this->server->close();
+        $this->server->close();
     }
 
-    public function testGetPortAfterShutDownReturnsNull()
+    public function testGetPortAfterCloseReturnsNull()
     {
-        $this->server->shutdown();
+        $this->server->close();
         $this->assertNull($this->server->getPort());
     }
 
-    public function testLoopWillEndWhenServerIsShutDownAfterSingleConnection()
+    public function testLoopWillEndWhenServerIsClosedAfterSingleConnection()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
 
         // explicitly unset server because we only accept a single connection
-        // and then already call shutdown()
+        // and then already call close()
         $server = $this->server;
         $this->server = null;
 
         $server->on('connection', function ($conn) use ($server) {
             $conn->close();
-            $server->shutdown();
+            $server->close();
         });
 
         $this->loop->run();
@@ -179,7 +179,7 @@ class ServerTest extends TestCase
         $mock = $this->expectCallableOnce();
 
         // explicitly unset server because we only accept a single connection
-        // and then already call shutdown()
+        // and then already call close()
         $server = $this->server;
         $this->server = null;
 
@@ -193,7 +193,7 @@ class ServerTest extends TestCase
             $conn->on('end', $mock);
 
             // do not await any further connections in order to let the loop terminate
-            $server->shutdown();
+            $server->close();
         });
 
         $this->loop->run();
@@ -245,12 +245,12 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @covers React\Socket\Server::shutdown
+     * @covers React\Socket\Server::close
      */
     public function tearDown()
     {
         if ($this->server) {
-            $this->server->shutdown();
+            $this->server->close();
         }
     }
 }

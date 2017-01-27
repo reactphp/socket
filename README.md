@@ -8,6 +8,10 @@ The socket component provides a more usable interface for a socket-layer
 server based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
 
+> The master branch contains the code for the upcoming 0.5 release.
+For the code of the current stable 0.4.x release, checkout the
+[0.4 branch](https://github.com/reactphp/socket-client/tree/0.4).
+
 **Table of Contents**
 
 * [Quickstart example](#quickstart-example)
@@ -16,7 +20,7 @@ and [`Stream`](https://github.com/reactphp/stream) components.
     * [connection event](#connection-event)
     * [error event](#error-event)
     * [getPort()](#getport)
-    * [shutdown()](#shutdown)
+    * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
   * [ConnectionInterface](#connectioninterface)
@@ -124,16 +128,16 @@ echo 'Server listening on port ' . $port . PHP_EOL;
 It will return the port number or `NULL` if it is unknown (not applicable to
 this server socket or already closed).
 
-#### shutdown()
+#### close()
 
-The `shutdown(): void` method can be used to
+The `close(): void` method can be used to
 shut down this listening socket.
 
 This will stop listening for new incoming connections on this socket.
 
 ```php
 echo 'Shutting down server socket' . PHP_EOL;
-$server->shutdown();
+$server->close();
 ```
 
 Calling this method more than once on the same instance is a NO-OP.
@@ -155,6 +159,22 @@ provided to the constructor:
 ```php
 $server = new Server('192.168.0.1:8080', $loop);
 ```
+
+Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+for the underlying stream socket resource like this:
+
+```php
+$server = new Server('[::1]:8080', $loop, array(
+    'backlog' => 200,
+    'so_reuseport' => true,
+    'ipv6_v6only' => true
+));
+```
+
+> Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+their defaults and effects of changing these may vary depending on your system
+and/or PHP version.
+Passing unknown context options has no effect.
 
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
@@ -271,16 +291,26 @@ For more details, see the
 
 #### getRemoteAddress()
 
-The `getRemoteAddress(): ?string` method returns the remote address
-(client IP) where this connection has been established from.
+The `getRemoteAddress(): ?string` method returns the full remote address
+(client IP and port) where this connection has been established from.
 
 ```php
-$ip = $connection->getRemoteAddress();
+$address = $connection->getRemoteAddress();
+echo 'Connection from ' . $address . PHP_EOL;
 ```
 
-It will return the remote address as a string value.
 If the remote address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full remote address as a string value.
+If this is a TCP/IP based connection and you only want the remote IP, you may
+use something like this:
+
+```php
+$address = $connection->getRemoteAddress();
+$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+echo 'Connection from ' . $ip . PHP_EOL;
+```
 
 ## Install
 
@@ -290,7 +320,7 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:^0.4.5
+$ composer require react/socket:^0.4.6
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
@@ -306,10 +336,10 @@ manually specify the root package version like this:
 $ COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install
 ```
 
-To run the test suite, you need PHPUnit. Go to the project root and run:
+To run the test suite, go to the project root and run:
 
 ```bash
-$ phpunit
+$ php vendor/bin/phpunit
 ```
 
 ## License

@@ -59,12 +59,29 @@ class Server extends EventEmitter implements ServerInterface
      * $server = new Server('192.168.0.1:8080', $loop);
      * ```
      *
+     * Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+     * for the underlying stream socket resource like this:
+     *
+     * ```php
+     * $server = new Server('[::1]:8080', $loop, array(
+     *     'backlog' => 200,
+     *     'so_reuseport' => true,
+     *     'ipv6_v6only' => true
+     * ));
+     * ```
+     *
+     * Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+     * their defaults and effects of changing these may vary depending on your system
+     * and/or PHP version.
+     * Passing unknown context options has no effect.
+     *
      * @param string        $uri
      * @param LoopInterface $loop
+     * @param array         $context
      * @throws InvalidArgumentException if the listening address is invalid
      * @throws ConnectionException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, LoopInterface $loop)
+    public function __construct($uri, LoopInterface $loop, array $context = array())
     {
         $this->loop = $loop;
 
@@ -98,7 +115,7 @@ class Server extends EventEmitter implements ServerInterface
             $errno,
             $errstr,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
-            stream_context_create()
+            stream_context_create(array('socket' => $context))
         );
         if (false === $this->master) {
             $message = "Could not bind to $uri: $errstr";
@@ -139,7 +156,7 @@ class Server extends EventEmitter implements ServerInterface
         return (int) substr(strrchr($name, ':'), 1);
     }
 
-    public function shutdown()
+    public function close()
     {
         if (!is_resource($this->master)) {
             return;

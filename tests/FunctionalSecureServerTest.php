@@ -375,7 +375,7 @@ class FunctionalSecureServerTest extends TestCase
         $loop = Factory::create();
 
         $server = new Server(0, $loop);
-        $server->shutdown();
+        $server->close();
 
         new SecureServer($server, $loop, array());
     }

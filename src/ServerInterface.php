@@ -64,5 +64,5 @@ interface ServerInterface extends EventEmitterInterface
      *
      * @return void
      */
-    public function shutdown();
+    public function close();
 }
