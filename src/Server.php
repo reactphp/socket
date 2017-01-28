@@ -51,8 +51,8 @@ class Server extends EventEmitter implements ServerInterface
      * ```
      *
      * As above, the `$uri` parameter can consist of only a port, in which case the
-     * server will default to listening on the localhost address `127.0.0.1` and thus
-     * it will not be reachable from outside of this system.
+     * server will default to listening on the localhost address `127.0.0.1`,
+     * which means it will not be reachable from outside of this system.
      *
      * In order to use a random port assignment, you can use the port `0`:
      *
@@ -62,7 +62,7 @@ class Server extends EventEmitter implements ServerInterface
      * ```
      *
      * In order to change the host the socket is listening on, you can provide an IP
-     * addres through the first parameter provided to the constructor, optionally
+     * address through the first parameter provided to the constructor, optionally
      * preceded by the `tcp://` scheme:
      *
      * ```php
