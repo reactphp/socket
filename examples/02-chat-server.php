@@ -58,6 +58,6 @@ $server->on('connection', function (ConnectionInterface $client) use (&$clients)
 
 $server->on('error', 'printf');
 
-echo 'Listening on ' . $server->getPort() . PHP_EOL;
+echo 'Listening on ' . $server->getAddress() . PHP_EOL;
 
 $loop->run();

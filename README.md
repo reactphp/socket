@@ -19,7 +19,7 @@ For the code of the current stable 0.4.x release, checkout the
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
     * [error event](#error-event)
-    * [getPort()](#getport)
+    * [getAddress()](#getaddress)
     * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
@@ -115,18 +115,27 @@ Note that this is not a fatal error event, i.e. the server keeps listening for
 new connections even after this event.
 
 
-#### getPort()
+#### getAddress()
 
-The `getPort(): ?int` method can be used to
-return the port this server is currently listening on.
+The `getAddress(): ?string` method can be used to
+return the full address (IP and port) this server is currently listening on.
 
 ```php
-$port = $server->getPort();
-echo 'Server listening on port ' . $port . PHP_EOL;
+$address = $server->getAddress();
+echo 'Server listening on ' . $address . PHP_EOL;
 ```
 
-It will return the port number or `NULL` if it is unknown (not applicable to
-this server socket or already closed).
+It will return the full address (IP and port) or `NULL` if it is unknown
+(not applicable to this server socket or already closed).
+
+If this is a TCP/IP based server and you only want the local port, you may
+use something like this:
+
+```php
+$address = $server->getAddress();
+$port = parse_url('tcp://' . $address, PHP_URL_PORT);
+echo 'Server listening on port ' . $port . PHP_EOL;
+```
 
 #### close()
 
@@ -159,7 +168,7 @@ In order to use a random port assignment, you can use the port `0`:
 
 ```php
 $server = new Server(0, $loop);
-$port = $server->getPort();
+$address = $server->getAddress();
 ```
 
 In order to change the host the socket is listening on, you can provide an IP

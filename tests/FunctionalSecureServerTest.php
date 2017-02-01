@@ -3,13 +3,14 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
-use React\SocketClient\TcpConnector;
-use Clue\React\Block;
-use React\Socket\SecureServer;
-use React\SocketClient\SecureConnector;
 use React\Stream\Stream;
+use React\Socket\SecureServer;
 use React\Socket\ConnectionInterface;
 use React\Socket\Server;
+use React\Socket\ServerInterface;
+use React\SocketClient\TcpConnector;
+use React\SocketClient\SecureConnector;
+use Clue\React\Block;
 
 class FunctionalSecureServerTest extends TestCase
 {
@@ -31,7 +32,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -50,7 +51,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $server->on('connection', function (ConnectionInterface $conn) {
             $conn->write('foo');
@@ -78,7 +79,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $server->on('connection', function (ConnectionInterface $conn) {
             $conn->write(str_repeat('*', 400000));
@@ -111,7 +112,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $once = $this->expectCallableOnceWith('foo');
         $server->on('connection', function (ConnectionInterface $conn) use ($once) {
@@ -140,7 +141,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $received = 0;
         $server->on('connection', function (ConnectionInterface $conn) use (&$received) {
@@ -173,7 +174,7 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $server->on('connection', function (ConnectionInterface $conn) use (&$received) {
             $conn->pipe($conn);
@@ -209,7 +210,7 @@ class FunctionalSecureServerTest extends TestCase
             'passphrase' => 'swordfish'
         ));
         $server->on('connection', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -229,7 +230,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -250,7 +251,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -272,7 +273,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -293,7 +294,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => true
@@ -314,7 +315,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -336,7 +337,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableNever());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
         $promise = $connector->create('127.0.0.1', $port);
@@ -355,7 +356,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
-        $port = $server->getPort();
+        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
         $promise = $connector->create('127.0.0.1', $port);
@@ -378,5 +379,10 @@ class FunctionalSecureServerTest extends TestCase
         $server->close();
 
         new SecureServer($server, $loop, array());
+    }
+
+    private function getPort(ServerInterface $server)
+    {
+        return parse_url($server->getAddress(), PHP_URL_PORT);
     }
 }

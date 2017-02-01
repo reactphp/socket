@@ -49,11 +49,28 @@ use Evenement\EventEmitterInterface;
 interface ServerInterface extends EventEmitterInterface
 {
     /**
-     * Returns the port this server is currently listening on
+     * Returns the full address (IP and port) this server is currently listening on
      *
-     * @return ?int the port number or NULL if it is unknown (not applicable to this server socket or already closed)
+     * ```php
+     * $address = $server->getAddress();
+     * echo 'Server listening on ' . $address . PHP_EOL;
+     * ```
+     *
+     * It will return the full address (IP and port) or `NULL` if it is unknown
+     * (not applicable to this server socket or already closed).
+     *
+     * If this is a TCP/IP based server and you only want the local port, you may
+     * use something like this:
+     *
+     * ```php
+     * $address = $server->getAddress();
+     * $port = parse_url('tcp://' . $address, PHP_URL_PORT);
+     * echo 'Server listening on port ' . $port . PHP_EOL;
+     * ```
+     *
+     * @return ?string the full listening address (IP and port) or NULL if it is unknown (not applicable to this server socket or already closed)
      */
-    public function getPort();
+    public function getAddress();
 
     /**
      * Shuts down this listening socket
