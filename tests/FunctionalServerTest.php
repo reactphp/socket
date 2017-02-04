@@ -49,6 +49,49 @@ class FunctionalServerTest extends TestCase
         $this->assertContains('127.0.0.1:', $peer);
     }
 
+    public function testEmitsConnectionWithLocalIp()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+        $local = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
+            $local = $conn->getLocalAddress();
+        });
+        $port = $this->getPort($server);
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('127.0.0.1:' . $port, $local);
+        $this->assertEquals($server->getAddress(), $local);
+    }
+
+    public function testEmitsConnectionWithLocalIpDespiteListeningOnAll()
+    {
+        $loop = Factory::create();
+
+        $server = new Server('0.0.0.0:0', $loop);
+        $local = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
+            $local = $conn->getLocalAddress();
+        });
+        $port = $this->getPort($server);
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('127.0.0.1:' . $port, $local);
+    }
+
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
     {
         $loop = Factory::create();
@@ -157,6 +200,33 @@ class FunctionalServerTest extends TestCase
         Block\sleep(0.1, $loop);
 
         $this->assertContains('[::1]:', $peer);
+    }
+
+    public function testEmitsConnectionWithLocalIpv6()
+    {
+        $loop = Factory::create();
+
+        try {
+            $server = new Server('[::1]:0', $loop);
+        } catch (ConnectionException $e) {
+            $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
+        }
+
+        $local = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
+            $local = $conn->getLocalAddress();
+        });
+        $port = $this->getPort($server);
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('::1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals('[::1]:' . $port, $local);
+        $this->assertEquals($server->getAddress(), $local);
     }
 
     public function testAppliesContextOptionsToSocketStreamResource()

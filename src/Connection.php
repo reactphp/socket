@@ -31,6 +31,11 @@ class Connection extends Stream implements ConnectionInterface
         return $this->parseAddress(@stream_socket_get_name($this->stream, true));
     }
 
+    public function getLocalAddress()
+    {
+        return $this->parseAddress(@stream_socket_get_name($this->stream, false));
+    }
+
     private function parseAddress($address)
     {
         if ($address === false) {
