@@ -58,7 +58,7 @@ class Server extends EventEmitter implements ServerInterface
      *
      * ```php
      * $server = new Server(0, $loop);
-     * $port = $server->getPort();
+     * $address = $server->getAddress();
      * ```
      *
      * In order to change the host the socket is listening on, you can provide an IP
@@ -174,15 +174,22 @@ class Server extends EventEmitter implements ServerInterface
         $this->emit('connection', array($client));
     }
 
-    public function getPort()
+    public function getAddress()
     {
         if (!is_resource($this->master)) {
             return null;
         }
 
-        $name = stream_socket_get_name($this->master, false);
+        $address = stream_socket_get_name($this->master, false);
 
-        return (int) substr(strrchr($name, ':'), 1);
+        // check if this is an IPv6 address which includes multiple colons but no square brackets
+        $pos = strrpos($address, ':');
+        if ($pos !== false && strpos($address, ':') < $pos && substr($address, 0, 1) !== '[') {
+            $port = substr($address, $pos + 1);
+            $address = '[' . substr($address, 0, $pos) . ']:' . $port;
+        }
+
+        return $address;
     }
 
     public function close()

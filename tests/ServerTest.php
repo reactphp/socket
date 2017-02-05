@@ -2,9 +2,9 @@
 
 namespace React\Tests\Socket;
 
-use React\Socket\Server;
 use React\EventLoop\StreamSelectLoop;
 use React\Stream\Stream;
+use React\Socket\Server;
 
 class ServerTest extends TestCase
 {
@@ -19,14 +19,14 @@ class ServerTest extends TestCase
 
     /**
      * @covers React\Socket\Server::__construct
-     * @covers React\Socket\Server::getPort
+     * @covers React\Socket\Server::getAddress
      */
     public function setUp()
     {
         $this->loop = $this->createLoop();
         $this->server = new Server(0, $this->loop);
 
-        $this->port = $this->server->getPort();
+        $this->port = parse_url($this->server->getAddress(), PHP_URL_PORT);
     }
 
     /**
@@ -145,10 +145,10 @@ class ServerTest extends TestCase
         $this->server->close();
     }
 
-    public function testGetPortAfterCloseReturnsNull()
+    public function testGetAddressAfterCloseReturnsNull()
     {
         $this->server->close();
-        $this->assertNull($this->server->getPort());
+        $this->assertNull($this->server->getAddress());
     }
 
     public function testLoopWillEndWhenServerIsClosedAfterSingleConnection()

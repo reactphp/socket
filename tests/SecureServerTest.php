@@ -13,17 +13,17 @@ class SecureServerTest extends TestCase
         }
     }
 
-    public function testGetPortWillBePassedThroughToTcpServer()
+    public function testGetAddressWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->getMock();
-        $tcp->expects($this->once())->method('getPort')->willReturn(1234);
+        $tcp->expects($this->once())->method('getAddress')->willReturn('127.0.0.1:1234');
         $tcp->master = stream_socket_server('tcp://localhost:0');
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
         $server = new SecureServer($tcp, $loop, array());
 
-        $this->assertEquals(1234, $server->getPort());
+        $this->assertEquals('127.0.0.1:1234', $server->getAddress());
     }
 
     public function testCloseWillBePassedThroughToTcpServer()

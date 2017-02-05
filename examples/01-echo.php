@@ -36,6 +36,6 @@ $server->on('connection', function (ConnectionInterface $conn) use ($loop) {
 
 $server->on('error', 'printf');
 
-echo 'bound to ' . $server->getPort() . PHP_EOL;
+echo 'Listening on ' . $server->getAddress() . PHP_EOL;
 
 $loop->run();

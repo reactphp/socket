@@ -68,9 +68,9 @@ class SecureServer extends EventEmitter implements ServerInterface
         });
     }
 
-    public function getPort()
+    public function getAddress()
     {
-        return $this->tcp->getPort();
+        return $this->tcp->getAddress();
     }
 
     public function close()
