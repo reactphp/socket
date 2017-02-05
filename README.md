@@ -25,6 +25,7 @@ For the code of the current stable 0.4.x release, checkout the
   * [SecureServer](#secureserver)
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
+    * [getLocalAddress()](#getlocaladdress)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -291,8 +292,8 @@ The `ConnectionInterface` is used to represent any incoming connection.
 
 An incoming connection is a duplex stream (both readable and writable) that
 implements React's
-[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
-and contains only a single additional property, the remote address (client IP)
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+It contains additional properties for the local and remote address (client IP)
 where this connection has been established from.
 
 > Note that this interface is only to be used to represent the server-side end
@@ -345,6 +346,27 @@ $address = $connection->getRemoteAddress();
 $ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
 echo 'Connection from ' . $ip . PHP_EOL;
 ```
+
+#### getLocalAddress()
+
+The `getLocalAddress(): ?string` method returns the full local address
+(client IP and port) where this connection has been established to.
+
+```php
+$address = $connection->getLocalAddress();
+echo 'Connection to ' . $address . PHP_EOL;
+```
+
+If the local address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full local address as a string value.
+
+This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
+so they should not be confused.
+If your `Server` instance is listening on multiple interfaces (e.g. using
+the address `0.0.0.0`), you can use this method to find out which interface
+actually accepted this connection (such as a public or local interface).
 
 ## Install
 
