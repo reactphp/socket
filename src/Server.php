@@ -100,7 +100,7 @@ class Server extends EventEmitter implements ServerInterface
      * and/or PHP version.
      * Passing unknown context options has no effect.
      *
-     * @param string        $uri
+     * @param string|int    $uri
      * @param LoopInterface $loop
      * @param array         $context
      * @throws InvalidArgumentException if the listening address is invalid
@@ -165,15 +165,6 @@ class Server extends EventEmitter implements ServerInterface
         });
     }
 
-    public function handleConnection($socket)
-    {
-        stream_set_blocking($socket, 0);
-
-        $client = $this->createConnection($socket);
-
-        $this->emit('connection', array($client));
-    }
-
     public function getAddress()
     {
         if (!is_resource($this->master)) {
@@ -203,8 +194,11 @@ class Server extends EventEmitter implements ServerInterface
         $this->removeAllListeners();
     }
 
-    public function createConnection($socket)
+    /** @internal */
+    public function handleConnection($socket)
     {
-        return new Connection($socket, $this->loop);
+        $this->emit('connection', array(
+            new Connection($socket, $this->loop)
+        ));
     }
 }
