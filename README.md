@@ -151,13 +151,38 @@ is responsible for accepting plaintext TCP/IP connections.
 $server = new Server(8080, $loop);
 ```
 
-By default, the server will listen on the localhost address and will not be
-reachable from the outside.
-You can change the host the socket is listening on through a first parameter 
-provided to the constructor:
+As above, the `$uri` parameter can consist of only a port, in which case the
+server will default to listening on the localhost address `127.0.0.1`,
+which means it will not be reachable from outside of this system.
+
+In order to use a random port assignment, you can use the port `0`:
+
+```php
+$server = new Server(0, $loop);
+$port = $server->getPort();
+```
+
+In order to change the host the socket is listening on, you can provide an IP
+address through the first parameter provided to the constructor, optionally
+preceded by the `tcp://` scheme:
 
 ```php
 $server = new Server('192.168.0.1:8080', $loop);
+```
+
+If you want to listen on an IPv6 address, you MUST enclose the host in square
+brackets:
+
+```php
+$server = new Server('[::1]:8080', $loop);
+```
+
+If the given URI is invalid, does not contain a port, any other scheme or if it
+contains a hostname, it will throw an `InvalidArgumentException`:
+
+```php
+// throws InvalidArgumentException due to missing port
+$server = new Server('127.0.0.1', $loop);
 ```
 
 Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)

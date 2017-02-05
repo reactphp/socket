@@ -175,4 +175,44 @@ class FunctionalServerTest extends TestCase
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
     }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFailsToListenOnInvalidUri()
+    {
+        $loop = Factory::create();
+
+        new Server('///', $loop);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFailsToListenOnUriWithoutPort()
+    {
+        $loop = Factory::create();
+
+        new Server('127.0.0.1', $loop);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFailsToListenOnUriWithWrongScheme()
+    {
+        $loop = Factory::create();
+
+        new Server('udp://127.0.0.1:0', $loop);
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testFailsToListenOnUriWIthHostname()
+    {
+        $loop = Factory::create();
+
+        new Server('localhost:8080', $loop);
+    }
 }
