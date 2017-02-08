@@ -4,7 +4,6 @@ namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
 use React\Socket\Server;
-use React\Socket\ConnectionException;
 use React\Socket\ConnectionInterface;
 use React\Socket\ServerInterface;
 use React\SocketClient\TcpConnector;
@@ -161,7 +160,7 @@ class FunctionalServerTest extends TestCase
 
         try {
             $server = new Server('[::1]:0', $loop);
-        } catch (ConnectionException $e) {
+        } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
 
@@ -182,7 +181,7 @@ class FunctionalServerTest extends TestCase
 
         try {
             $server = new Server('[::1]:0', $loop);
-        } catch (ConnectionException $e) {
+        } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
 
@@ -208,7 +207,7 @@ class FunctionalServerTest extends TestCase
 
         try {
             $server = new Server('[::1]:0', $loop);
-        } catch (ConnectionException $e) {
+        } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
 

@@ -5,6 +5,7 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * The `Server` class implements the `ServerInterface` and
@@ -84,6 +85,22 @@ class Server extends EventEmitter implements ServerInterface
      * $server = new Server('127.0.0.1', $loop);
      * ```
      *
+     * If the given URI appears to be valid, but listening on it fails (such as if port
+     * is already in use or port below 1024 may require root access etc.), it will
+     * throw a `RuntimeException`:
+     *
+     * ```php
+     * $first = new Server(8080, $loop);
+     *
+     * // throws RuntimeException because port is already in use
+     * $second = new Server(8080, $loop);
+     * ```
+     *
+     * Note that these error conditions may vary depending on your system and/or
+     * configuration.
+     * See the exception message and code for more details about the actual error
+     * condition.
+     *
      * Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
      * for the underlying stream socket resource like this:
      *
@@ -104,7 +121,7 @@ class Server extends EventEmitter implements ServerInterface
      * @param LoopInterface $loop
      * @param array         $context
      * @throws InvalidArgumentException if the listening address is invalid
-     * @throws ConnectionException if listening on this address fails (already in use etc.)
+     * @throws RuntimeException if listening on this address fails (already in use etc.)
      */
     public function __construct($uri, LoopInterface $loop, array $context = array())
     {
@@ -136,7 +153,7 @@ class Server extends EventEmitter implements ServerInterface
         }
 
         if (false === filter_var(trim($parts['host'], '[]'), FILTER_VALIDATE_IP)) {
-            throw new \InvalidArgumentException('Given URI "' . $uri . '" does not contain a valid host IP');
+            throw new InvalidArgumentException('Given URI "' . $uri . '" does not contain a valid host IP');
         }
 
         $this->master = @stream_socket_server(
@@ -147,8 +164,7 @@ class Server extends EventEmitter implements ServerInterface
             stream_context_create(array('socket' => $context))
         );
         if (false === $this->master) {
-            $message = "Could not bind to $uri: $errstr";
-            throw new ConnectionException($message, $errno);
+            throw new RuntimeException('Failed to listen on "' . $uri . '": ' . $errstr, $errno);
         }
         stream_set_blocking($this->master, 0);
 

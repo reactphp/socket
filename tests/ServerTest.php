@@ -237,10 +237,14 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @expectedException React\Socket\ConnectionException
+     * @expectedException RuntimeException
      */
     public function testListenOnBusyPortThrows()
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Windows supports listening on same port multiple times');
+        }
+
         $another = new Server($this->port, $this->loop);
     }
 

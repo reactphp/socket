@@ -195,6 +195,22 @@ contains a hostname, it will throw an `InvalidArgumentException`:
 $server = new Server('127.0.0.1', $loop);
 ```
 
+If the given URI appears to be valid, but listening on it fails (such as if port
+is already in use or port below 1024 may require root access etc.), it will
+throw a `RuntimeException`:
+
+```php
+$first = new Server(8080, $loop);
+
+// throws RuntimeException because port is already in use
+$second = new Server(8080, $loop);
+```
+
+> Note that these error conditions may vary depending on your system and/or
+configuration.
+See the exception message and code for more details about the actual error
+condition.
+
 Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
 for the underlying stream socket resource like this:
 
