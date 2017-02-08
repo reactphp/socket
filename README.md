@@ -296,13 +296,13 @@ If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ServerInterface`](#serverinterface) instead.
 
 > Advanced usage: Despite allowing any `ServerInterface` as first parameter,
-you SHOULD pass an unmodified `Server` instance as first parameter, unless you
+you SHOULD pass a `Server` instance as first parameter, unless you
 know what you're doing.
 Internally, the `SecureServer` has to set the required TLS context options on
 the underlying stream resources.
 These resources are not exposed through any of the interfaces defined in this
 package, but only through the `React\Stream\Stream` class.
-The unmodified `Server` class is guaranteed to emit connections that implement
+The `Server` class is guaranteed to emit connections that implement
 the `ConnectionInterface` and also extend the `Stream` class in order to
 expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not

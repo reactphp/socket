@@ -30,9 +30,7 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Server::handleConnection
-     * @covers React\Socket\Server::createConnection
      */
     public function testConnection()
     {
@@ -43,9 +41,7 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Server::handleConnection
-     * @covers React\Socket\Server::createConnection
      */
     public function testConnectionWithManyClients()
     {
