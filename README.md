@@ -263,6 +263,11 @@ $server = new SecureServer($server, $loop, array(
 ));
 ```
 
+> Note that available [TLS context options](http://php.net/manual/en/context.ssl.php),
+their defaults and effects of changing these may vary depending on your system
+and/or PHP version.
+Passing unknown context options has no effect.
+
 Whenever a client completes the TLS handshake, it will emit a `connection` event
 with a connection instance implementing [`ConnectionInterface`](#connectioninterface):
 
@@ -285,6 +290,19 @@ $server->on('error', function (Exception $e) {
 ```
 
 See also the [`ServerInterface`](#serverinterface) for more details.
+
+Note that the `SecureServer` class is a concrete implementation for TLS sockets.
+If you want to typehint in your higher-level protocol implementation, you SHOULD
+use the generic [`ServerInterface`](#serverinterface) instead.
+
+> Advanced usage: Internally, the `SecureServer` has to set the required
+context options on the underlying stream resources.
+It should therefor be used with an unmodified `Server` instance as first
+parameter so that it can allocate an empty context resource which this
+class uses to set required TLS context options.
+Failing to do so may result in some hard to trace race conditions,
+because all stream resources will use a single, shared default context
+resource otherwise.
 
 ### ConnectionInterface
 
