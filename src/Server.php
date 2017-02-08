@@ -34,7 +34,7 @@ use InvalidArgumentException;
  * @see ServerInterface
  * @see ConnectionInterface
  */
-class Server extends EventEmitter implements ServerInterface
+final class Server extends EventEmitter implements ServerInterface
 {
     private $master;
     private $loop;

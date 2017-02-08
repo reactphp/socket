@@ -3,6 +3,7 @@
 namespace React\Tests\Socket;
 
 use React\Socket\SecureServer;
+use React\Socket\Server;
 
 class SecureServerTest extends TestCase
 {
@@ -39,9 +40,9 @@ class SecureServerTest extends TestCase
 
     public function testConnectionWillBeEndedWithErrorIfItIsNotAStream()
     {
-        $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->setMethods(null)->getMock();
-
         $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $tcp = new Server(0, $loop);
 
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->once())->method('end');
@@ -55,9 +56,9 @@ class SecureServerTest extends TestCase
 
     public function testSocketErrorWillBeForwarded()
     {
-        $tcp = $this->getMockBuilder('React\Socket\Server')->disableOriginalConstructor()->setMethods(null)->getMock();
-
         $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $tcp = new Server(0, $loop);
 
         $server = new SecureServer($tcp, $loop, array());
 
