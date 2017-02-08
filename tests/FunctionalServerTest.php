@@ -229,7 +229,7 @@ class FunctionalServerTest extends TestCase
         $this->assertEquals($server->getAddress(), $local);
     }
 
-    public function testAppliesContextOptionsToSocketStreamResource()
+    public function testEmitsConnectionWithInheritedContextOptions()
     {
         if (defined('HHVM_VERSION') && version_compare(HHVM_VERSION, '3.13', '<')) {
             // https://3v4l.org/hB4Tc
@@ -242,7 +242,18 @@ class FunctionalServerTest extends TestCase
             'backlog' => 4
         ));
 
-        $all = stream_context_get_options($server->master);
+        $all = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$all) {
+            $all = stream_context_get_options($conn->stream);
+        });
+        $port = $this->getPort($server);
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->create('127.0.0.1', $port);
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
     }

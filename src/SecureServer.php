@@ -56,6 +56,7 @@ class SecureServer extends EventEmitter implements ServerInterface
 {
     private $tcp;
     private $encryption;
+    private $context;
 
     /**
      * Creates a secure TLS server and starts waiting for incoming connections
@@ -106,27 +107,19 @@ class SecureServer extends EventEmitter implements ServerInterface
      * @param Server $tcp
      * @param LoopInterface $loop
      * @param array $context
-     * @throws ConnectionException
      * @see Server
      * @link http://php.net/manual/en/context.ssl.php for TLS context options
      */
     public function __construct(Server $tcp, LoopInterface $loop, array $context)
     {
-        if (!is_resource($tcp->master)) {
-            throw new ConnectionException('TCP server already shut down');
-        }
-
         // default to empty passphrase to surpress blocking passphrase prompt
         $context += array(
             'passphrase' => ''
         );
 
-        foreach ($context as $name => $value) {
-            stream_context_set_option($tcp->master, 'ssl', $name, $value);
-        }
-
         $this->tcp = $tcp;
         $this->encryption = new StreamEncryption($loop);
+        $this->context = $context;
 
         $that = $this;
         $this->tcp->on('connection', function ($connection) use ($that) {
@@ -154,6 +147,10 @@ class SecureServer extends EventEmitter implements ServerInterface
             $this->emit('error', array(new \UnexpectedValueException('Connection event MUST emit an instance extending Stream in order to access underlying stream resource')));
             $connection->end();
             return;
+        }
+
+        foreach ($this->context as $name => $value) {
+            stream_context_set_option($connection->stream, 'ssl', $name, $value);
         }
 
         $that = $this;
