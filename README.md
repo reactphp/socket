@@ -295,14 +295,19 @@ Note that the `SecureServer` class is a concrete implementation for TLS sockets.
 If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ServerInterface`](#serverinterface) instead.
 
-> Advanced usage: Internally, the `SecureServer` has to set the required
-context options on the underlying stream resources.
-It should therefor be used with an unmodified `Server` instance as first
-parameter so that it can allocate an empty context resource which this
-class uses to set required TLS context options.
-Failing to do so may result in some hard to trace race conditions,
-because all stream resources will use a single, shared default context
-resource otherwise.
+> Advanced usage: Despite allowing any `ServerInterface` as first parameter,
+you SHOULD pass an unmodified `Server` instance as first parameter, unless you
+know what you're doing.
+Internally, the `SecureServer` has to set the required TLS context options on
+the underlying stream resources.
+These resources are not exposed through any of the interfaces defined in this
+package, but only through the `React\Stream\Stream` class.
+The unmodified `Server` class is guaranteed to emit connections that implement
+the `ConnectionInterface` and also extend the `Stream` class in order to
+expose these underlying resources.
+If you use a custom `ServerInterface` and its `connection` event does not
+meet this requirement, the `SecureServer` will emit an `error` event and
+then close the underlying connection.
 
 ### ConnectionInterface
 
