@@ -1,5 +1,105 @@
 # Changelog
 
+## 0.5.0 (2017-02-14)
+
+* Feature / BC break: Replace `listen()` call with URIs passed to constructor
+  and reject listening on hostnames with `InvalidArgumentException`
+  and replace `ConnectionException` with `RuntimeException` for consistency
+  (#61, #66 and #72 by @clue)
+
+  ```php
+  // old
+  $server = new Server($loop);
+  $server->listen(8080);
+
+  // new
+  $server = new Server(8080, $loop);
+  ```
+
+  Similarly, you can now pass a full listening URI to the constructor to change
+  the listening host:
+
+  ```php
+  // old
+  $server = new Server($loop);
+  $server->listen(8080, '127.0.0.1');
+
+  // new
+  $server = new Server('127.0.0.1:8080', $loop);
+  ```
+
+  Trying to start listening on (DNS) host names will now throw an
+  `InvalidArgumentException`, use IP addresses instead:
+
+  ```php
+  // old
+  $server = new Server($loop);
+  $server->listen(8080, 'localhost');
+
+  // new
+  $server = new Server('127.0.0.1:8080', $loop);
+  ```
+
+  If trying to listen fails (such as if port is already in use or port below
+  1024 may require root access etc.), it will now throw a `RuntimeException`,
+  the `ConnectionException` class has been removed:
+
+  ```php
+  // old: throws React\Socket\ConnectionException
+  $server = new Server($loop);
+  $server->listen(80);
+
+  // new: throws RuntimeException
+  $server = new Server(80, $loop);
+  ```
+
+* Feature / BC break: Rename `shutdown()` to `close()` for consistency throughout React
+  (#62 by @clue)
+
+  ```php
+  // old
+  $server->shutdown();
+
+  // new
+  $server->close();
+  ```
+
+* Feature / BC break: Replace `getPort()` with `getAddress()`
+  (#67 by @clue)
+
+  ```php
+  // old
+  echo $server->getPort(); // 8080
+
+  // new
+  echo $server->getAddress(); // 127.0.0.1:8080
+  ```
+
+* Feature / BC break: `getRemoteAddress()` returns full address instead of only IP
+  (#65 by @clue)
+
+  ```php
+  // old
+  echo $connection->getRemoteAddress(); // 192.168.0.1
+
+  // new
+  echo $connection->getRemoteAddress(); // 192.168.0.1:51743
+  ```
+  
+* Feature / BC break: Add `getLocalAddress()` method
+  (#68 by @clue)
+
+  ```php
+  echo $connection->getLocalAddress(); // 127.0.0.1:8080
+  ```
+
+* BC break: The `Server` and `SecureServer` class are now marked `final`
+  and you can no longer `extend` them
+  (which was never documented or recommended anyway).
+  Public properties and event handlers are now internal only.
+  Please use composition instead of extension.
+  (#71, #70 and #69 by @clue)
+
 ## 0.4.6 (2017-01-26)
 
 * Feature: Support socket context options passed to `Server`
