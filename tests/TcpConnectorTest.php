@@ -28,12 +28,9 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server($loop);
+        $server = new Server(9999, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $server->on('connection', function () use ($server, $loop) {
-            $server->shutdown();
-        });
-        $server->listen(9999);
+        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
@@ -62,15 +59,14 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server($loop);
-        $server->on('connection', $this->expectCallableOnce());
-        $server->on('connection', array($server, 'shutdown'));
-
         try {
-            $server->listen(9999, '::1');
+            $server = new Server('[::1]:9999', $loop);
         } catch (\Exception $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (IPv6 not supported on this system?)');
         }
+
+        $server->on('connection', $this->expectCallableOnce());
+        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
@@ -137,10 +133,9 @@ class TcpConnectorTest extends TestCase
         $loop = new StreamSelectLoop();
         $connector = new TcpConnector($loop);
 
-        $server = new Server($loop);
-        $server->listen(0);
+        $server = new Server(0, $loop);
 
-        $promise = $connector->connect('127.0.0.1:' . $server->getPort());
+        $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
         $this->setExpectedException('RuntimeException', 'Cancelled');
