@@ -3,12 +3,10 @@
 namespace React\SocketClient;
 
 use React\EventLoop\LoopInterface;
-use React\Dns\Resolver\Resolver;
 use React\Stream\Stream;
 use React\Promise;
-use React\Promise\Deferred;
 
-class TcpConnector implements ConnectorInterface
+final class TcpConnector implements ConnectorInterface
 {
     private $loop;
     private $context;

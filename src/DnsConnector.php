@@ -3,11 +3,10 @@
 namespace React\SocketClient;
 
 use React\Dns\Resolver\Resolver;
-use React\Stream\Stream;
 use React\Promise;
 use React\Promise\CancellablePromiseInterface;
 
-class DnsConnector implements ConnectorInterface
+final class DnsConnector implements ConnectorInterface
 {
     private $connector;
     private $resolver;
