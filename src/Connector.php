@@ -15,7 +15,7 @@ use React\Dns\Resolver\Resolver;
  * @see DnsConnector for the newer replacement
  * @see ConnectorInterface for the base interface
  */
-class Connector implements ConnectorInterface
+final class Connector implements ConnectorInterface
 {
     private $connector;
 

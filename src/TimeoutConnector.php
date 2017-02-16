@@ -5,11 +5,8 @@ namespace React\SocketClient;
 use React\SocketClient\ConnectorInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise\Timer;
-use React\Stream\Stream;
-use React\Promise\Promise;
-use React\Promise\CancellablePromiseInterface;
 
-class TimeoutConnector implements ConnectorInterface
+final class TimeoutConnector implements ConnectorInterface
 {
     private $connector;
     private $timeout;

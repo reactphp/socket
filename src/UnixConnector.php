@@ -14,7 +14,7 @@ use RuntimeException;
  * Unix domain sockets use atomic operations, so we can as well emulate
  * async behavior.
  */
-class UnixConnector implements ConnectorInterface
+final class UnixConnector implements ConnectorInterface
 {
     private $loop;
 

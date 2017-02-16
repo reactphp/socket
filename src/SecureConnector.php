@@ -5,9 +5,8 @@ namespace React\SocketClient;
 use React\EventLoop\LoopInterface;
 use React\Stream\Stream;
 use React\Promise;
-use React\Promise\CancellablePromiseInterface;
 
-class SecureConnector implements ConnectorInterface
+final class SecureConnector implements ConnectorInterface
 {
     private $connector;
     private $streamEncryption;
