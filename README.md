@@ -212,6 +212,14 @@ $tcpConnector = new React\SocketClient\TcpConnector($loop, array(
 ```
 
 Note that this class only allows you to connect to IP-port-combinations.
+If the given URI is invalid, does not contain a valid IP address and port
+or contains any other scheme, it will reject with an
+`InvalidArgumentException`:
+
+If the given URI appears to be valid, but connecting to it fails (such as if
+the remote host rejects the connection etc.), it will reject with a
+`RuntimeException`.
+
 If you want to connect to hostname-port-combinations, see also the following chapter.
 
 ### DNS resolution

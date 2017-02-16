@@ -87,7 +87,7 @@ class TcpConnector implements ConnectorInterface
         if (false === stream_socket_get_name($socket, true)) {
             fclose($socket);
 
-            return Promise\reject(new ConnectionException('Connection refused'));
+            return Promise\reject(new \RuntimeException('Connection refused'));
         }
 
         return Promise\resolve($socket);
