@@ -16,22 +16,43 @@ namespace React\SocketClient;
  * swap this implementation against any other implementation of this interface.
  *
  * The interface only offers a single `connect()` method.
+ *
+ * @see ConnectionInterface
  */
 interface ConnectorInterface
 {
     /**
-     * Creates a Promise which resolves with a stream once the connection to the given remote address succeeds
+     * Creates a streaming connection to the given remote address
      *
-     * The Promise resolves with a `React\Stream\Stream` instance on success or
-     * rejects with an `Exception` if the connection is not successful.
+     * If returns a Promise which either fulfills with a stream implementing
+     * `ConnectionInterface` on success or rejects with an `Exception` if the
+     * connection is not successful.
+     *
+     * ```php
+     * $connector->connect('google.com:443')->then(
+     *     function (ConnectionInterface $connection) {
+     *         // connection successfully established
+     *     },
+     *     function (Exception $error) {
+     *         // failed to connect due to $error
+     *     }
+     * );
+     * ```
      *
      * The returned Promise MUST be implemented in such a way that it can be
      * cancelled when it is still pending. Cancelling a pending promise MUST
      * reject its value with an Exception. It SHOULD clean up any underlying
      * resources and references as applicable.
      *
+     * ```php
+     * $promise = $connector->connect($uri);
+     *
+     * $promise->cancel();
+     * ```
+     *
      * @param string $uri
-     * @return React\Promise\PromiseInterface resolves with a Stream on success or rejects with an Exception on error
+     * @return React\Promise\PromiseInterface resolves with a stream implementing ConnectionInterface on success or rejects with an Exception on error
+     * @see ConnectionInterface
      */
     public function connect($uri);
 }

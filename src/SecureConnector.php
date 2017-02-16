@@ -52,18 +52,23 @@ class SecureConnector implements ConnectorInterface
         }
 
         $encryption = $this->streamEncryption;
-        return $this->connector->connect($uri)->then(function (Stream $stream) use ($context, $encryption) {
+        return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption) {
             // (unencrypted) TCP/IP connection succeeded
+
+            if (!$connection instanceof Stream) {
+                $connection->close();
+                throw new \UnexpectedValueException('Connection MUST extend Stream in order to access underlying stream resource');
+            }
 
             // set required SSL/TLS context options
             foreach ($context as $name => $value) {
-                stream_context_set_option($stream->stream, 'ssl', $name, $value);
+                stream_context_set_option($connection->stream, 'ssl', $name, $value);
             }
 
             // try to enable encryption
-            return $encryption->enable($stream)->then(null, function ($error) use ($stream) {
+            return $encryption->enable($connection)->then(null, function ($error) use ($connection) {
                 // establishing encryption failed => close invalid connection and return error
-                $stream->close();
+                $connection->close();
                 throw $error;
             });
         });

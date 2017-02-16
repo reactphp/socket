@@ -5,6 +5,7 @@ namespace React\Tests\SocketClient;
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\Server;
 use React\SocketClient\TcpConnector;
+use React\SocketClient\ConnectionInterface;
 use Clue\React\Block;
 
 class TcpConnectorTest extends TestCase
@@ -34,11 +35,67 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
 
-        $this->assertInstanceOf('React\Stream\Stream', $stream);
+        $this->assertInstanceOf('React\SocketClient\ConnectionInterface', $connection);
 
-        $stream->close();
+        $connection->close();
+    }
+
+    /** @test */
+    public function connectionToTcpServerShouldSucceedWithRemoteAdressSameAsTarget()
+    {
+        $loop = new StreamSelectLoop();
+
+        $server = new Server(9999, $loop);
+        $server->on('connection', array($server, 'close'));
+
+        $connector = new TcpConnector($loop);
+
+        $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
+        /* @var $connection ConnectionInterface */
+
+        $this->assertEquals('127.0.0.1:9999', $connection->getRemoteAddress());
+
+        $connection->close();
+    }
+
+    /** @test */
+    public function connectionToTcpServerShouldSucceedWithLocalAdressOnLocalhost()
+    {
+        $loop = new StreamSelectLoop();
+
+        $server = new Server(9999, $loop);
+        $server->on('connection', array($server, 'close'));
+
+        $connector = new TcpConnector($loop);
+
+        $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
+        /* @var $connection ConnectionInterface */
+
+        $this->assertContains('127.0.0.1:', $connection->getLocalAddress());
+        $this->assertNotEquals('127.0.0.1:9999', $connection->getLocalAddress());
+
+        $connection->close();
+    }
+
+    /** @test */
+    public function connectionToTcpServerShouldSucceedWithNullAddressesAfterConnectionClosed()
+    {
+        $loop = new StreamSelectLoop();
+
+        $server = new Server(9999, $loop);
+        $server->on('connection', array($server, 'close'));
+
+        $connector = new TcpConnector($loop);
+
+        $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
+        /* @var $connection ConnectionInterface */
+
+        $connection->close();
+
+        $this->assertNull($connection->getRemoteAddress());
+        $this->assertNull($connection->getLocalAddress());
     }
 
     /** @test */
@@ -70,11 +127,15 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $stream = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
+        /* @var $connection ConnectionInterface */
 
-        $this->assertInstanceOf('React\Stream\Stream', $stream);
+        $this->assertEquals('[::1]:9999', $connection->getRemoteAddress());
 
-        $stream->close();
+        $this->assertContains('[::1]:', $connection->getLocalAddress());
+        $this->assertNotEquals('[::1]:9999', $connection->getLocalAddress());
+
+        $connection->close();
     }
 
     /** @test */

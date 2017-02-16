@@ -3,8 +3,8 @@
 use React\EventLoop\Factory;
 use React\SocketClient\TcpConnector;
 use React\SocketClient\DnsConnector;
-use React\Stream\Stream;
 use React\SocketClient\TimeoutConnector;
+use React\SocketClient\ConnectionInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -33,21 +33,21 @@ $stderr->pause();
 
 $stderr->write('Connecting' . PHP_EOL);
 
-$dns->create($argv[1], $argv[2])->then(function (Stream $stream) use ($stdin, $stdout, $stderr) {
+$dns->create($argv[1], $argv[2])->then(function (ConnectionInterface $connection) use ($stdin, $stdout, $stderr) {
     // pipe everything from STDIN into connection
     $stdin->resume();
-    $stdin->pipe($stream);
+    $stdin->pipe($connection);
 
     // pipe everything from connection to STDOUT
-    $stream->pipe($stdout);
+    $connection->pipe($stdout);
 
     // report errors to STDERR
-    $stream->on('error', function ($error) use ($stderr) {
+    $connection->on('error', function ($error) use ($stderr) {
         $stderr->write('Stream ERROR: ' . $error . PHP_EOL);
     });
 
     // report closing and stop reading from input
-    $stream->on('close', function () use ($stderr, $stdin) {
+    $connection->on('close', function () use ($stderr, $stdin) {
         $stderr->write('[CLOSED]' . PHP_EOL);
         $stdin->close();
     });

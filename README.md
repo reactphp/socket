@@ -50,15 +50,16 @@ The interface only offers a single method:
 
 #### connect()
 
-The `connect(string $uri): PromiseInterface<Stream, Exception>` method
-can be used to establish a streaming connection.
+The `connect(string $uri): PromiseInterface<ConnectionInterface, Exception>` method
+can be used to create a streaming connection to the given remote address.
+
 It returns a [Promise](https://github.com/reactphp/promise) which either
-fulfills with a [Stream](https://github.com/reactphp/stream) or
-rejects with an `Exception`:
+fulfills with a stream implementing [`ConnectionInterface`](#connectioninterface)
+on success or rejects with an `Exception` if the connection is not successful:
 
 ```php
 $connector->connect('google.com:443')->then(
-    function (Stream $stream) {
+    function (ConnectionInterface $connection) {
         // connection successfully established
     },
     function (Exception $error) {
@@ -66,6 +67,8 @@ $connector->connect('google.com:443')->then(
     }
 );
 ```
+
+See also [`ConnectionInterface`](#connectioninterface) for more details.
 
 The returned Promise MUST be implemented in such a way that it can be
 cancelled when it is still pending. Cancelling a pending promise MUST
@@ -78,6 +81,95 @@ $promise = $connector->connect($uri);
 $promise->cancel();
 ```
 
+### ConnectionInterface
+
+The `ConnectionInterface` is used to represent any outgoing connection,
+such as a normal TCP/IP connection.
+
+An outgoing connection is a duplex stream (both readable and writable) that
+implements React's
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+It contains additional properties for the local and remote address
+where this connection has been established to.
+
+Most commonly, instances implementing this `ConnectionInterface` are returned
+by all classes implementing the [`ConnectorInterface`](#connectorinterface).
+
+> Note that this interface is only to be used to represent the client-side end
+of an outgoing connection.
+It MUST NOT be used to represent an incoming connection in a server-side context.
+If you want to accept incoming connections,
+use the [`Socket`](https://github.com/reactphp/socket) component instead.
+
+Because the `ConnectionInterface` implements the underlying
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
+you can use any of its events and methods as usual:
+
+```php
+$connection->on('data', function ($chunk) {
+    echo $data;
+});
+
+$conenction->on('close', function () {
+    echo 'closed';
+});
+
+$connection->write($data);
+$connection->end($data = null);
+$connection->close();
+// …
+```
+
+For more details, see the
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+
+#### getRemoteAddress()
+
+The `getRemoteAddress(): ?string` method can be used to
+return the remote address (IP and port) where this connection has been
+established to.
+
+```php
+$address = $connection->getRemoteAddress();
+echo 'Connected to ' . $address . PHP_EOL;
+```
+
+If the remote address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full remote address as a string value.
+If this is a TCP/IP based connection and you only want the remote IP, you may
+use something like this:
+
+```php
+$address = $connection->getRemoteAddress();
+$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+echo 'Connected to ' . $ip . PHP_EOL;
+```
+
+#### getLocalAddress()
+
+The `getLocalAddress(): ?string` method can be used to
+return the full local address (IP and port) where this connection has been
+established from.
+
+```php
+$address = $connection->getLocalAddress();
+echo 'Connected via ' . $address . PHP_EOL;
+```
+
+If the local address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full local address as a string value.
+
+This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
+so they should not be confused.
+
+If your system has multiple interfaces (e.g. a WAN and a LAN interface),
+you can use this method to find out which interface was actually
+used for this connection.
+
 ### Async TCP/IP connections
 
 The `React\SocketClient\TcpConnector` class implements the
@@ -87,9 +179,9 @@ TCP/IP connections to any IP-port-combination:
 ```php
 $tcpConnector = new React\SocketClient\TcpConnector($loop);
 
-$tcpConnector->connect('127.0.0.1:80')->then(function (React\Stream\Stream $stream) {
-    $stream->write('...');
-    $stream->end();
+$tcpConnector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
 });
 
 $loop->run();
@@ -140,9 +232,9 @@ $dns = $dnsResolverFactory->connectCached('8.8.8.8', $loop);
 
 $dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
 
-$dnsConnector->connect('www.google.com:80')->then(function (React\Stream\Stream $stream) {
-    $stream->write('...');
-    $stream->end();
+$dnsConnector->connect('www.google.com:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
 });
 
 $loop->run();
@@ -184,8 +276,8 @@ stream.
 ```php
 $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop);
 
-$secureConnector->connect('www.google.com:443')->then(function (React\Stream\Stream $stream) {
-    $stream->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
+$secureConnector->connect('www.google.com:443')->then(function (ConnectionInterface $connection) {
+    $connection->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
     ...
 });
 
@@ -237,7 +329,7 @@ underlying connection attempt if it takes too long.
 ```php
 $timeoutConnector = new React\SocketClient\TimeoutConnector($connector, 3.0, $loop);
 
-$timeoutConnector->connect('google.com:80')->then(function (React\Stream\Stream $stream) {
+$timeoutConnector->connect('google.com:80')->then(function (ConnectionInterface $connection) {
     // connection succeeded within 3.0 seconds
 });
 ```
@@ -264,8 +356,8 @@ Unix domain socket (UDS) paths like this:
 ```php
 $connector = new React\SocketClient\UnixConnector($loop);
 
-$connector->connect('/tmp/demo.sock')->then(function (React\Stream\Stream $stream) {
-    $stream->write("HELLO\n");
+$connector->connect('/tmp/demo.sock')->then(function (ConnectionInterface $connection) {
+    $connection->write("HELLO\n");
 });
 
 $loop->run();
