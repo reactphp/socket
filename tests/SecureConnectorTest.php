@@ -59,4 +59,16 @@ class SecureConnectorTest extends TestCase
 
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
     }
+
+    public function testConnectionWillBeClosedAndRejectedIfConnectioIsNoStream()
+    {
+        $connection = $this->getMockBuilder('React\SocketClient\ConnectionInterface')->getMock();
+        $connection->expects($this->once())->method('close');
+
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
+
+        $promise = $this->connector->connect('example.com:80');
+
+        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+    }
 }

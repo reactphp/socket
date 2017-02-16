@@ -26,6 +26,9 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
 
+        $this->assertContains(':80', $conn->getRemoteAddress());
+        $this->assertNotEquals('google.com:80', $conn->getRemoteAddress());
+
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
