@@ -2,26 +2,35 @@
 
 [![Build Status](https://secure.travis-ci.org/reactphp/socket-client.png?branch=master)](http://travis-ci.org/reactphp/socket-client) [![Code Climate](https://codeclimate.com/github/reactphp/socket-client/badges/gpa.svg)](https://codeclimate.com/github/reactphp/socket-client)
 
-Async Connector to open TCP/IP and SSL/TLS based connections.
+Async, streaming plaintext TCP/IP and secure TLS based connections for [ReactPHP](https://reactphp.org/)
 
-> The master branch contains the code for the upcoming 0.6 release.
-For the code of the current stable 0.5.x release, checkout the
-[0.5 branch](https://github.com/reactphp/socket-client/tree/0.5).
-
-## Introduction
-
-Think of this library as an async version of
+You can think of this library as an async version of
 [`fsockopen()`](http://www.php.net/function.fsockopen) or
 [`stream_socket_client()`](http://php.net/function.stream-socket-client).
+If you want to transmit and receive data to/from a remote server, you first
+have to establish a connection to the remote end.
+Establishing this connection through the internet/network may take some time
+as it requires several steps (such as resolving target hostname, completing
+TCP/IP handshake and enabling TLS) in order to complete.
+This component provides an async version of all this so you can establish and
+handle multiple connections without blocking.
 
-Before you can actually transmit and receive data to/from a remote server, you
-have to establish a connection to the remote end. Establishing this connection
-through the internet/network takes some time as it requires several steps in
-order to complete:
+**Table of Contents**
 
-1. Resolve remote target hostname via DNS (+cache)
-2. Complete TCP handshake (2 roundtrips) with remote target IP:port
-3. Optionally enable SSL/TLS on the new resulting connection
+* [Usage](#usage)
+  * [ConnectorInterface](#connectorinterface)
+    * [connect()](#connect)
+  * [ConnectionInterface](#connectioninterface)
+    * [getRemoteAddress()](#getremoteaddress)
+    * [getLocalAddress()](#getlocaladdress)
+  * [Plaintext TCP/IP connections](#plaintext-tcpip-connections)
+  * [DNS resolution](#dns-resolution)
+  * [Secure TLS connections](#secure-tls-connections)
+  * [Connection timeout](#connection-timeouts)
+  * [Unix domain sockets](#unix-domain-sockets)
+* [Install](#install)
+* [Tests](#tests)
+* [License](#license)
 
 ## Usage
 
@@ -170,7 +179,7 @@ If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
 
-### Async TCP/IP connections
+### Plaintext TCP/IP connections
 
 The `React\SocketClient\TcpConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -271,7 +280,7 @@ $connector = new React\SocketClient\Connector($loop, $dns);
 $connector->connect('www.google.com:80')->then($callback);
 ```
 
-### Async SSL/TLS connections
+### Secure TLS connections
 
 The `SecureConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create secure
@@ -383,15 +392,26 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket-client:^0.5.3
+$ composer require react/socket-client:^0.6
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
 
 ## Tests
 
-To run the test suite, you need PHPUnit. Go to the project root and run:
+To run the test suite, you first need to clone this repo and then install all
+dependencies [through Composer](http://getcomposer.org):
 
 ```bash
-$ phpunit
+$ composer install
 ```
+
+To run the test suite, go to the project root and run:
+
+```bash
+$ php vendor/bin/phpunit
+```
+
+## License
+
+MIT, see [LICENSE file](LICENSE).

@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.6.0 (2017-02-17)
+
+* Feature / BC break: Use `connect($uri)` instead of `create($host, $port)`
+  and resolve with a `ConnectionInterface` instead of `Stream`
+  and expose remote and local addresses through this interface
+  and remove superfluous and undocumented `ConnectionException`.
+  (#74, #82 and #84 by @clue)
+
+  ```php
+  // old
+  $connector->create('google.com', 80)->then(function (Stream $conn) {
+      echo 'Connected' . PHP_EOL;
+      $conn->write("GET / HTTP/1.0\r\n\r\n");
+  });
+
+  // new
+  $connector->connect('google.com:80')->then(function (ConnectionInterface $conn) {
+      echo 'Connected to ' . $conn->getRemoteAddress() . PHP_EOL;
+      $conn->write("GET / HTTP/1.0\r\n\r\n");
+  });
+  ```
+
+  > Note that both the old `Stream` and the new `ConnectionInterface` implement
+    the same underlying `DuplexStreamInterface`, so their streaming behavior is
+    actually equivalent.
+    In order to upgrade, simply use the new typehints.
+    Existing stream handlers should continue to work unchanged.
+
+* Feature / BC break: All connectors now MUST offer cancellation support.
+  You can now rely on getting a rejected promise when calling `cancel()` on a
+  pending connection attempt.
+  (#79 by @clue)
+
+  ```php
+  // old: promise resolution not enforced and thus unreliable
+  $promise = $connector->create($host, $port);
+  $promise->cancel();
+  $promise->then(/* MAY still be called */, /* SHOULD be called */);
+
+  // new: rejecting after cancellation is mandatory
+  $promise = $connector->connect($uri);
+  $promise->cancel();
+  $promise->then(/* MUST NOT be called */, /* MUST be called */);
+  ```
+
+  > Note that this behavior is only mandatory for *pending* connection attempts.
+    Once the promise is settled (resolved), calling `cancel()` will have no effect.
+
+* BC break: All connector classes are now marked `final`
+  and you can no longer `extend` them
+  (which was never documented or recommended anyway).
+  Please use composition instead of extension.
+  (#85 by @clue)
+
 ## 0.5.3 (2016-12-24)
 
 * Fix: Skip IPv6 tests if not supported by the system
