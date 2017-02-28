@@ -29,7 +29,7 @@ if (isset($argv[2])) {
     ));
 }
 
-$server->on('connection', function (ConnectionInterface $conn) use ($loop) {
+$server->on('connection', function (ConnectionInterface $conn) {
     echo '[connected]' . PHP_EOL;
     $conn->pipe($conn);
 });
