@@ -187,7 +187,7 @@ final class Server extends EventEmitter implements ServerInterface
             $path = str_replace('unix://','', $uri);
             $parts = pathinfo($path);
 
-            // ensure URI is valid path
+            // ensure that URI is valid path
             if (!$parts || empty($parts['dirname']) || empty($parts['basename'])) {
                 throw new InvalidArgumentException('Invalid URI "' . $uri . '" given');
             }
