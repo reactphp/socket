@@ -77,6 +77,12 @@ final class Server extends EventEmitter implements ServerInterface
      * $server = new Server('[::1]:8080', $loop);
      * ```
      *
+     * In order to use a unix socket, precede your socket path with unix:// scheme
+     *
+     * ```php
+     * $server = new Server('unix:///path/to/socket.sck', $loop);
+     * ```
+     *
      * If the given URI is invalid, does not contain a port, any other scheme or if it
      * contains a hostname, it will throw an `InvalidArgumentException`:
      *
@@ -127,34 +133,7 @@ final class Server extends EventEmitter implements ServerInterface
     {
         $this->loop = $loop;
 
-        // a single port has been given => assume localhost
-        if ((string)(int)$uri === (string)$uri) {
-            $uri = '127.0.0.1:' . $uri;
-        }
-
-        // assume default scheme if none has been given
-        if (strpos($uri, '://') === false) {
-            $uri = 'tcp://' . $uri;
-        }
-
-        // parse_url() does not accept null ports (random port assignment) => manually remove
-        if (substr($uri, -2) === ':0') {
-            $parts = parse_url(substr($uri, 0, -2));
-            if ($parts) {
-                $parts['port'] = 0;
-            }
-        } else {
-            $parts = parse_url($uri);
-        }
-
-        // ensure URI contains TCP scheme, host and port
-        if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
-            throw new InvalidArgumentException('Invalid URI "' . $uri . '" given');
-        }
-
-        if (false === filter_var(trim($parts['host'], '[]'), FILTER_VALIDATE_IP)) {
-            throw new InvalidArgumentException('Given URI "' . $uri . '" does not contain a valid host IP');
-        }
+        $this->checkUri($uri);
 
         $this->master = @stream_socket_server(
             $uri,
@@ -179,6 +158,62 @@ final class Server extends EventEmitter implements ServerInterface
             }
             $that->handleConnection($newSocket);
         });
+    }
+
+    /**
+     * Check if URI is valid, if not throw InvalidArgumentException
+     * @param string|int $uri
+     */
+    private function checkUri(&$uri) {
+
+        // a single port has been given => assume localhost
+        if ((string)(int)$uri === (string)$uri) {
+            $uri = '127.0.0.1:' . $uri;
+        }
+
+        // assume default scheme if none has been given
+        if (strpos($uri, '://') === false) {
+            $uri = 'tcp://' . $uri;
+        }
+
+        // if unix socket
+        if (strpos($uri, 'unix://') === 0) {
+
+            if (!in_array('unix', stream_get_transports())) {
+                throw new InvalidArgumentException('Unix socket not supported');
+            }
+
+            //remove unix:// from uri and check path
+            $path = str_replace('unix://','', $uri);
+            $parts = pathinfo($path);
+
+            // ensure URI is valid path
+            if (!$parts || empty($parts['dirname']) || empty($parts['basename'])) {
+                throw new InvalidArgumentException('Invalid URI "' . $uri . '" given');
+            }
+
+            if (file_exists($path)) {
+                throw new InvalidArgumentException('File "' . $uri . '" exists, can\'t create socket');
+            }
+        } else {
+            // parse_url() does not accept null ports (random port assignment) => manually remove
+            if (substr($uri, -2) === ':0') {
+                $parts = parse_url(substr($uri, 0, -2));
+                if ($parts) {
+                    $parts['port'] = 0;
+                }
+            } else {
+                $parts = parse_url($uri);
+            }
+            // ensure URI contains TCP scheme, host and port
+            if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
+                throw new InvalidArgumentException('Invalid URI "' . $uri . '" given');
+            }
+
+            if (false === filter_var(trim($parts['host'], '[]'), FILTER_VALIDATE_IP)) {
+                throw new InvalidArgumentException('Given URI "' . $uri . '" does not contain a valid host IP');
+            }
+        }
     }
 
     public function getAddress()
