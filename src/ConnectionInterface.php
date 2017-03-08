@@ -20,7 +20,33 @@ use React\Stream\DuplexStreamInterface;
  * use React's SocketClient component instead.
  *
  * Because the `ConnectionInterface` implements the underlying
- * `DuplexStreamInterface` you can use any of its events and methods as usual.
+ * `DuplexStreamInterface` you can use any of its events and methods as usual:
+ *
+ * ```php
+ * $connection->on('data', function ($chunk) {
+ *     echo $chunk;
+ * });
+ *
+ * $connection->on('end', function () {
+ *     echo 'ended';
+ * });
+ *
+ * $connection->on('error', function (Exception $e) {
+ *     echo 'error: ' . $e->getMessage();
+ * });
+ *
+ * $connection->on('close', function () {
+ *     echo 'closed';
+ * });
+ *
+ * $connection->write($data);
+ * $connection->end($data = null);
+ * $connection->close();
+ * // …
+ * ```
+ *
+ * For more details, see the
+ * [`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
  *
  * @see DuplexStreamInterface
  */

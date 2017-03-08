@@ -7,7 +7,7 @@
         "php": ">=5.3.0",
         "evenement/evenement": "~2.0|~1.0",
         "react/event-loop": "0.4.*|0.3.*",
-        "react/stream": "^0.4.5",
+        "react/stream": "^0.6 || ^0.5 || ^0.4.5",
         "react/promise": "^2.0 || ^1.1"
     },
     "require-dev": {
