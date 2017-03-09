@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 (2017-03-09)
+
+* Feature: Forward compatibility with Stream v0.5 and upcoming v0.6
+  (#79 by @clue)
+
 ## 0.5.0 (2017-02-14)
 
 * Feature / BC break: Replace `listen()` call with URIs passed to constructor
