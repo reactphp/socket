@@ -21,7 +21,7 @@ $tls = new SecureConnector($dns, $loop);
 // time out connection attempt in 3.0s
 $tls = new TimeoutConnector($tls, 3.0, $loop);
 
-$tls->create('www.google.com', 443)->then(function (ConnectionInterface $connection) {
+$tls->connect('www.google.com:443')->then(function (ConnectionInterface $connection) {
     $connection->on('data', function ($data) {
         echo $data;
     });

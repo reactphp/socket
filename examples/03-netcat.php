@@ -8,8 +8,8 @@ use React\SocketClient\ConnectionInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-if (!isset($argv[2])) {
-    fwrite(STDERR, 'Usage error: required arguments <host> <port>' . PHP_EOL);
+if (!isset($argv[1])) {
+    fwrite(STDERR, 'Usage error: required argument <host:port>' . PHP_EOL);
     exit(1);
 }
 
@@ -33,7 +33,7 @@ $stderr->pause();
 
 $stderr->write('Connecting' . PHP_EOL);
 
-$dns->create($argv[1], $argv[2])->then(function (ConnectionInterface $connection) use ($stdin, $stdout, $stderr) {
+$dns->connect($argv[1])->then(function (ConnectionInterface $connection) use ($stdin, $stdout, $stderr) {
     // pipe everything from STDIN into connection
     $stdin->resume();
     $stdin->pipe($connection);

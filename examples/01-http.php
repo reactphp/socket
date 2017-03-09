@@ -19,7 +19,7 @@ $dns = new DnsConnector($tcp, $resolver);
 // time out connection attempt in 3.0s
 $dns = new TimeoutConnector($dns, 3.0, $loop);
 
-$dns->create('www.google.com', 80)->then(function (ConnectionInterface $connection) {
+$dns->connect('www.google.com:80')->then(function (ConnectionInterface $connection) {
     $connection->on('data', function ($data) {
         echo $data;
     });
