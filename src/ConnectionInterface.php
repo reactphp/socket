@@ -29,10 +29,18 @@ use React\Stream\DuplexStreamInterface;
  *
  * ```php
  * $connection->on('data', function ($chunk) {
- *     echo $data;
+ *     echo $chunk;
  * });
  *
- * $conenction->on('close', function () {
+ * $connection->on('end', function () {
+ *     echo 'ended';
+ * });
+ *
+ * $connection->on('error', function (Exception $e) {
+ *     echo 'error: ' . $e->getMessage();
+ * });
+ *
+ * $connection->on('close', function () {
  *     echo 'closed';
  * });
  *
