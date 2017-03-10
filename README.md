@@ -24,11 +24,12 @@ handle multiple connections without blocking.
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
   * [Connector](#connector)
-  * [Plaintext TCP/IP connections](#plaintext-tcpip-connections)
-  * [DNS resolution](#dns-resolution)
-  * [Secure TLS connections](#secure-tls-connections)
-  * [Connection timeout](#connection-timeouts)
-  * [Unix domain sockets](#unix-domain-sockets)
+* [Advanced Usage](#advanced-usage)
+  * [TcpConnector](#tcpconnector)
+  * [DnsConnector](#dnsconnector)
+  * [SecureConnector](#secureconnector)
+  * [TimeoutConnector](#timeoutconnector)
+  * [UnixConnector](#unixconnector)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -183,10 +184,11 @@ used for this connection.
 
 ### Connector
 
-The `Connector` class implements the
-[`ConnectorInterface`](#connectorinterface) and allows you to create any kind
-of streaming connections, such as plaintext TCP/IP, secure TLS or local Unix
-connection streams.
+The `Connector` class is the main class in this package that implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create streaming connections.
+
+You can use this connector to create any kind of streaming connections, such
+as plaintext TCP/IP, secure TLS or local Unix connection streams.
 
 It binds to the main event loop and can be used like this:
 
@@ -280,7 +282,9 @@ $connector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connect
 });
 ```
 
-### Plaintext TCP/IP connections
+## Advanced Usage
+
+### TcpConnector
 
 The `React\SocketClient\TcpConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -339,7 +343,7 @@ be used to set up the TLS peer name.
 This is used by the `SecureConnector` and `DnsConnector` to verify the peer
 name and can also be used if you want a custom TLS peer name.
 
-### DNS resolution
+### DnsConnector
 
 The `DnsConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -399,7 +403,7 @@ hostname and is used by the `TcpConnector` to set up the TLS peer name.
 If a `hostname` is given explicitly, this query parameter will not be modified,
 which can be useful if you want a custom TLS peer name.
 
-### Secure TLS connections
+### SecureConnector
 
 The `SecureConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create secure
@@ -453,7 +457,7 @@ Failing to do so may result in a TLS peer name mismatch error or some hard to
 trace race conditions, because all stream resources will use a single, shared
 *default context* resource otherwise.
 
-### Connection timeouts
+### TimeoutConnector
 
 The `TimeoutConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to add timeout
@@ -484,7 +488,7 @@ $promise->cancel();
 Calling `cancel()` on a pending promise will cancel the underlying connection
 attempt, abort the timer and reject the resulting promise.
 
-### Unix domain sockets
+### UnixConnector
 
 The `UnixConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to connect to

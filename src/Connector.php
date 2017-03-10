@@ -8,9 +8,11 @@ use React\Dns\Resolver\Factory;
 use InvalidArgumentException;
 
 /**
- * The `Connector` class implements the `ConnectorInterface` and allows you to
- * create any kind of streaming connections, such as plaintext TCP/IP, secure
- * TLS or local Unix connection streams.
+ * The `Connector` class is the main class in this package that implements the
+ * `ConnectorInterface` and allows you to create streaming connections.
+ *
+ * You can use this connector to create any kind of streaming connections, such
+ * as plaintext TCP/IP, secure TLS or local Unix connection streams.
  *
  * Under the hood, the `Connector` is implemented as a *higher-level facade*
  * or the lower-level connectors implemented in this package. This means it
