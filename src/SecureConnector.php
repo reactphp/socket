@@ -30,25 +30,12 @@ final class SecureConnector implements ConnectorInterface
         }
 
         $parts = parse_url($uri);
-        if (!$parts || !isset($parts['host']) || $parts['scheme'] !== 'tls') {
+        if (!$parts || !isset($parts['scheme']) || $parts['scheme'] !== 'tls') {
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
         $uri = str_replace('tls://', '', $uri);
-        $host = trim($parts['host'], '[]');
-
-        $context = $this->context + array(
-            'SNI_enabled' => true,
-            'peer_name' => $host
-        );
-
-        // legacy PHP < 5.6 ignores peer_name and requires legacy context options instead
-        if (PHP_VERSION_ID < 50600) {
-            $context += array(
-                'SNI_server_name' => $host,
-                'CN_match' => $host
-            );
-        }
+        $context = $this->context;
 
         $encryption = $this->streamEncryption;
         return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption) {

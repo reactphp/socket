@@ -10,6 +10,7 @@ use React\SocketClient\SecureConnector;
 use React\SocketClient\TcpConnector;
 use React\Stream\BufferedSink;
 use Clue\React\Block;
+use React\SocketClient\DnsConnector;
 
 class IntegrationTest extends TestCase
 {
@@ -54,6 +55,35 @@ class IntegrationTest extends TestCase
         );
 
         $conn = Block\await($secureConnector->connect('google.com:443'), $loop);
+
+        $conn->write("GET / HTTP/1.0\r\n\r\n");
+
+        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+
+        $this->assertRegExp('#^HTTP/1\.0#', $response);
+    }
+
+    /** @test */
+    public function gettingEncryptedStuffFromGoogleShouldWorkIfHostIsResolvedFirst()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = new StreamSelectLoop();
+
+        $factory = new Factory();
+        $dns = $factory->create('8.8.8.8', $loop);
+
+        $connector = new DnsConnector(
+            new SecureConnector(
+                new TcpConnector($loop),
+                $loop
+            ),
+            $dns
+        );
+
+        $conn = Block\await($connector->connect('google.com:443'), $loop);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
