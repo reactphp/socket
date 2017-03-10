@@ -1,7 +1,7 @@
 {
     "name": "react/socket-client",
-    "description": "Async connector to open TCP/IP and SSL/TLS based connections.",
-    "keywords": ["socket"],
+    "description": "Async, streaming plaintext TCP/IP and secure TLS based connections for ReactPHP",
+    "keywords": ["async", "socket", "stream", "connection", "ReactPHP"],
     "license": "MIT",
     "require": {
         "php": ">=5.3.0",

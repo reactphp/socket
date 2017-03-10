@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1 (2017-03-10)
+
+* Feature: Forward compatibility with Stream v0.5 and upcoming v0.6
+  (#89 by @clue)
+
+* Fix: Fix examples to use updated API
+  (#88 by @clue)
+
 ## 0.6.0 (2017-02-17)
 
 * Feature / BC break: Use `connect($uri)` instead of `create($host, $port)`
