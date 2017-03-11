@@ -4,7 +4,6 @@ namespace React\Tests\SocketClient;
 
 use React\Dns\Resolver\Factory;
 use React\EventLoop\StreamSelectLoop;
-use React\Socket\Server;
 use React\SocketClient\Connector;
 use React\SocketClient\SecureConnector;
 use React\SocketClient\TcpConnector;
@@ -20,10 +19,7 @@ class IntegrationTest extends TestCase
     public function gettingStuffFromGoogleShouldWork()
     {
         $loop = new StreamSelectLoop();
-
-        $factory = new Factory();
-        $dns = $factory->create('8.8.8.8', $loop);
-        $connector = new Connector($loop, $dns);
+        $connector = new Connector($loop);
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
 
@@ -45,16 +41,9 @@ class IntegrationTest extends TestCase
         }
 
         $loop = new StreamSelectLoop();
+        $secureConnector = new Connector($loop);
 
-        $factory = new Factory();
-        $dns = $factory->create('8.8.8.8', $loop);
-
-        $secureConnector = new SecureConnector(
-            new Connector($loop, $dns),
-            $loop
-        );
-
-        $conn = Block\await($secureConnector->connect('google.com:443'), $loop);
+        $conn = Block\await($secureConnector->connect('tls://google.com:443'), $loop);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
@@ -101,11 +90,8 @@ class IntegrationTest extends TestCase
 
         $loop = new StreamSelectLoop();
 
-        $factory = new Factory();
-        $dns = $factory->create('8.8.8.8', $loop);
-
         $secureConnector = new SecureConnector(
-            new Connector($loop, $dns),
+            new Connector($loop),
             $loop,
             array(
                 'verify_peer' => true
@@ -125,11 +111,8 @@ class IntegrationTest extends TestCase
 
         $loop = new StreamSelectLoop();
 
-        $factory = new Factory();
-        $dns = $factory->create('8.8.8.8', $loop);
-
         $secureConnector = new SecureConnector(
-            new Connector($loop, $dns),
+            new Connector($loop),
             $loop,
             array(
                 'verify_peer' => false

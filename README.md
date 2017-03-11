@@ -23,6 +23,7 @@ handle multiple connections without blocking.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
+  * [Connector](#connector)
   * [Plaintext TCP/IP connections](#plaintext-tcpip-connections)
   * [DNS resolution](#dns-resolution)
   * [Secure TLS connections](#secure-tls-connections)
@@ -33,13 +34,6 @@ handle multiple connections without blocking.
 * [License](#license)
 
 ## Usage
-
-In order to use this project, you'll need the following react boilerplate code
-to initialize the main loop.
-
-```php
-$loop = React\EventLoop\Factory::create();
-```
 
 ### ConnectorInterface
 
@@ -187,6 +181,105 @@ If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
 
+### Connector
+
+The `Connector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create any kind
+of streaming connections, such as plaintext TCP/IP, secure TLS or local Unix
+connection streams.
+
+It binds to the main event loop and can be used like this:
+
+```php
+$loop = React\EventLoop\Factory::create();
+$connector = new Connector($loop);
+
+$connector->connect($uri)->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+
+$loop->run();
+```
+
+In order to create a plaintext TCP/IP connection, you can simply pass a host
+and port combination like this:
+
+```php
+$connector->connect('www.google.com:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> If you do no specify a URI scheme in the destination URI, it will assume
+  `tcp://` as a default and establish a plaintext TCP/IP connection.
+  Note that TCP/IP connections require as host and port part in the destination
+  URI like above, all other URI components are optional.
+
+In order to create a secure TLS connection, you can use the `tls://` URI scheme
+like this:
+
+```php
+$connector->connect('tls://www.google.com:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+In order to create a local Unix domain socket connection, you can use the
+`unix://` URI scheme like this:
+
+```php
+$connector->connect('unix:///tmp/demo.sock')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+Under the hood, the `Connector` is implemented as a *higher-level facade*
+for the lower-level connectors implemented in this package. This means it
+also shares all of their features and implementation details.
+If you want to typehint in your higher-level protocol implementation, you SHOULD
+use the generic [`ConnectorInterface`](#connectorinterface) instead.
+
+In particular, the `Connector` class uses Google's public DNS server `8.8.8.8`
+to resolve all hostnames into underlying IP addresses by default.
+This implies that it also ignores your `hosts` file and `resolve.conf`, which
+means you won't be able to connect to `localhost` and other non-public
+hostnames by default.
+If you want to use a custom DNS server (such as a local DNS relay), you can set
+up the `Connector` like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$dns = $dnsResolverFactory->createCached('127.0.1.1', $loop);
+
+$tcpConnector = new TcpConnector($loop);
+$dnsConnector = new DnsConnector($tcpConnector, $dns);
+$connector = new Connector($loop, $dnsConnector);
+
+$connector->connect('localhost:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+If you do not want to use a DNS resolver and want to connect to IP addresses
+only, you can also set up your `Connector` like this:
+
+```php
+$connector = new Connector(
+    $loop,
+    new TcpConnector($loop)
+);
+
+$connector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
 ### Plaintext TCP/IP connections
 
 The `React\SocketClient\TcpConnector` class implements the
@@ -260,7 +353,7 @@ Make sure to set up your DNS resolver and underlying TCP connector like this:
 
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
-$dns = $dnsResolverFactory->connectCached('8.8.8.8', $loop);
+$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
 $dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
 
