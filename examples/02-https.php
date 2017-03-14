@@ -21,7 +21,9 @@ $tls = new SecureConnector($dns, $loop);
 // time out connection attempt in 3.0s
 $tls = new TimeoutConnector($tls, 3.0, $loop);
 
-$tls->connect('www.google.com:443')->then(function (ConnectionInterface $connection) {
+$target = isset($argv[1]) ? $argv[1] : 'www.google.com:443';
+
+$tls->connect($target)->then(function (ConnectionInterface $connection) use ($target) {
     $connection->on('data', function ($data) {
         echo $data;
     });
@@ -29,7 +31,7 @@ $tls->connect('www.google.com:443')->then(function (ConnectionInterface $connect
         echo '[CLOSED]' . PHP_EOL;
     });
 
-    $connection->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
+    $connection->write("GET / HTTP/1.0\r\nHost: $target\r\n\r\n");
 }, 'printf');
 
 $loop->run();

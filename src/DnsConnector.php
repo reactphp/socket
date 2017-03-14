@@ -30,13 +30,12 @@ final class DnsConnector implements ConnectorInterface
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
-        $that = $this;
         $host = trim($parts['host'], '[]');
         $connector = $this->connector;
 
         return $this
             ->resolveHostname($host)
-            ->then(function ($ip) use ($connector, $parts) {
+            ->then(function ($ip) use ($connector, $host, $parts) {
                 $uri = '';
 
                 // prepend original scheme if known
@@ -64,6 +63,14 @@ final class DnsConnector implements ConnectorInterface
                 // append original query if known
                 if (isset($parts['query'])) {
                     $uri .= '?' . $parts['query'];
+                }
+
+                // append original hostname as query if resolved via DNS and if
+                // destination URI does not contain "hostname" query param already
+                $args = array();
+                parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
+                if ($host !== $ip && !isset($args['hostname'])) {
+                    $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . rawurlencode($host);
                 }
 
                 // append original fragment if known

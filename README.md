@@ -239,6 +239,13 @@ the remote host rejects the connection etc.), it will reject with a
 
 If you want to connect to hostname-port-combinations, see also the following chapter.
 
+> Advanced usage: Internally, the `TcpConnector` allocates an empty *context*
+resource for each stream resource.
+If the destination URI contains a `hostname` query parameter, its value will
+be used to set up the TLS peer name.
+This is used by the `SecureConnector` and `DnsConnector` to verify the peer
+name and can also be used if you want a custom TLS peer name.
+
 ### DNS resolution
 
 The `DnsConnector` class implements the
@@ -288,6 +295,17 @@ $connector = new React\SocketClient\Connector($loop, $dns);
 $connector->connect('www.google.com:80')->then($callback);
 ```
 
+> Advanced usage: Internally, the `DnsConnector` relies on a `Resolver` to
+look up the IP address for the given hostname.
+It will then replace the hostname in the destination URI with this IP and
+append a `hostname` query parameter and pass this updated URI to the underlying
+connector.
+The underlying connector is thus responsible for creating a connection to the
+target IP address, while this query parameter can be used to check the original
+hostname and is used by the `TcpConnector` to set up the TLS peer name.
+If a `hostname` is given explicitly, this query parameter will not be modified,
+which can be useful if you want a custom TLS peer name.
+
 ### Secure TLS connections
 
 The `SecureConnector` class implements the
@@ -333,13 +351,14 @@ $secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, 
 ));
 ```
 
-> Advanced usage: Internally, the `SecureConnector` has to set the required
-*context options* on the underlying stream resource.
+> Advanced usage: Internally, the `SecureConnector` relies on setting up the
+required *context options* on the underlying stream resource.
 It should therefor be used with a `TcpConnector` somewhere in the connector
 stack so that it can allocate an empty *context* resource for each stream
-resource.
-Failing to do so may result in some hard to trace race conditions, because all
-stream resources will use a single, shared *default context* resource otherwise.
+resource and verify the peer name.
+Failing to do so may result in a TLS peer name mismatch error or some hard to
+trace race conditions, because all stream resources will use a single, shared
+*default context* resource otherwise.
 
 ### Connection timeouts
 

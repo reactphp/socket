@@ -33,13 +33,52 @@ final class TcpConnector implements ConnectorInterface
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
         }
 
+        // use context given in constructor
+        $context = array(
+            'socket' => $this->context
+        );
+
+        // parse arguments from query component of URI
+        $args = array();
+        if (isset($parts['query'])) {
+            parse_str($parts['query'], $args);
+        }
+
+        // If an original hostname has been given, use this for TLS setup.
+        // This can happen due to layers of nested connectors, such as a
+        // DnsConnector reporting its original hostname.
+        // These context options are here in case TLS is enabled later on this stream.
+        // If TLS is not enabled later, this doesn't hurt either.
+        if (isset($args['hostname'])) {
+            $context['ssl'] = array(
+                'SNI_enabled' => true,
+                'peer_name' => $args['hostname']
+            );
+
+            // Legacy PHP < 5.6 ignores peer_name and requires legacy context options instead.
+            // The SNI_server_name context option has to be set here during construction,
+            // as legacy PHP ignores any values set later.
+            if (PHP_VERSION_ID < 50600) {
+                $context['ssl'] += array(
+                    'SNI_server_name' => $args['hostname'],
+                    'CN_match' => $args['hostname']
+                );
+            }
+        }
+
+        // HHVM fails to parse URIs with a query but no path, so let's add a dummy path
+        // See also https://3v4l.org/jEhLF
+        if (defined('HHVM_VERSION') && isset($parts['query']) && !isset($parts['path'])) {
+            $uri = str_replace('?', '/?', $uri);
+        }
+
         $socket = @stream_socket_client(
             $uri,
             $errno,
             $errstr,
             0,
             STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
-            stream_context_create(array('socket' => $this->context))
+            stream_context_create($context)
         );
 
         if (false === $socket) {
