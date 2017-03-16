@@ -193,7 +193,7 @@ final class Server extends EventEmitter implements ServerInterface
             }
 
             if (file_exists($path)) {
-                throw new InvalidArgumentException('File "' . $uri . '" exists, can\'t create socket');
+                throw new RuntimeException('File "' . $uri . '" exists, can\'t create socket');
             }
         } else {
             // parse_url() does not accept null ports (random port assignment) => manually remove
@@ -241,7 +241,17 @@ final class Server extends EventEmitter implements ServerInterface
         }
 
         $this->loop->removeStream($this->master);
+
+        //get socket meta_data before closing
+        $metaData = stream_get_meta_data($this->master);
+        $socket_path = stream_socket_get_name($this->master, false);
         fclose($this->master);
+
+        //if unix socket we must delete socket file
+        if ($metaData['stream_type'] == 'unix_socket') {
+            unlink($socket_path);
+        }
+
         $this->removeAllListeners();
     }
 
