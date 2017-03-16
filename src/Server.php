@@ -248,7 +248,7 @@ final class Server extends EventEmitter implements ServerInterface
         fclose($this->master);
 
         //if unix socket we must delete socket file
-        if ($metaData['stream_type'] == 'unix_socket') {
+        if ($metaData['stream_type'] == 'unix_socket' && file_exists($socket_path)) {
             unlink($socket_path);
         }
 

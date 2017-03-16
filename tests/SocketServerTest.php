@@ -8,7 +8,7 @@ use React\Socket\Server;
 
 class SocketServerTest extends TestCase
 {
-    const UNIX_SOCKET = "unix:///tmp/test.sock";
+    const UNIX_SOCKET = "unix://test.sock";
 
     private $loop;
 
