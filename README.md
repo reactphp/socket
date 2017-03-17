@@ -424,6 +424,36 @@ $ composer require react/socket-client:^0.6.1
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
 
+This project supports running on legacy PHP 5.3 through current PHP 7+ and HHVM.
+It's *highly recommended to use PHP 7+* for this project, partly due to its vast
+performance improvements and partly because legacy PHP versions require several
+workarounds as described below.
+
+Secure TLS connections received some major upgrades starting with PHP 5.6, with
+the defaults now being more secure, while older versions required explicit
+context options.
+This library does not take responsibility over these context options, so it's
+up to consumers of this library to take care of setting appropriate context
+options as described above.
+
+All versions of PHP prior to 5.6.8 suffered from a buffering issue where reading
+from a streaming TLS connection could be one `data` event behind.
+This library implements a work-around to try to flush the complete incoming
+data buffers on these versions, but we have seen reports of people saying this
+could still affect some older versions (`5.5.23`, `5.6.7`, and `5.6.8`).
+Note that this only affects *some* higher-level streaming protocols, such as
+IRC over TLS, but should not affect HTTP over TLS (HTTPS).
+Further investigation of this issue is needed.
+For more insights, this issue is also covered by our test suite.
+
+This project also supports running on HHVM.
+Note that really old HHVM < 3.8 does not support secure TLS connections, as it
+lacks the required `stream_socket_enable_crypto()` function.
+As such, trying to create a secure TLS connections on affected versions will
+return a rejected promise instead.
+This issue is also covered by our test suite, which will skip related tests
+on affected versions.
+
 ## Tests
 
 To run the test suite, you first need to clone this repo and then install all
