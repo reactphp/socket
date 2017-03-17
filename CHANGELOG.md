@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2 (2017-03-17)
+
+* Feature / Fix: Support SNI on legacy PHP < 5.6 and add documentation for
+  supported PHP and HHVM versions.
+  (#90 and #91 by @clue)
+
 ## 0.6.1 (2017-03-10)
 
 * Feature: Forward compatibility with Stream v0.5 and upcoming v0.6
