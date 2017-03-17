@@ -176,7 +176,7 @@ class SecureIntegrationTest extends TestCase
             $peer->write($data);
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop);
+        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
         /* @var $client Stream */
 
         // buffer incoming data for 0.1s (should be plenty of time)
