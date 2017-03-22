@@ -5,7 +5,6 @@ namespace React\Tests\Socket;
 use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
-use React\Socket\ServerInterface;
 use React\SocketClient\TcpConnector;
 use Clue\React\Block;
 
@@ -17,10 +16,9 @@ class FunctionalServerTest extends TestCase
 
         $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -36,10 +34,9 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $peer = $conn->getRemoteAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -57,16 +54,15 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
             $local = $conn->getLocalAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('127.0.0.1:' . $port, $local);
+        $this->assertContains('127.0.0.1:', $local);
         $this->assertEquals($server->getAddress(), $local);
     }
 
@@ -79,16 +75,15 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
             $local = $conn->getLocalAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('127.0.0.1:' . $port, $local);
+        $this->assertContains('127.0.0.1:', $local);
     }
 
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
@@ -102,10 +97,9 @@ class FunctionalServerTest extends TestCase
                 $peer = $conn->getRemoteAddress();
             });
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $client = Block\await($promise, $loop, 0.1);
         $client->end();
@@ -125,10 +119,9 @@ class FunctionalServerTest extends TestCase
             $conn->close();
             $peer = $conn->getRemoteAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -143,10 +136,9 @@ class FunctionalServerTest extends TestCase
 
         $server = new Server(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
         $promise->then(null, $this->expectCallableOnce());
@@ -165,10 +157,9 @@ class FunctionalServerTest extends TestCase
         }
 
         $server->on('connection', $this->expectCallableOnce());
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('::1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -189,10 +180,9 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $peer = $conn->getRemoteAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('::1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -215,16 +205,15 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
             $local = $conn->getLocalAddress();
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('::1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\sleep(0.1, $loop);
 
-        $this->assertEquals('[::1]:' . $port, $local);
+        $this->assertContains('[::1]:', $local);
         $this->assertEquals($server->getAddress(), $local);
     }
 
@@ -245,10 +234,9 @@ class FunctionalServerTest extends TestCase
         $server->on('connection', function (ConnectionInterface $conn) use (&$all) {
             $all = stream_context_get_options($conn->stream);
         });
-        $port = $this->getPort($server);
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->create('127.0.0.1', $port);
+        $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
@@ -295,10 +283,5 @@ class FunctionalServerTest extends TestCase
         $loop = Factory::create();
 
         new Server('localhost:8080', $loop);
-    }
-
-    private function getPort(ServerInterface $server)
-    {
-        return parse_url('tcp://' . $server->getAddress(), PHP_URL_PORT);
     }
 }
