@@ -26,6 +26,30 @@ class SecureServerTest extends TestCase
         $this->assertEquals('127.0.0.1:1234', $server->getAddress());
     }
 
+    public function testPauseWillBePassedThroughToTcpServer()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+        $tcp->expects($this->once())->method('pause');
+
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $server = new SecureServer($tcp, $loop, array());
+
+        $server->pause();
+    }
+
+    public function testResumeWillBePassedThroughToTcpServer()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+        $tcp->expects($this->once())->method('resume');
+
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+
+        $server = new SecureServer($tcp, $loop, array());
+
+        $server->resume();
+    }
+
     public function testCloseWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();

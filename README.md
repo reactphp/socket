@@ -16,6 +16,8 @@ and [`Stream`](https://github.com/reactphp/stream) components.
     * [connection event](#connection-event)
     * [error event](#error-event)
     * [getAddress()](#getaddress)
+    * [pause()](#pause)
+    * [resume()](#resume)
     * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
@@ -133,6 +135,61 @@ $address = $server->getAddress();
 $port = parse_url('tcp://' . $address, PHP_URL_PORT);
 echo 'Server listening on port ' . $port . PHP_EOL;
 ```
+
+#### pause()
+
+The `pause(): void` method can be used to
+pause accepting new incoming connections.
+
+Removes the socket resource from the EventLoop and thus stop accepting
+new connections. Note that the listening socket stays active and is not
+closed.
+
+This means that new incoming connections will stay pending in the
+operating system backlog until its configurable backlog is filled.
+Once the backlog is filled, the operating system may reject further
+incoming connections until the backlog is drained again by resuming
+to accept new connections.
+
+Once the server is paused, no futher `connection` events SHOULD
+be emitted.
+
+```php
+$server->pause();
+
+$server->on('connection', assertShouldNeverCalled());
+```
+
+This method is advisory-only, though generally not recommended, the
+server MAY continue emitting `connection` events.
+
+Unless otherwise noted, a successfully opened server SHOULD NOT start
+in paused state.
+
+You can continue processing events by calling `resume()` again.
+
+Note that both methods can be called any number of times, in particular
+calling `pause()` more than once SHOULD NOT have any effect.
+Similarly, calling this after `close()` is a NO-OP.
+
+#### resume()
+
+The `resume(): void` method can be used to
+resume accepting new incoming connections.
+
+Re-attach the socket resource to the EventLoop after a previous `pause()`.
+
+```php
+$server->pause();
+
+$loop->addTimer(1.0, function () use ($server) {
+    $server->resume();
+});
+```
+
+Note that both methods can be called any number of times, in particular
+calling `resume()` without a prior `pause()` SHOULD NOT have any effect.
+Similarly, calling this after `close()` is a NO-OP.
 
 #### close()
 
