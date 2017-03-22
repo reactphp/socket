@@ -11,7 +11,7 @@
         "react/promise": "^2.0 || ^1.1"
     },
     "require-dev": {
-        "react/socket-client": "^0.5.1",
+        "react/socket-client": "^0.6",
         "clue/block-react": "^1.1",
         "phpunit/phpunit": "~4.8"
     },
