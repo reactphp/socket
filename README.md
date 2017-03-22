@@ -183,6 +183,12 @@ brackets:
 $server = new Server('[::1]:8080', $loop);
 ```
 
+In order to use a unix domain socket (UDS), preceded socket path with `unix://`:
+
+```php
+$server = new Server('unix:///path/to/socket.sock', $loop);
+```
+
 If the given URI is invalid, does not contain a port, any other scheme or if it
 contains a hostname, it will throw an `InvalidArgumentException`:
 
