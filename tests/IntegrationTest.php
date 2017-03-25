@@ -82,6 +82,26 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
+    public function testConnectingFailsIfDnsUsesInvalidResolver()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = new StreamSelectLoop();
+
+        $factory = new Factory();
+        $dns = $factory->create('demo.invalid', $loop);
+
+        $connector = new Connector($loop, array(
+            'dns' => $dns
+        ));
+
+        $this->setExpectedException('RuntimeException');
+        Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
+    }
+
+    /** @test */
     public function testSelfSignedRejectsIfVerificationIsEnabled()
     {
         if (!function_exists('stream_socket_enable_crypto')) {

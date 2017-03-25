@@ -216,7 +216,7 @@ $connector->connect('www.google.com:80')->then(function (ConnectionInterface $co
 
 > If you do no specify a URI scheme in the destination URI, it will assume
   `tcp://` as a default and establish a plaintext TCP/IP connection.
-  Note that TCP/IP connections require as host and port part in the destination
+  Note that TCP/IP connections require a host and port part in the destination
   URI like above, all other URI components are optional.
 
 In order to create a secure TLS connection, you can use the `tls://` URI scheme
@@ -254,12 +254,9 @@ If you want to use a custom DNS server (such as a local DNS relay), you can set
 up the `Connector` like this:
 
 ```php
-$dnsResolverFactory = new React\Dns\Resolver\Factory();
-$dns = $dnsResolverFactory->createCached('127.0.1.1', $loop);
-
-$tcpConnector = new TcpConnector($loop);
-$dnsConnector = new DnsConnector($tcpConnector, $dns);
-$connector = new Connector($loop, $dnsConnector);
+$connector = new Connector($loop, array(
+    'dns' => '127.0.1.1'
+));
 
 $connector->connect('localhost:80')->then(function (ConnectionInterface $connection) {
     $connection->write('...');
@@ -267,16 +264,32 @@ $connector->connect('localhost:80')->then(function (ConnectionInterface $connect
 });
 ```
 
-If you do not want to use a DNS resolver and want to connect to IP addresses
-only, you can also set up your `Connector` like this:
+If you do not want to use a DNS resolver at all and want to connect to IP
+addresses only, you can also set up your `Connector` like this:
 
 ```php
-$connector = new Connector(
-    $loop,
-    new TcpConnector($loop)
-);
+$connector = new Connector($loop, array(
+    'dns' => false
+));
 
 $connector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+Advanced: If you need a custom DNS `Resolver` instance, you can also set up
+your `Connector` like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
+
+$connector = new Connector($loop, array(
+    'dns' => $resolver
+));
+
+$connector->connect('localhost:80')->then(function (ConnectionInterface $connection) {
     $connection->write('...');
     $connection->end();
 });

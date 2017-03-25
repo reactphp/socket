@@ -5,7 +5,8 @@ namespace React\SocketClient;
 use React\EventLoop\LoopInterface;
 use React\Dns\Resolver\Resolver;
 use React\Dns\Resolver\Factory;
-use InvalidArgumentException;
+use React\Promise;
+use RuntimeException;
 
 /**
  * The `Connector` class is the main class in this package that implements the
@@ -24,41 +25,55 @@ use InvalidArgumentException;
  */
 final class Connector implements ConnectorInterface
 {
-    private $tcp;
-    private $tls;
-    private $unix;
+    private $connectors;
 
-    public function __construct(LoopInterface $loop, ConnectorInterface $tcp = null)
+    public function __construct(LoopInterface $loop, array $options = array())
     {
-        if ($tcp === null) {
-            $factory = new Factory();
-            $resolver = $factory->create('8.8.8.8', $loop);
+        // apply default options if not explicitly given
+        $options += array(
+            'dns' => true
+        );
 
-            $tcp = new DnsConnector(new TcpConnector($loop), $resolver);
+        $tcp = new TcpConnector($loop);
+        if ($options['dns'] !== false) {
+            if ($options['dns'] instanceof Resolver) {
+                $resolver = $options['dns'];
+            } else {
+                $factory = new Factory();
+                $resolver = $factory->create(
+                    $options['dns'] === true ? '8.8.8.8' : $options['dns'],
+                    $loop
+                );
+            }
+
+            $tcp = new DnsConnector($tcp, $resolver);
         }
 
-        $this->tcp = $tcp;
-        $this->tls = new SecureConnector($tcp, $loop);
-        $this->unix = new UnixConnector($loop);
+        $tls = new SecureConnector($tcp, $loop);
+
+        $unix = new UnixConnector($loop);
+
+        $this->connectors = array(
+            'tcp' => $tcp,
+            'tls' => $tls,
+            'unix' => $unix
+        );
     }
 
     public function connect($uri)
     {
-        if (strpos($uri, '://') === false) {
-            $uri = 'tcp://' . $uri;
+        $scheme = 'tcp';
+        if (strpos($uri, '://') !== false) {
+            $scheme = (string)substr($uri, 0, strpos($uri, '://'));
         }
 
-        $scheme = (string)substr($uri, 0, strpos($uri, '://'));
-
-        if ($scheme === 'tcp') {
-            return $this->tcp->connect($uri);
-        } elseif ($scheme === 'tls') {
-            return $this->tls->connect($uri);
-        } elseif ($scheme === 'unix') {
-            return $this->unix->connect($uri);
-        } else{
-            return Promise\reject(new InvalidArgumentException('Unknown URI scheme given'));
+        if (!isset($this->connectors[$scheme])) {
+            return Promise\reject(new RuntimeException(
+                'No connector available for URI scheme "' . $scheme . '"'
+            ));
         }
+
+        return $this->connectors[$scheme]->connect($uri);
     }
 }
 

@@ -4,14 +4,14 @@ use React\EventLoop\Factory;
 use React\SocketClient\Connector;
 use React\SocketClient\ConnectionInterface;
 
-$target = 'tls://' . (isset($argv[1]) ? $argv[1] : 'www.google.com:443');
+$target = isset($argv[1]) ? $argv[1] : 'www.google.com:443';
 
 require __DIR__ . '/../vendor/autoload.php';
 
 $loop = Factory::create();
 $connector = new Connector($loop);
 
-$connector->connect($target)->then(function (ConnectionInterface $connection) use ($target) {
+$connector->connect('tls://' . $target)->then(function (ConnectionInterface $connection) use ($target) {
     $connection->on('data', function ($data) {
         echo $data;
     });
