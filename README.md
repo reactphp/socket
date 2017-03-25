@@ -340,6 +340,44 @@ $connector->connect('tls://localhost:443')->then(function (ConnectionInterface $
   about [socket context options](http://php.net/manual/en/context.socket.php)
   and [SSL context options](http://php.net/manual/en/context.ssl.php).
 
+Advanced: By default, the `Connector` supports the `tcp://`, `tls://` and
+`unix://` URI schemes.
+For this, it sets up the required connector classes automatically.
+If you want to explicitly pass custom connectors for any of these, you can simply
+pass an instance implementing the `ConnectorInterface` like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
+$tcp = new DnsConnector(new TcpConnector($loop), $resolver);
+
+$tls = new SecureConnector($tcp, $loop);
+
+$unix = new UnixConnector($loop);
+
+$connector = new Connector($loop, array(
+    'tcp' => $tcp,
+    'dns' => false,
+    'tls' => $tls,
+    'unix' => $unix,
+));
+
+$connector->connect('google.com:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> Internally, the `tcp://` connector will always be wrapped by the DNS resolver,
+  unless you disable DNS like in the above example. In this case, the `tcp://`
+  connector receives the actual hostname instead of only the resolved IP address
+  and is thus responsible for performing the lookup.
+  Internally, the automatically created `tls://` connector will always wrap the
+  underlying `tcp://` connector for establishing the underlying plaintext
+  TCP/IP connection before enabling secure TLS mode. If you want to use a custom
+  underlying `tcp://` connector for secure TLS connections only, you may
+  explicitly pass a `tls://` connector like above instead.
+
 ## Advanced Usage
 
 ### TcpConnector

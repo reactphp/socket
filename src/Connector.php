@@ -37,10 +37,15 @@ final class Connector implements ConnectorInterface
             'unix' => true,
         );
 
-        $tcp = new TcpConnector(
-            $loop,
-            is_array($options['tcp']) ? $options['tcp'] : array()
-        );
+        if ($options['tcp'] instanceof ConnectorInterface) {
+            $tcp = $options['tcp'];
+        } else {
+            $tcp = new TcpConnector(
+                $loop,
+                is_array($options['tcp']) ? $options['tcp'] : array()
+            );
+        }
+
         if ($options['dns'] !== false) {
             if ($options['dns'] instanceof Resolver) {
                 $resolver = $options['dns'];
@@ -60,17 +65,21 @@ final class Connector implements ConnectorInterface
         }
 
         if ($options['tls'] !== false) {
-            $tls = new SecureConnector(
-                $tcp,
-                $loop,
-                is_array($options['tls']) ? $options['tls'] : array()
-            );
-            $this->connectors['tls'] = $tls;
+            if (!$options['tls'] instanceof ConnectorInterface) {
+                $options['tls'] = new SecureConnector(
+                    $tcp,
+                    $loop,
+                    is_array($options['tls']) ? $options['tls'] : array()
+                );
+            }
+            $this->connectors['tls'] = $options['tls'];
         }
 
         if ($options['unix'] !== false) {
-            $unix = new UnixConnector($loop);
-            $this->connectors['unix'] = $unix;
+            if (!$options['unix'] instanceof ConnectorInterface) {
+                $options['unix'] = new UnixConnector($loop);
+            }
+            $this->connectors['unix'] = $options['unix'];
         }
     }
 
