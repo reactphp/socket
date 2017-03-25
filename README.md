@@ -307,11 +307,38 @@ $connector = new Connector($loop, array(
     'unix' => false,
 ));
 
-$connector->connect('tcp://localhost:443')->then(function (ConnectionInterface $connection) {
+$connector->connect('tls://google.com:443')->then(function (ConnectionInterface $connection) {
     $connection->write('...');
     $connection->end();
 });
 ```
+
+The `tcp://` and `tls://` also accept additional context options passed to
+the underlying connectors.
+If you want to explicitly pass additional context options, you can simply
+pass arrays of context options like this:
+
+```php
+// allow insecure TLS connections
+$connector = new Connector($loop, array(
+    'tcp' => array(
+        'bindto' => '192.168.0.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    ),
+));
+
+$connector->connect('tls://localhost:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> For more details about context options, please refer to the PHP documentation
+  about [socket context options](http://php.net/manual/en/context.socket.php)
+  and [SSL context options](http://php.net/manual/en/context.ssl.php).
 
 ## Advanced Usage
 

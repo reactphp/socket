@@ -37,7 +37,10 @@ final class Connector implements ConnectorInterface
             'unix' => true,
         );
 
-        $tcp = new TcpConnector($loop);
+        $tcp = new TcpConnector(
+            $loop,
+            is_array($options['tcp']) ? $options['tcp'] : array()
+        );
         if ($options['dns'] !== false) {
             if ($options['dns'] instanceof Resolver) {
                 $resolver = $options['dns'];
@@ -57,7 +60,11 @@ final class Connector implements ConnectorInterface
         }
 
         if ($options['tls'] !== false) {
-            $tls = new SecureConnector($tcp, $loop);
+            $tls = new SecureConnector(
+                $tcp,
+                $loop,
+                is_array($options['tls']) ? $options['tls'] : array()
+            );
             $this->connectors['tls'] = $tls;
         }
 

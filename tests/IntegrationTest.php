@@ -110,16 +110,14 @@ class IntegrationTest extends TestCase
 
         $loop = new StreamSelectLoop();
 
-        $secureConnector = new SecureConnector(
-            new Connector($loop),
-            $loop,
-            array(
+        $connector = new Connector($loop, array(
+            'tls' => array(
                 'verify_peer' => true
             )
-        );
+        ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($secureConnector->connect('self-signed.badssl.com:443'), $loop, self::TIMEOUT);
+        Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
     }
 
     /** @test */
@@ -131,15 +129,13 @@ class IntegrationTest extends TestCase
 
         $loop = new StreamSelectLoop();
 
-        $secureConnector = new SecureConnector(
-            new Connector($loop),
-            $loop,
-            array(
+        $connector = new Connector($loop, array(
+            'tls' => array(
                 'verify_peer' => false
             )
-        );
+        ));
 
-        $conn = Block\await($secureConnector->connect('self-signed.badssl.com:443'), $loop, self::TIMEOUT);
+        $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
         $conn->close();
     }
 
