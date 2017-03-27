@@ -25,13 +25,16 @@ use RuntimeException;
  */
 final class Connector implements ConnectorInterface
 {
-    private $connectors;
+    private $connectors = array();
 
     public function __construct(LoopInterface $loop, array $options = array())
     {
         // apply default options if not explicitly given
         $options += array(
-            'dns' => true
+            'tcp' => true,
+            'dns' => true,
+            'tls' => true,
+            'unix' => true,
         );
 
         $tcp = new TcpConnector($loop);
@@ -49,15 +52,19 @@ final class Connector implements ConnectorInterface
             $tcp = new DnsConnector($tcp, $resolver);
         }
 
-        $tls = new SecureConnector($tcp, $loop);
+        if ($options['tcp'] !== false) {
+            $this->connectors['tcp'] = $tcp;
+        }
 
-        $unix = new UnixConnector($loop);
+        if ($options['tls'] !== false) {
+            $tls = new SecureConnector($tcp, $loop);
+            $this->connectors['tls'] = $tls;
+        }
 
-        $this->connectors = array(
-            'tcp' => $tcp,
-            'tls' => $tls,
-            'unix' => $unix
-        );
+        if ($options['unix'] !== false) {
+            $unix = new UnixConnector($loop);
+            $this->connectors['unix'] = $unix;
+        }
     }
 
     public function connect($uri)

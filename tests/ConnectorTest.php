@@ -16,6 +16,50 @@ class ConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnce());
     }
 
+    public function testConnectorWithDisabledTcpDefaultSchemeAlwaysFails()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = new Connector($loop, array(
+            'tcp' => false
+        ));
+
+        $promise = $connector->connect('google.com:80');
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
+    public function testConnectorWithDisabledTcpSchemeAlwaysFails()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = new Connector($loop, array(
+            'tcp' => false
+        ));
+
+        $promise = $connector->connect('tcp://google.com:80');
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
+    public function testConnectorWithDisabledTlsSchemeAlwaysFails()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = new Connector($loop, array(
+            'tls' => false
+        ));
+
+        $promise = $connector->connect('tls://google.com:443');
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
+    public function testConnectorWithDisabledUnixSchemeAlwaysFails()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = new Connector($loop, array(
+            'unix' => false
+        ));
+
+        $promise = $connector->connect('unix://demo.sock');
+        $promise->then(null, $this->expectCallableOnce());
+    }
+
     public function testConnectorUsesGivenResolverInstance()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();

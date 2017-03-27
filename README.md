@@ -295,6 +295,24 @@ $connector->connect('localhost:80')->then(function (ConnectionInterface $connect
 });
 ```
 
+By default, the `Connector` supports the `tcp://`, `tls://` and `unix://`
+URI schemes. If you want to explicitly prohibit any of these, you can simply
+pass boolean flags like this:
+
+```php
+// only allow secure TLS connections
+$connector = new Connector($loop, array(
+    'tcp' => false,
+    'tls' => true,
+    'unix' => false,
+));
+
+$connector->connect('tcp://localhost:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
 ## Advanced Usage
 
 ### TcpConnector
