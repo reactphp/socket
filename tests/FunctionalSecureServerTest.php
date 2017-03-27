@@ -6,7 +6,7 @@ use React\EventLoop\Factory;
 use React\Stream\Stream;
 use React\Socket\SecureServer;
 use React\Socket\ConnectionInterface;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\TcpConnector;
 use React\Socket\SecureConnector;
 use Clue\React\Block;
@@ -26,7 +26,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -44,7 +44,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -71,7 +71,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -103,7 +103,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -131,7 +131,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -163,7 +163,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -197,7 +197,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'swordfish'
@@ -216,7 +216,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => 'invalid.pem'
         ));
@@ -236,7 +236,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem'
         ));
@@ -256,7 +256,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'nope'
@@ -277,7 +277,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -297,7 +297,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -318,7 +318,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
@@ -336,7 +336,7 @@ class FunctionalSecureServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));

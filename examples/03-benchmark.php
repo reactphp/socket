@@ -17,7 +17,7 @@
 // $ dd if=/dev/zero bs=1M count=1000 | openssl s_client -connect localhost:8000
 
 use React\EventLoop\Factory;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureServer;
 
@@ -25,7 +25,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $loop = Factory::create();
 
-$server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop);
+$server = new TcpServer(isset($argv[1]) ? $argv[1] : 0, $loop);
 
 // secure TLS mode if certificate is given as second parameter
 if (isset($argv[2])) {

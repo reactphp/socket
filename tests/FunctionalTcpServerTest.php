@@ -3,18 +3,18 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpConnector;
 use Clue\React\Block;
 
-class FunctionalServerTest extends TestCase
+class FunctionalTcpServerTest extends TestCase
 {
     public function testEmitsConnectionForNewConnection()
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
 
         $connector = new TcpConnector($loop);
@@ -29,7 +29,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->on('connection', $this->expectCallableNever());
         $server->pause();
 
@@ -45,7 +45,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
         $server->pause();
         $server->resume();
@@ -62,7 +62,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $peer = $conn->getRemoteAddress();
@@ -82,7 +82,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $local = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
             $local = $conn->getLocalAddress();
@@ -103,7 +103,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server('0.0.0.0:0', $loop);
+        $server = new TcpServer('0.0.0.0:0', $loop);
         $local = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$local) {
             $local = $conn->getLocalAddress();
@@ -123,7 +123,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $conn->on('close', function () use ($conn, &$peer) {
@@ -146,7 +146,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $peer = null;
         $server->on('connection', function (ConnectionInterface $conn) use (&$peer) {
             $conn->close();
@@ -167,7 +167,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->on('connection', $this->expectCallableOnce());
 
         $connector = new TcpConnector($loop);
@@ -184,7 +184,7 @@ class FunctionalServerTest extends TestCase
         $loop = Factory::create();
 
         try {
-            $server = new Server('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0', $loop);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -204,7 +204,7 @@ class FunctionalServerTest extends TestCase
         $loop = Factory::create();
 
         try {
-            $server = new Server('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0', $loop);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -229,7 +229,7 @@ class FunctionalServerTest extends TestCase
         $loop = Factory::create();
 
         try {
-            $server = new Server('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0', $loop);
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -259,7 +259,7 @@ class FunctionalServerTest extends TestCase
 
         $loop = Factory::create();
 
-        $server = new Server(0, $loop, array(
+        $server = new TcpServer(0, $loop, array(
             'backlog' => 4
         ));
 
@@ -285,7 +285,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        new Server('///', $loop);
+        new TcpServer('///', $loop);
     }
 
     /**
@@ -295,7 +295,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        new Server('127.0.0.1', $loop);
+        new TcpServer('127.0.0.1', $loop);
     }
 
     /**
@@ -305,7 +305,7 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        new Server('udp://127.0.0.1:0', $loop);
+        new TcpServer('udp://127.0.0.1:0', $loop);
     }
 
     /**
@@ -315,6 +315,6 @@ class FunctionalServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        new Server('localhost:8080', $loop);
+        new TcpServer('localhost:8080', $loop);
     }
 }
