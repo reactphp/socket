@@ -2,6 +2,11 @@
 
 [![Build Status](https://secure.travis-ci.org/reactphp/socket.png?branch=master)](http://travis-ci.org/reactphp/socket)
 
+For previous versions, please see related documentation:
+
+| [0.3.x](https://github.com/reactphp/socket/tree/0.3/README.md) | [0.4.x](https://github.com/reactphp/socket/tree/0.4/README.md) | [0.5.x](https://github.com/reactphp/socket/tree/master/README.md) |
+|---|---|---|
+
 Async, streaming plaintext TCP/IP and secure TLS socket server for React PHP
 
 The socket component provides a more usable interface for a socket-layer
