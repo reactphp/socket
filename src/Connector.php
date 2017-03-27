@@ -32,10 +32,16 @@ final class Connector implements ConnectorInterface
         // apply default options if not explicitly given
         $options += array(
             'tcp' => true,
-            'dns' => true,
             'tls' => true,
             'unix' => true,
+
+            'dns' => true,
+            'timeout' => true,
         );
+
+        if ($options['timeout'] === true) {
+            $options['timeout'] = (float)ini_get("default_socket_timeout");
+        }
 
         if ($options['tcp'] instanceof ConnectorInterface) {
             $tcp = $options['tcp'];
@@ -61,7 +67,17 @@ final class Connector implements ConnectorInterface
         }
 
         if ($options['tcp'] !== false) {
-            $this->connectors['tcp'] = $tcp;
+            $options['tcp'] = $tcp;
+
+            if ($options['timeout'] !== false) {
+                $options['tcp'] = new TimeoutConnector(
+                    $options['tcp'],
+                    $options['timeout'],
+                    $loop
+                );
+            }
+
+            $this->connectors['tcp'] = $options['tcp'];
         }
 
         if ($options['tls'] !== false) {
@@ -72,6 +88,15 @@ final class Connector implements ConnectorInterface
                     is_array($options['tls']) ? $options['tls'] : array()
                 );
             }
+
+            if ($options['timeout'] !== false) {
+                $options['tls'] = new TimeoutConnector(
+                    $options['tls'],
+                    $options['timeout'],
+                    $loop
+                );
+            }
+
             $this->connectors['tls'] = $options['tls'];
         }
 

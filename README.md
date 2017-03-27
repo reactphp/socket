@@ -295,6 +295,25 @@ $connector->connect('localhost:80')->then(function (ConnectionInterface $connect
 });
 ```
 
+By default, the `tcp://` and `tls://` URI schemes will use timeout value that
+repects your `default_socket_timeout` ini setting (which defaults to 60s).
+If you want a custom timeout value, you can simply pass this like this:
+
+```php
+$connector = new Connector($loop, array(
+    'timeout' => 10.0
+));
+```
+
+Similarly, if you do not want to apply a timeout at all and let the operating
+system handle this, you can pass a boolean flag like this:
+
+```php
+$connector = new Connector($loop, array(
+    'timeout' => false
+));
+```
+
 By default, the `Connector` supports the `tcp://`, `tls://` and `unix://`
 URI schemes. If you want to explicitly prohibit any of these, you can simply
 pass boolean flags like this:
@@ -357,9 +376,11 @@ $unix = new UnixConnector($loop);
 
 $connector = new Connector($loop, array(
     'tcp' => $tcp,
-    'dns' => false,
     'tls' => $tls,
     'unix' => $unix,
+
+    'dns' => false,
+    'timeout' => false,
 ));
 
 $connector->connect('google.com:80')->then(function (ConnectionInterface $connection) {
@@ -377,6 +398,8 @@ $connector->connect('google.com:80')->then(function (ConnectionInterface $connec
   TCP/IP connection before enabling secure TLS mode. If you want to use a custom
   underlying `tcp://` connector for secure TLS connections only, you may
   explicitly pass a `tls://` connector like above instead.
+  Internally, the `tcp://` and `tls://` connectors will always be wrapped by
+  `TimeoutConnector`, unless you disable timeouts like in the above example.
 
 ## Advanced Usage
 

@@ -11,8 +11,9 @@ class ConnectorTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $promise = new Promise(function () { });
         $tcp = $this->getMockBuilder('React\SocketClient\ConnectorInterface')->getMock();
-        $tcp->expects($this->once())->method('connect')->with('127.0.0.1:80');
+        $tcp->expects($this->once())->method('connect')->with('127.0.0.1:80')->willReturn($promise);
 
         $connector = new Connector($loop, array(
             'tcp' => $tcp
@@ -25,8 +26,9 @@ class ConnectorTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $promise = new Promise(function () { });
         $tcp = $this->getMockBuilder('React\SocketClient\ConnectorInterface')->getMock();
-        $tcp->expects($this->once())->method('connect')->with('tcp://google.com:80');
+        $tcp->expects($this->once())->method('connect')->with('tcp://google.com:80')->willReturn($promise);
 
         $connector = new Connector($loop, array(
             'tcp' => $tcp,
@@ -112,8 +114,9 @@ class ConnectorTest extends TestCase
         $resolver = $this->getMockBuilder('React\Dns\Resolver\Resolver')->disableOriginalConstructor()->getMock();
         $resolver->expects($this->once())->method('resolve')->with('google.com')->willReturn($promise);
 
+        $promise = new Promise(function () { });
         $tcp = $this->getMockBuilder('React\SocketClient\ConnectorInterface')->getMock();
-        $tcp->expects($this->once())->method('connect')->with('tcp://127.0.0.1:80?hostname=google.com');
+        $tcp->expects($this->once())->method('connect')->with('tcp://127.0.0.1:80?hostname=google.com')->willReturn($promise);
 
         $connector = new Connector($loop, array(
             'tcp' => $tcp,
