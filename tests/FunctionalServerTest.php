@@ -25,6 +25,39 @@ class FunctionalServerTest extends TestCase
         Block\sleep(0.1, $loop);
     }
 
+    public function testEmitsNoConnectionForNewConnectionWhenPaused()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+        $server->on('connection', $this->expectCallableNever());
+        $server->pause();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->connect($server->getAddress());
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
+    public function testEmitsConnectionForNewConnectionWhenResumedAfterPause()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+        $server->on('connection', $this->expectCallableOnce());
+        $server->pause();
+        $server->resume();
+
+        $connector = new TcpConnector($loop);
+        $promise = $connector->connect($server->getAddress());
+
+        $promise->then($this->expectCallableOnce());
+
+        Block\sleep(0.1, $loop);
+    }
+
     public function testEmitsConnectionWithRemoteIp()
     {
         $loop = Factory::create();

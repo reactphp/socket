@@ -232,6 +232,51 @@ class ServerTest extends TestCase
         $this->loop->tick();
     }
 
+    public function testCtorAddsResourceToLoop()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addReadStream');
+
+        $server = new Server(0, $loop);
+    }
+
+    public function testResumeWithoutPauseIsNoOp()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addReadStream');
+
+        $server = new Server(0, $loop);
+        $server->resume();
+    }
+
+    public function testPauseRemovesResourceFromLoop()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('removeReadStream');
+
+        $server = new Server(0, $loop);
+        $server->pause();
+    }
+
+    public function testPauseAfterPauseIsNoOp()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('removeReadStream');
+
+        $server = new Server(0, $loop);
+        $server->pause();
+        $server->pause();
+    }
+
+    public function testCloseRemovesResourceFromLoop()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('removeReadStream');
+
+        $server = new Server(0, $loop);
+        $server->close();
+    }
+
     /**
      * @expectedException RuntimeException
      */

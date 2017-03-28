@@ -39,6 +39,7 @@ final class Server extends EventEmitter implements ServerInterface
 {
     private $master;
     private $loop;
+    private $listening = false;
 
     /**
      * Creates a plaintext TCP/IP socket server and starts listening on the given address
@@ -168,17 +169,7 @@ final class Server extends EventEmitter implements ServerInterface
         }
         stream_set_blocking($this->master, 0);
 
-        $that = $this;
-
-        $this->loop->addReadStream($this->master, function ($master) use ($that) {
-            $newSocket = @stream_socket_accept($master);
-            if (false === $newSocket) {
-                $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
-
-                return;
-            }
-            $that->handleConnection($newSocket);
-        });
+        $this->resume();
     }
 
     public function getAddress()
@@ -199,13 +190,42 @@ final class Server extends EventEmitter implements ServerInterface
         return $address;
     }
 
+    public function pause()
+    {
+        if (!$this->listening) {
+            return;
+        }
+
+        $this->loop->removeReadStream($this->master);
+        $this->listening = false;
+    }
+
+    public function resume()
+    {
+        if ($this->listening || !is_resource($this->master)) {
+            return;
+        }
+
+        $that = $this;
+        $this->loop->addReadStream($this->master, function ($master) use ($that) {
+            $newSocket = @stream_socket_accept($master);
+            if (false === $newSocket) {
+                $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
+
+                return;
+            }
+            $that->handleConnection($newSocket);
+        });
+        $this->listening = true;
+    }
+
     public function close()
     {
         if (!is_resource($this->master)) {
             return;
         }
 
-        $this->loop->removeStream($this->master);
+        $this->pause();
         fclose($this->master);
         $this->removeAllListeners();
     }

@@ -73,6 +73,67 @@ interface ServerInterface extends EventEmitterInterface
     public function getAddress();
 
     /**
+     * Pauses accepting new incoming connections.
+     *
+     * Removes the socket resource from the EventLoop and thus stop accepting
+     * new connections. Note that the listening socket stays active and is not
+     * closed.
+     *
+     * This means that new incoming connections will stay pending in the
+     * operating system backlog until its configurable backlog is filled.
+     * Once the backlog is filled, the operating system may reject further
+     * incoming connections until the backlog is drained again by resuming
+     * to accept new connections.
+     *
+     * Once the server is paused, no futher `connection` events SHOULD
+     * be emitted.
+     *
+     * ```php
+     * $server->pause();
+     *
+     * $server->on('connection', assertShouldNeverCalled());
+     * ```
+     *
+     * This method is advisory-only, though generally not recommended, the
+     * server MAY continue emitting `connection` events.
+     *
+     * Unless otherwise noted, a successfully opened server SHOULD NOT start
+     * in paused state.
+     *
+     * You can continue processing events by calling `resume()` again.
+     *
+     * Note that both methods can be called any number of times, in particular
+     * calling `pause()` more than once SHOULD NOT have any effect.
+     * Similarly, calling this after `close()` is a NO-OP.
+     *
+     * @see self::resume()
+     * @return void
+     */
+    public function pause();
+
+    /**
+     * Resumes accepting new incoming connections.
+     *
+     * Re-attach the socket resource to the EventLoop after a previous `pause()`.
+     *
+     * ```php
+     * $server->pause();
+     *
+     * $loop->addTimer(1.0, function () use ($server) {
+     *     $server->resume();
+     * });
+     * ```
+     *
+     * Note that both methods can be called any number of times, in particular
+     * calling `resume()` without a prior `pause()` SHOULD NOT have any effect.
+     * Similarly, calling this after `close()` is a NO-OP.
+     *
+     * @see self::pause()
+     * @return void
+     */
+    public function resume();
+
+    /**
      * Shuts down this listening socket
      *
      * This will stop listening for new incoming connections on this socket.
