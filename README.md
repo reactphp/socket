@@ -21,6 +21,8 @@ and [`Stream`](https://github.com/reactphp/stream) components.
     * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
+  * [AccountingServer](#accountingserver)
+    * [getConnections()](#getconnections)
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
@@ -377,6 +379,52 @@ expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
+
+### AccountingServer
+
+The `AccountingServer` decorators wraps a given `ServerInterface` and is responsible
+for keeping track of open connections to this server instance.
+
+Whenever the underlying server emits a `connection` event, it will keep track
+of this connection by adding it to the list of open connections and then
+forward the `connection` event (unless its limits are exceeded).
+
+Whenever a connection closes, it will remove this connection from the list of
+open connections.
+
+```php
+$server = new AccountingServer($server);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+See also the [second example](examples) for more details.
+
+You can optionally pass a maximum number of open connections to ensure
+the server will automatically reject (close) connections once this limit
+is exceeded. In this case, it will emit an `error` event to inform about
+this and no `connection` event will be emitted.
+
+```php
+$server = new AccountingServer($server, 50);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+#### getConnections()
+
+The `getConnections(): ConnectionInterface[]` method can be used to
+return an array with all currently active connections.
+
+```php
+foreach ($server->getConnection() as $connection) {
+    $connection->write('Hi!');
+}
+```
 
 ### ConnectionInterface
 

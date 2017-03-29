@@ -15,6 +15,7 @@ use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureServer;
+use React\Socket\AccountingServer;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -29,17 +30,11 @@ if (isset($argv[2])) {
     ));
 }
 
-$clients = array();
+$server = new AccountingServer($server);
 
-$server->on('connection', function (ConnectionInterface $client) use (&$clients) {
-    // keep a list of all connected clients
-    $clients []= $client;
-    $client->on('close', function() use ($client, &$clients) {
-        unset($clients[array_search($client, $clients)]);
-    });
-
+$server->on('connection', function (ConnectionInterface $client) use ($server) {
     // whenever a new message comes in
-    $client->on('data', function ($data) use ($client, &$clients) {
+    $client->on('data', function ($data) use ($client, $server) {
         // remove any non-word characters (just for the demo)
         $data = trim(preg_replace('/[^\w\d \.\,\-\!\?]/u', '', $data));
 
@@ -50,8 +45,8 @@ $server->on('connection', function (ConnectionInterface $client) use (&$clients)
 
         // prefix with client IP and broadcast to all connected clients
         $data = $client->getRemoteAddress() . ': ' . $data . PHP_EOL;
-        foreach ($clients as $client) {
-            $client->write($data);
+        foreach ($server->getConnections() as $connection) {
+            $connection->write($data);
         }
     });
 });
