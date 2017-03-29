@@ -23,23 +23,18 @@ handle multiple connections without blocking.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
-  * [Plaintext TCP/IP connections](#plaintext-tcpip-connections)
-  * [DNS resolution](#dns-resolution)
-  * [Secure TLS connections](#secure-tls-connections)
-  * [Connection timeout](#connection-timeouts)
-  * [Unix domain sockets](#unix-domain-sockets)
+  * [Connector](#connector)
+* [Advanced Usage](#advanced-usage)
+  * [TcpConnector](#tcpconnector)
+  * [DnsConnector](#dnsconnector)
+  * [SecureConnector](#secureconnector)
+  * [TimeoutConnector](#timeoutconnector)
+  * [UnixConnector](#unixconnector)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
 
 ## Usage
-
-In order to use this project, you'll need the following react boilerplate code
-to initialize the main loop.
-
-```php
-$loop = React\EventLoop\Factory::create();
-```
 
 ### ConnectorInterface
 
@@ -187,7 +182,228 @@ If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
 
-### Plaintext TCP/IP connections
+### Connector
+
+The `Connector` class is the main class in this package that implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create streaming connections.
+
+You can use this connector to create any kind of streaming connections, such
+as plaintext TCP/IP, secure TLS or local Unix connection streams.
+
+It binds to the main event loop and can be used like this:
+
+```php
+$loop = React\EventLoop\Factory::create();
+$connector = new Connector($loop);
+
+$connector->connect($uri)->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+
+$loop->run();
+```
+
+In order to create a plaintext TCP/IP connection, you can simply pass a host
+and port combination like this:
+
+```php
+$connector->connect('www.google.com:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> If you do no specify a URI scheme in the destination URI, it will assume
+  `tcp://` as a default and establish a plaintext TCP/IP connection.
+  Note that TCP/IP connections require a host and port part in the destination
+  URI like above, all other URI components are optional.
+
+In order to create a secure TLS connection, you can use the `tls://` URI scheme
+like this:
+
+```php
+$connector->connect('tls://www.google.com:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+In order to create a local Unix domain socket connection, you can use the
+`unix://` URI scheme like this:
+
+```php
+$connector->connect('unix:///tmp/demo.sock')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+Under the hood, the `Connector` is implemented as a *higher-level facade*
+for the lower-level connectors implemented in this package. This means it
+also shares all of their features and implementation details.
+If you want to typehint in your higher-level protocol implementation, you SHOULD
+use the generic [`ConnectorInterface`](#connectorinterface) instead.
+
+In particular, the `Connector` class uses Google's public DNS server `8.8.8.8`
+to resolve all hostnames into underlying IP addresses by default.
+This implies that it also ignores your `hosts` file and `resolve.conf`, which
+means you won't be able to connect to `localhost` and other non-public
+hostnames by default.
+If you want to use a custom DNS server (such as a local DNS relay), you can set
+up the `Connector` like this:
+
+```php
+$connector = new Connector($loop, array(
+    'dns' => '127.0.1.1'
+));
+
+$connector->connect('localhost:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+If you do not want to use a DNS resolver at all and want to connect to IP
+addresses only, you can also set up your `Connector` like this:
+
+```php
+$connector = new Connector($loop, array(
+    'dns' => false
+));
+
+$connector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+Advanced: If you need a custom DNS `Resolver` instance, you can also set up
+your `Connector` like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
+
+$connector = new Connector($loop, array(
+    'dns' => $resolver
+));
+
+$connector->connect('localhost:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+By default, the `tcp://` and `tls://` URI schemes will use timeout value that
+repects your `default_socket_timeout` ini setting (which defaults to 60s).
+If you want a custom timeout value, you can simply pass this like this:
+
+```php
+$connector = new Connector($loop, array(
+    'timeout' => 10.0
+));
+```
+
+Similarly, if you do not want to apply a timeout at all and let the operating
+system handle this, you can pass a boolean flag like this:
+
+```php
+$connector = new Connector($loop, array(
+    'timeout' => false
+));
+```
+
+By default, the `Connector` supports the `tcp://`, `tls://` and `unix://`
+URI schemes. If you want to explicitly prohibit any of these, you can simply
+pass boolean flags like this:
+
+```php
+// only allow secure TLS connections
+$connector = new Connector($loop, array(
+    'tcp' => false,
+    'tls' => true,
+    'unix' => false,
+));
+
+$connector->connect('tls://google.com:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+The `tcp://` and `tls://` also accept additional context options passed to
+the underlying connectors.
+If you want to explicitly pass additional context options, you can simply
+pass arrays of context options like this:
+
+```php
+// allow insecure TLS connections
+$connector = new Connector($loop, array(
+    'tcp' => array(
+        'bindto' => '192.168.0.1:0'
+    ),
+    'tls' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false
+    ),
+));
+
+$connector->connect('tls://localhost:443')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> For more details about context options, please refer to the PHP documentation
+  about [socket context options](http://php.net/manual/en/context.socket.php)
+  and [SSL context options](http://php.net/manual/en/context.ssl.php).
+
+Advanced: By default, the `Connector` supports the `tcp://`, `tls://` and
+`unix://` URI schemes.
+For this, it sets up the required connector classes automatically.
+If you want to explicitly pass custom connectors for any of these, you can simply
+pass an instance implementing the `ConnectorInterface` like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
+$tcp = new DnsConnector(new TcpConnector($loop), $resolver);
+
+$tls = new SecureConnector($tcp, $loop);
+
+$unix = new UnixConnector($loop);
+
+$connector = new Connector($loop, array(
+    'tcp' => $tcp,
+    'tls' => $tls,
+    'unix' => $unix,
+
+    'dns' => false,
+    'timeout' => false,
+));
+
+$connector->connect('google.com:80')->then(function (ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+```
+
+> Internally, the `tcp://` connector will always be wrapped by the DNS resolver,
+  unless you disable DNS like in the above example. In this case, the `tcp://`
+  connector receives the actual hostname instead of only the resolved IP address
+  and is thus responsible for performing the lookup.
+  Internally, the automatically created `tls://` connector will always wrap the
+  underlying `tcp://` connector for establishing the underlying plaintext
+  TCP/IP connection before enabling secure TLS mode. If you want to use a custom
+  underlying `tcp://` connector for secure TLS connections only, you may
+  explicitly pass a `tls://` connector like above instead.
+  Internally, the `tcp://` and `tls://` connectors will always be wrapped by
+  `TimeoutConnector`, unless you disable timeouts like in the above example.
+
+## Advanced Usage
+
+### TcpConnector
 
 The `React\SocketClient\TcpConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -246,7 +462,7 @@ be used to set up the TLS peer name.
 This is used by the `SecureConnector` and `DnsConnector` to verify the peer
 name and can also be used if you want a custom TLS peer name.
 
-### DNS resolution
+### DnsConnector
 
 The `DnsConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -260,7 +476,7 @@ Make sure to set up your DNS resolver and underlying TCP connector like this:
 
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
-$dns = $dnsResolverFactory->connectCached('8.8.8.8', $loop);
+$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
 $dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
 
@@ -306,7 +522,7 @@ hostname and is used by the `TcpConnector` to set up the TLS peer name.
 If a `hostname` is given explicitly, this query parameter will not be modified,
 which can be useful if you want a custom TLS peer name.
 
-### Secure TLS connections
+### SecureConnector
 
 The `SecureConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create secure
@@ -360,7 +576,7 @@ Failing to do so may result in a TLS peer name mismatch error or some hard to
 trace race conditions, because all stream resources will use a single, shared
 *default context* resource otherwise.
 
-### Connection timeouts
+### TimeoutConnector
 
 The `TimeoutConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to add timeout
@@ -391,7 +607,7 @@ $promise->cancel();
 Calling `cancel()` on a pending promise will cancel the underlying connection
 attempt, abort the timer and reject the resulting promise.
 
-### Unix domain sockets
+### UnixConnector
 
 The `UnixConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to connect to
