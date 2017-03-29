@@ -501,16 +501,6 @@ $promise->cancel();
 Calling `cancel()` on a pending promise will cancel the underlying DNS lookup
 and/or the underlying TCP/IP connection and reject the resulting promise.
 
-The legacy `Connector` class can be used for backwards-compatiblity reasons.
-It works very much like the newer `DnsConnector` but instead has to be
-set up like this:
-
-```php
-$connector = new React\SocketClient\Connector($loop, $dns);
-
-$connector->connect('www.google.com:80')->then($callback);
-```
-
 > Advanced usage: Internally, the `DnsConnector` relies on a `Resolver` to
 look up the IP address for the given hostname.
 It will then replace the hostname in the destination URI with this IP and
