@@ -18,7 +18,11 @@ handle multiple concurrent connections without blocking.
 **Table of Contents**
 
 * [Quickstart example](#quickstart-example)
-* [Usage](#usage)
+* [Connection usage](#connection-usage)
+  * [ConnectionInterface](#connectioninterface)
+    * [getRemoteAddress()](#getremoteaddress)
+    * [getLocalAddress()](#getlocaladdress)
+* [Server usage](#server-usage)
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
     * [error event](#error-event)
@@ -30,18 +34,16 @@ handle multiple concurrent connections without blocking.
   * [SecureServer](#secureserver)
   * [LimitingServer](#limitingserver)
     * [getConnections()](#getconnections)
-  * [ConnectionInterface](#connectioninterface)
-    * [getRemoteAddress()](#getremoteaddress)
-    * [getLocalAddress()](#getlocaladdress)
+* [Client usage](#client-usage)
   * [ConnectorInterface](#connectorinterface)
     * [connect()](#connect)
   * [Connector](#connector)
-* [Advanced Usage](#advanced-usage)
-  * [TcpConnector](#tcpconnector)
-  * [DnsConnector](#dnsconnector)
-  * [SecureConnector](#secureconnector)
-  * [TimeoutConnector](#timeoutconnector)
-  * [UnixConnector](#unixconnector)
+  * [Advanced client usage](#advanced-client-usage)
+    * [TcpConnector](#tcpconnector)
+    * [DnsConnector](#dnsconnector)
+    * [SecureConnector](#secureconnector)
+    * [TimeoutConnector](#timeoutconnector)
+    * [UnixConnector](#unixconnector)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -84,7 +86,102 @@ $connector->connect('127.0.0.1:8080')->then(function (ConnectionInterface $conn)
 $loop->run();
 ```
 
-## Usage
+## Connection usage
+
+### ConnectionInterface
+
+The `ConnectionInterface` is used to represent any incoming and outgoing
+connection, such as a normal TCP/IP connection.
+
+An incoming or outgoing connection is a duplex stream (both readable and
+writable) that implements React's
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+It contains additional properties for the local and remote address (client IP)
+where this connection has been established to/from.
+
+Most commonly, instances implementing this `ConnectionInterface` are emitted
+by all classes implementing the [`ServerInterface`](#serverinterface) and
+used by all classes implementing the [`ConnectorInterface`](#connectorinterface).
+
+Because the `ConnectionInterface` implements the underlying
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
+you can use any of its events and methods as usual:
+
+```php
+$connection->on('data', function ($chunk) {
+    echo $chunk;
+});
+
+$connection->on('end', function () {
+    echo 'ended';
+});
+
+$connection->on('error', function (Exception $e) {
+    echo 'error: ' . $e->getMessage();
+});
+
+$connection->on('close', function () {
+    echo 'closed';
+});
+
+$connection->write($data);
+$connection->end($data = null);
+$connection->close();
+// …
+```
+
+For more details, see the
+[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
+
+#### getRemoteAddress()
+
+The `getRemoteAddress(): ?string` method returns the full remote address
+(client IP and port) where this connection has been established with.
+
+```php
+$address = $connection->getRemoteAddress();
+echo 'Connection with ' . $address . PHP_EOL;
+```
+
+If the remote address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full remote address as a string value.
+If this is a TCP/IP based connection and you only want the remote IP, you may
+use something like this:
+
+```php
+$address = $connection->getRemoteAddress();
+$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+echo 'Connection with ' . $ip . PHP_EOL;
+```
+
+#### getLocalAddress()
+
+The `getLocalAddress(): ?string` method returns the full local address
+(client IP and port) where this connection has been established with.
+
+```php
+$address = $connection->getLocalAddress();
+echo 'Connection with ' . $address . PHP_EOL;
+```
+
+If the local address can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full local address as a string value.
+
+This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
+so they should not be confused.
+If your `Server` instance is listening on multiple interfaces (e.g. using
+the address `0.0.0.0`), you can use this method to find out which interface
+actually accepted this connection (such as a public or local interface).
+
+If your system has multiple interfaces (e.g. a WAN and a LAN interface),
+you can use this method to find out which interface was actually
+used for this connection.
+
+## Server usage
 
 ### ServerInterface
 
@@ -473,98 +570,7 @@ foreach ($server->getConnection() as $connection) {
 }
 ```
 
-### ConnectionInterface
-
-The `ConnectionInterface` is used to represent any incoming and outgoing
-connection, such as a normal TCP/IP connection.
-
-An incoming or outgoing connection is a duplex stream (both readable and
-writable) that implements React's
-[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
-It contains additional properties for the local and remote address (client IP)
-where this connection has been established to/from.
-
-Most commonly, instances implementing this `ConnectionInterface` are emitted
-by all classes implementing the [`ServerInterface`](#serverinterface) and
-used by all classes implementing the [`ConnectorInterface`](#connectorinterface).
-
-Because the `ConnectionInterface` implements the underlying
-[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
-you can use any of its events and methods as usual:
-
-```php
-$connection->on('data', function ($chunk) {
-    echo $chunk;
-});
-
-$connection->on('end', function () {
-    echo 'ended';
-});
-
-$connection->on('error', function (Exception $e) {
-    echo 'error: ' . $e->getMessage();
-});
-
-$connection->on('close', function () {
-    echo 'closed';
-});
-
-$connection->write($data);
-$connection->end($data = null);
-$connection->close();
-// …
-```
-
-For more details, see the
-[`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
-
-#### getRemoteAddress()
-
-The `getRemoteAddress(): ?string` method returns the full remote address
-(client IP and port) where this connection has been established with.
-
-```php
-$address = $connection->getRemoteAddress();
-echo 'Connection with ' . $address . PHP_EOL;
-```
-
-If the remote address can not be determined or is unknown at this time (such as
-after the connection has been closed), it MAY return a `NULL` value instead.
-
-Otherwise, it will return the full remote address as a string value.
-If this is a TCP/IP based connection and you only want the remote IP, you may
-use something like this:
-
-```php
-$address = $connection->getRemoteAddress();
-$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
-echo 'Connection with ' . $ip . PHP_EOL;
-```
-
-#### getLocalAddress()
-
-The `getLocalAddress(): ?string` method returns the full local address
-(client IP and port) where this connection has been established with.
-
-```php
-$address = $connection->getLocalAddress();
-echo 'Connection with ' . $address . PHP_EOL;
-```
-
-If the local address can not be determined or is unknown at this time (such as
-after the connection has been closed), it MAY return a `NULL` value instead.
-
-Otherwise, it will return the full local address as a string value.
-
-This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
-so they should not be confused.
-If your `Server` instance is listening on multiple interfaces (e.g. using
-the address `0.0.0.0`), you can use this method to find out which interface
-actually accepted this connection (such as a public or local interface).
-
-If your system has multiple interfaces (e.g. a WAN and a LAN interface),
-you can use this method to find out which interface was actually
-used for this connection.
+## Client usage
 
 ### ConnectorInterface
 
@@ -834,9 +840,9 @@ $connector->connect('google.com:80')->then(function (ConnectionInterface $connec
   Internally, the `tcp://` and `tls://` connectors will always be wrapped by
   `TimeoutConnector`, unless you disable timeouts like in the above example.
 
-## Advanced Usage
+### Advanced client usage
 
-### TcpConnector
+#### TcpConnector
 
 The `React\Socket\TcpConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -895,7 +901,7 @@ be used to set up the TLS peer name.
 This is used by the `SecureConnector` and `DnsConnector` to verify the peer
 name and can also be used if you want a custom TLS peer name.
 
-### DnsConnector
+#### DnsConnector
 
 The `DnsConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
@@ -945,7 +951,7 @@ hostname and is used by the `TcpConnector` to set up the TLS peer name.
 If a `hostname` is given explicitly, this query parameter will not be modified,
 which can be useful if you want a custom TLS peer name.
 
-### SecureConnector
+#### SecureConnector
 
 The `SecureConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create secure
@@ -999,7 +1005,7 @@ Failing to do so may result in a TLS peer name mismatch error or some hard to
 trace race conditions, because all stream resources will use a single, shared
 *default context* resource otherwise.
 
-### TimeoutConnector
+#### TimeoutConnector
 
 The `TimeoutConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to add timeout
@@ -1030,7 +1036,7 @@ $promise->cancel();
 Calling `cancel()` on a pending promise will cancel the underlying connection
 attempt, abort the timer and reject the resulting promise.
 
-### UnixConnector
+#### UnixConnector
 
 The `UnixConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to connect to

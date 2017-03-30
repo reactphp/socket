@@ -133,6 +133,6 @@ final class TcpConnector implements ConnectorInterface
     /** @internal */
     public function handleConnectedSocket($socket)
     {
-        return new StreamConnection($socket, $this->loop);
+        return new Connection($socket, $this->loop);
     }
 }

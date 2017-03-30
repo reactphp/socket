@@ -32,7 +32,7 @@ class SecureIntegrationTest extends TestCase
         $this->loop = LoopFactory::create();
         $this->server = new Server(0, $this->loop);
         $this->server = new SecureServer($this->server, $this->loop, array(
-            'local_cert' => __DIR__ . '/localhost.pem'
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $this->address = $this->server->getAddress();
         $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));

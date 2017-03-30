@@ -3,7 +3,6 @@
 namespace React\Socket;
 
 use React\Socket\ConnectorInterface;
-use React\Stream\Stream;
 use React\EventLoop\LoopInterface;
 use React\Promise;
 use RuntimeException;
@@ -37,6 +36,6 @@ final class UnixConnector implements ConnectorInterface
             return Promise\reject(new RuntimeException('Unable to connect to unix domain socket "' . $path . '": ' . $errstr, $errno));
         }
 
-        return Promise\resolve(new Stream($resource, $this->loop));
+        return Promise\resolve(new Connection($resource, $this->loop));
     }
 }
