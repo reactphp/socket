@@ -3,7 +3,7 @@
 use React\EventLoop\Factory;
 use React\SocketClient\ConnectionInterface;
 use React\SocketClient\Connector;
-use React\Stream\Stream;
+use React\Stream\WritableResourceStream;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -36,8 +36,7 @@ if (isset($parts['query'])) {
     $resource .= '?' . $parts['query'];
 }
 
-$stdout = new Stream(STDOUT, $loop);
-$stdout->pause();
+$stdout = new WritableResourceStream(STDOUT, $loop);
 
 $connector->connect($target)->then(function (ConnectionInterface $connection) use ($resource, $host, $stdout) {
     $connection->pipe($stdout);

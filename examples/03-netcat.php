@@ -3,7 +3,8 @@
 use React\EventLoop\Factory;
 use React\SocketClient\Connector;
 use React\SocketClient\ConnectionInterface;
-use React\Stream\Stream;
+use React\Stream\ReadableResourceStream;
+use React\Stream\WritableResourceStream;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -15,12 +16,10 @@ if (!isset($argv[1])) {
 $loop = Factory::create();
 $connector = new Connector($loop);
 
-$stdin = new Stream(STDIN, $loop);
+$stdin = new ReadableResourceStream(STDIN, $loop);
 $stdin->pause();
-$stdout = new Stream(STDOUT, $loop);
-$stdout->pause();
-$stderr = new Stream(STDERR, $loop);
-$stderr->pause();
+$stdout = new WritableResourceStream(STDOUT, $loop);
+$stderr = new WritableResourceStream(STDERR, $loop);
 
 $stderr->write('Connecting' . PHP_EOL);
 
