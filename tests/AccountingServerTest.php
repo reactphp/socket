@@ -35,6 +35,17 @@ class AccountingServerTest extends TestCase
         $server->pause();
     }
 
+    public function testPauseTwiceWillBePassedThroughToTcpServerOnce()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+        $tcp->expects($this->once())->method('pause');
+
+        $server = new AccountingServer($tcp);
+
+        $server->pause();
+        $server->pause();
+    }
+
     public function testResumeWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
@@ -42,6 +53,19 @@ class AccountingServerTest extends TestCase
 
         $server = new AccountingServer($tcp);
 
+        $server->pause();
+        $server->resume();
+    }
+
+    public function testResumeTwiceWillBePassedThroughToTcpServerOnce()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+        $tcp->expects($this->once())->method('resume');
+
+        $server = new AccountingServer($tcp);
+
+        $server->pause();
+        $server->resume();
         $server->resume();
     }
 
@@ -104,6 +128,21 @@ class AccountingServerTest extends TestCase
         $tcp->emit('connection', array($second));
     }
 
+    public function testPausingServerWillBePausedOnceLimitIsReached()
+    {
+        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $loop->expects($this->once())->method('addReadStream');
+        $loop->expects($this->once())->method('removeReadStream');
+
+        $tcp = new Server(0, $loop);
+
+        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+
+        $server = new AccountingServer($tcp, 1, true);
+
+        $tcp->emit('connection', array($connection));
+    }
+
     public function testSocketDisconnectionWillRemoveFromList()
     {
         $loop = Factory::create();
@@ -120,5 +159,43 @@ class AccountingServerTest extends TestCase
         Block\sleep(0.1, $loop);
 
         $this->assertEquals(array(), $server->getConnections());
+    }
+
+    public function testPausingServerWillEmitOnlyOneButAcceptTwoConnectionsDueToOperatingSystem()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+        $server = new AccountingServer($server, 1, true);
+        $server->on('connection', $this->expectCallableOnce());
+        $server->on('error', $this->expectCallableNever());
+
+        $first = stream_socket_client('tcp://' . $server->getAddress());
+        $second = stream_socket_client('tcp://' . $server->getAddress());
+
+        Block\sleep(0.1, $loop);
+
+        fclose($first);
+        fclose($second);
+    }
+
+    public function testPausingServerWillEmitTwoConnectionsFromBacklog()
+    {
+        $loop = Factory::create();
+
+        $twice = $this->createCallableMock();
+        $twice->expects($this->exactly(2))->method('__invoke');
+
+        $server = new Server(0, $loop);
+        $server = new AccountingServer($server, 1, true);
+        $server->on('connection', $twice);
+        $server->on('error', $this->expectCallableNever());
+
+        $first = stream_socket_client('tcp://' . $server->getAddress());
+        fclose($first);
+        $second = stream_socket_client('tcp://' . $server->getAddress());
+        fclose($second);
+
+        Block\sleep(0.1, $loop);
     }
 }

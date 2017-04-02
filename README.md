@@ -415,6 +415,29 @@ $server->on('connection', function (ConnectionInterface $connection) {
 });
 ```
 
+You can optionally configure the server to pause accepting new
+connections once the connection limit is reached. In this case, it will
+pause the underlying server and no longer process any new connections at
+all, thus also no longer closing any excessive connections.
+The underlying operating system is responsible for keeping a backlog of
+pending connections until its limit is reached, at which point it will
+start rejecting further connections.
+Once the server is below the connection limit, it will continue consuming
+connections from the backlog and will process any outstanding data on
+each connection.
+This mode may be useful for some protocols that are designed to wait for
+a response message (such as HTTP), but may be less useful for other
+protocols that demand immediate responses (such as a "welcome" message in
+an interactive chat).
+
+```php
+$server = new AccountingServer($server, 50, true);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
 #### getConnections()
 
 The `getConnections(): ConnectionInterface[]` method can be used to

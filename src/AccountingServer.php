@@ -34,6 +34,10 @@ class AccountingServer extends EventEmitter implements ServerInterface
     private $server;
     private $limit;
 
+    private $pauseOnLimit = false;
+    private $autoPaused = false;
+    private $manuPaused = false;
+
     /**
      * Instantiates a new AccountingServer.
      *
@@ -42,13 +46,48 @@ class AccountingServer extends EventEmitter implements ServerInterface
      * is exceeded. In this case, it will emit an `error` event to inform about
      * this and no `connection` event will be emitted.
      *
+     * ```php
+     * $server = new AccountingServer($server, 50);
+     * $server->on('connection', function (ConnectionInterface $connection) {
+     *     $connection->write('hello there!' . PHP_EOL);
+     *     …
+     * });
+     * ```
+     *
+     * You can optionally configure the server to pause accepting new
+     * connections once the connection limit is reached. In this case, it will
+     * pause the underlying server and no longer process any new connections at
+     * all, thus also no longer closing any excessive connections.
+     * The underlying operating system is responsible for keeping a backlog of
+     * pending connections until its limit is reached, at which point it will
+     * start rejecting further connections.
+     * Once the server is below the connection limit, it will continue consuming
+     * connections from the backlog and will process any outstanding data on
+     * each connection.
+     * This mode may be useful for some protocols that are designed to wait for
+     * a response message (such as HTTP), but may be less useful for other
+     * protocols that demand immediate responses (such as a "welcome" message in
+     * an interactive chat).
+     *
+     * ```php
+     * $server = new AccountingServer($server, 50, true);
+     * $server->on('connection', function (ConnectionInterface $connection) {
+     *     $connection->write('hello there!' . PHP_EOL);
+     *     …
+     * });
+     * ```
+     *
      * @param ServerInterface $server
      * @param null|int        $connectionLimit
+     * @param bool            $pauseOnLimit
      */
-    public function __construct(ServerInterface $server, $connectionLimit = null)
+    public function __construct(ServerInterface $server, $connectionLimit = null, $pauseOnLimit = false)
     {
         $this->server = $server;
         $this->limit = $connectionLimit;
+        if ($connectionLimit !== null) {
+            $this->pauseOnLimit = $pauseOnLimit;
+        }
 
         $this->server->on('connection', array($this, 'handleConnection'));
         $this->server->on('error', array($this, 'handleError'));
@@ -77,12 +116,24 @@ class AccountingServer extends EventEmitter implements ServerInterface
 
     public function pause()
     {
-        $this->server->pause();
+        if (!$this->manuPaused) {
+            $this->manuPaused = true;
+
+            if (!$this->autoPaused) {
+                $this->server->pause();
+            }
+        }
     }
 
     public function resume()
     {
-        $this->server->resume();
+        if ($this->manuPaused) {
+            $this->manuPaused = false;
+
+            if (!$this->autoPaused) {
+                $this->server->resume();
+            }
+        }
     }
 
     public function close()
@@ -93,7 +144,7 @@ class AccountingServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection(ConnectionInterface $connection)
     {
-        // close connection is limit exceeded
+        // close connection if limit exceeded
         if ($this->limit !== null && count($this->connections) >= $this->limit) {
             $this->handleError(new \OverflowException('Connection closed because server reached connection limit'));
             $connection->close();
@@ -106,6 +157,15 @@ class AccountingServer extends EventEmitter implements ServerInterface
             $that->handleDisconnection($connection);
         });
 
+        // pause accepting new connections if limit exceeded
+        if ($this->pauseOnLimit && !$this->autoPaused && count($this->connections) >= $this->limit) {
+            $this->autoPaused = true;
+
+            if (!$this->manuPaused) {
+                $this->server->pause();
+            }
+        }
+
         $this->emit('connection', array($connection));
     }
 
@@ -113,6 +173,15 @@ class AccountingServer extends EventEmitter implements ServerInterface
     public function handleDisconnection(ConnectionInterface $connection)
     {
         unset($this->connections[array_search($connection, $this->connections)]);
+
+        // continue accepting new connection if below limit
+        if ($this->autoPaused && count($this->connections) < $this->limit) {
+            $this->autoPaused = false;
+
+            if (!$this->manuPaused) {
+                $this->server->resume();
+            }
+        }
     }
 
     /** @internal */
