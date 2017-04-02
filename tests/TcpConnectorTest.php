@@ -1,11 +1,11 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 use React\EventLoop\StreamSelectLoop;
 use React\Socket\Server;
-use React\SocketClient\TcpConnector;
-use React\SocketClient\ConnectionInterface;
+use React\Socket\TcpConnector;
+use React\Socket\ConnectionInterface;
 use Clue\React\Block;
 
 class TcpConnectorTest extends TestCase
@@ -37,7 +37,7 @@ class TcpConnectorTest extends TestCase
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
 
-        $this->assertInstanceOf('React\SocketClient\ConnectionInterface', $connection);
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         $connection->close();
     }

@@ -1,9 +1,9 @@
 <?php
 
-namespace React\SocketClient;
+namespace React\Socket;
 
 use React\Stream\Stream;
-use React\SocketClient\ConnectionInterface;
+use React\Socket\ConnectionInterface;
 
 /**
  * @internal should not be relied upon, see ConnectionInterface instead

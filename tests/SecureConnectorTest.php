@@ -1,9 +1,9 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 use React\Promise;
-use React\SocketClient\SecureConnector;
+use React\Socket\SecureConnector;
 
 class SecureConnectorTest extends TestCase
 {
@@ -18,7 +18,7 @@ class SecureConnectorTest extends TestCase
         }
 
         $this->loop = $this->getMock('React\EventLoop\LoopInterface');
-        $this->tcp = $this->getMock('React\SocketClient\ConnectorInterface');
+        $this->tcp = $this->getMock('React\Socket\ConnectorInterface');
         $this->connector = new SecureConnector($this->tcp, $this->loop);
     }
 
@@ -62,7 +62,7 @@ class SecureConnectorTest extends TestCase
 
     public function testConnectionWillBeClosedAndRejectedIfConnectioIsNoStream()
     {
-        $connection = $this->getMockBuilder('React\SocketClient\ConnectionInterface')->getMock();
+        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->once())->method('close');
 
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));

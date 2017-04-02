@@ -1,8 +1,8 @@
 <?php
 
 use React\EventLoop\Factory;
-use React\SocketClient\Connector;
-use React\SocketClient\ConnectionInterface;
+use React\Socket\Connector;
+use React\Socket\ConnectionInterface;
 use React\Stream\ReadableResourceStream;
 use React\Stream\WritableResourceStream;
 

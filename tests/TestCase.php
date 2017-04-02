@@ -1,6 +1,6 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 class TestCase extends \PHPUnit_Framework_TestCase
 {
@@ -47,6 +47,6 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
     protected function createCallableMock()
     {
-        return $this->getMock('React\Tests\SocketClient\CallableStub');
+        return $this->getMock('React\Tests\Socket\CallableStub');
     }
 }

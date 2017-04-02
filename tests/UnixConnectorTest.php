@@ -1,8 +1,8 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
-use React\SocketClient\UnixConnector;
+use React\Socket\UnixConnector;
 
 class UnixConnectorTest extends TestCase
 {

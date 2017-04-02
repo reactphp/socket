@@ -1,4 +1,4 @@
-# SocketClient Component
+# Socket Component
 
 [![Build Status](https://secure.travis-ci.org/reactphp/socket-client.png?branch=master)](http://travis-ci.org/reactphp/socket-client) [![Code Climate](https://codeclimate.com/github/reactphp/socket-client/badges/gpa.svg)](https://codeclimate.com/github/reactphp/socket-client)
 
@@ -405,12 +405,12 @@ $connector->connect('google.com:80')->then(function (ConnectionInterface $connec
 
 ### TcpConnector
 
-The `React\SocketClient\TcpConnector` class implements the
+The `React\Socket\TcpConnector` class implements the
 [`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
 TCP/IP connections to any IP-port-combination:
 
 ```php
-$tcpConnector = new React\SocketClient\TcpConnector($loop);
+$tcpConnector = new React\Socket\TcpConnector($loop);
 
 $tcpConnector->connect('127.0.0.1:80')->then(function (ConnectionInterface $connection) {
     $connection->write('...');
@@ -439,7 +439,7 @@ You can optionally pass additional
 to the constructor like this:
 
 ```php
-$tcpConnector = new React\SocketClient\TcpConnector($loop, array(
+$tcpConnector = new React\Socket\TcpConnector($loop, array(
     'bindto' => '192.168.0.1:0'
 ));
 ```
@@ -478,7 +478,7 @@ Make sure to set up your DNS resolver and underlying TCP connector like this:
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
 $dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
 
-$dnsConnector = new React\SocketClient\DnsConnector($tcpConnector, $dns);
+$dnsConnector = new React\Socket\DnsConnector($tcpConnector, $dns);
 
 $dnsConnector->connect('www.google.com:80')->then(function (ConnectionInterface $connection) {
     $connection->write('...');
@@ -523,7 +523,7 @@ creates a plaintext TCP/IP connection and then enables TLS encryption on this
 stream.
 
 ```php
-$secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop);
+$secureConnector = new React\Socket\SecureConnector($dnsConnector, $loop);
 
 $secureConnector->connect('www.google.com:443')->then(function (ConnectionInterface $connection) {
     $connection->write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n");
@@ -551,7 +551,7 @@ You can optionally pass additional
 to the constructor like this:
 
 ```php
-$secureConnector = new React\SocketClient\SecureConnector($dnsConnector, $loop, array(
+$secureConnector = new React\Socket\SecureConnector($dnsConnector, $loop, array(
     'verify_peer' => false,
     'verify_peer_name' => false
 ));
@@ -577,7 +577,7 @@ instance and starting a timer that will automatically reject and abort any
 underlying connection attempt if it takes too long.
 
 ```php
-$timeoutConnector = new React\SocketClient\TimeoutConnector($connector, 3.0, $loop);
+$timeoutConnector = new React\Socket\TimeoutConnector($connector, 3.0, $loop);
 
 $timeoutConnector->connect('google.com:80')->then(function (ConnectionInterface $connection) {
     // connection succeeded within 3.0 seconds
@@ -604,7 +604,7 @@ The `UnixConnector` class implements the
 Unix domain socket (UDS) paths like this:
 
 ```php
-$connector = new React\SocketClient\UnixConnector($loop);
+$connector = new React\Socket\UnixConnector($loop);
 
 $connector->connect('/tmp/demo.sock')->then(function (ConnectionInterface $connection) {
     $connection->write("HELLO\n");

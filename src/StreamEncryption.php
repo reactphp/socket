@@ -1,6 +1,6 @@
 <?php
 
-namespace React\SocketClient;
+namespace React\Socket;
 
 use React\Promise\Deferred;
 use React\Stream\Stream;
@@ -9,7 +9,7 @@ use UnexpectedValueException;
 
 /**
  * This class is considered internal and its API should not be relied upon
- * outside of SocketClient
+ * outside of Socket
  */
 class StreamEncryption
 {

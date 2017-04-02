@@ -1,6 +1,6 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 class CallableStub
 {

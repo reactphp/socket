@@ -1,15 +1,15 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 use React\Dns\Resolver\Factory;
 use React\EventLoop\StreamSelectLoop;
-use React\SocketClient\Connector;
-use React\SocketClient\SecureConnector;
-use React\SocketClient\TcpConnector;
+use React\Socket\Connector;
+use React\Socket\SecureConnector;
+use React\Socket\TcpConnector;
 use React\Stream\BufferedSink;
 use Clue\React\Block;
-use React\SocketClient\DnsConnector;
+use React\Socket\DnsConnector;
 
 class IntegrationTest extends TestCase
 {

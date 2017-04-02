@@ -1,8 +1,8 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
-use React\SocketClient\TimeoutConnector;
+use React\Socket\TimeoutConnector;
 use React\Promise;
 use React\EventLoop\Factory;
 
@@ -12,7 +12,7 @@ class TimeoutConnectorTest extends TestCase
     {
         $promise = new Promise\Promise(function () { });
 
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
@@ -31,7 +31,7 @@ class TimeoutConnectorTest extends TestCase
     {
         $promise = Promise\reject(new \RuntimeException());
 
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
@@ -50,7 +50,7 @@ class TimeoutConnectorTest extends TestCase
     {
         $promise = Promise\resolve();
 
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
@@ -69,7 +69,7 @@ class TimeoutConnectorTest extends TestCase
     {
         $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
 
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();
@@ -88,7 +88,7 @@ class TimeoutConnectorTest extends TestCase
     {
         $promise = new Promise\Promise(function () { }, function () { throw new \Exception(); });
 
-        $connector = $this->getMock('React\SocketClient\ConnectorInterface');
+        $connector = $this->getMock('React\Socket\ConnectorInterface');
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
         $loop = Factory::create();

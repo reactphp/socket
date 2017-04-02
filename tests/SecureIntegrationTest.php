@@ -1,12 +1,12 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
 use React\EventLoop\Factory as LoopFactory;
 use React\Socket\Server;
 use React\Socket\SecureServer;
-use React\SocketClient\TcpConnector;
-use React\SocketClient\SecureConnector;
+use React\Socket\TcpConnector;
+use React\Socket\SecureConnector;
 use React\Stream\Stream;
 use Clue\React\Block;
 use React\Promise\Promise;

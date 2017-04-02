@@ -1,8 +1,8 @@
 <?php
 
-namespace React\Tests\SocketClient;
+namespace React\Tests\Socket;
 
-use React\SocketClient\DnsConnector;
+use React\Socket\DnsConnector;
 use React\Promise;
 
 class DnsConnectorTest extends TestCase
@@ -13,7 +13,7 @@ class DnsConnectorTest extends TestCase
 
     public function setUp()
     {
-        $this->tcp = $this->getMock('React\SocketClient\ConnectorInterface');
+        $this->tcp = $this->getMock('React\Socket\ConnectorInterface');
         $this->resolver = $this->getMockBuilder('React\Dns\Resolver\Resolver')->disableOriginalConstructor()->getMock();
 
         $this->connector = new DnsConnector($this->tcp, $this->resolver);

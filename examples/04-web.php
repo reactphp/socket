@@ -1,8 +1,8 @@
 <?php
 
 use React\EventLoop\Factory;
-use React\SocketClient\ConnectionInterface;
-use React\SocketClient\Connector;
+use React\Socket\ConnectionInterface;
+use React\Socket\Connector;
 use React\Stream\WritableResourceStream;
 
 require __DIR__ . '/../vendor/autoload.php';

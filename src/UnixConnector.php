@@ -1,8 +1,8 @@
 <?php
 
-namespace React\SocketClient;
+namespace React\Socket;
 
-use React\SocketClient\ConnectorInterface;
+use React\Socket\ConnectorInterface;
 use React\Stream\Stream;
 use React\EventLoop\LoopInterface;
 use React\Promise;

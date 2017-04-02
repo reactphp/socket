@@ -1,6 +1,6 @@
 <?php
 
-namespace React\SocketClient;
+namespace React\Socket;
 
 use React\Dns\Resolver\Resolver;
 use React\Promise;
