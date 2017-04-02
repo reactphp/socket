@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.7.0 (2017-04-02)
+
+* Feature / BC break: Add main `Connector` facade
+  (#93 by @clue)
+
+  The new `Connector` class acts as a facade for all underlying connectors,
+  which are now marked as "advanced usage", but continue to work unchanged.
+  This now makes it trivially easy to create plaintext TCP/IP, secure TLS and
+  Unix domain socket (UDS) connection streams simply like this:
+
+  ```php
+  $connector = new Connector($loop);
+
+  $connector->connect('tls://google.com:443')->then(function (ConnectionInterface $conn) {
+      $conn->write("GET / HTTP/1.0\r\n\r\n");
+  });
+  ```
+
+  Optionally, it accepts options to configure all underlying connectors, such
+  as using a custom DNS setup, timeout values and disabling certain protocols
+  and much more. See the README for more details.
+
 ## 0.6.2 (2017-03-17)
 
 * Feature / Fix: Support SNI on legacy PHP < 5.6 and add documentation for
