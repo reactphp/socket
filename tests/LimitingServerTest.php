@@ -2,25 +2,19 @@
 
 namespace React\Tests\Socket;
 
-use React\Socket\AccountingServer;
+use React\Socket\LimitingServer;
 use React\Socket\Server;
 use React\EventLoop\Factory;
 use Clue\React\Block;
 
-class AccountingServerTest extends TestCase
+class LimitingServerTest extends TestCase
 {
-    public function testA()
-    {
-        $server = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
-        $server = new AccountingServer($server);
-    }
-
     public function testGetAddressWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('getAddress')->willReturn('127.0.0.1:1234');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $this->assertEquals('127.0.0.1:1234', $server->getAddress());
     }
@@ -30,7 +24,7 @@ class AccountingServerTest extends TestCase
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('pause');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->pause();
     }
@@ -40,7 +34,7 @@ class AccountingServerTest extends TestCase
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('pause');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->pause();
         $server->pause();
@@ -51,7 +45,7 @@ class AccountingServerTest extends TestCase
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('resume');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->pause();
         $server->resume();
@@ -62,7 +56,7 @@ class AccountingServerTest extends TestCase
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('resume');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->pause();
         $server->resume();
@@ -74,7 +68,7 @@ class AccountingServerTest extends TestCase
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
         $tcp->expects($this->once())->method('close');
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->close();
     }
@@ -85,7 +79,7 @@ class AccountingServerTest extends TestCase
 
         $tcp = new Server(0, $loop);
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
 
         $server->on('error', $this->expectCallableOnce());
 
@@ -100,7 +94,7 @@ class AccountingServerTest extends TestCase
 
         $tcp = new Server(0, $loop);
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
         $server->on('connection', $this->expectCallableOnceWith($connection));
         $server->on('error', $this->expectCallableNever());
 
@@ -120,7 +114,7 @@ class AccountingServerTest extends TestCase
 
         $tcp = new Server(0, $loop);
 
-        $server = new AccountingServer($tcp, 1);
+        $server = new LimitingServer($tcp, 1);
         $server->on('connection', $this->expectCallableOnceWith($first));
         $server->on('error', $this->expectCallableOnce());
 
@@ -138,7 +132,7 @@ class AccountingServerTest extends TestCase
 
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
-        $server = new AccountingServer($tcp, 1, true);
+        $server = new LimitingServer($tcp, 1, true);
 
         $tcp->emit('connection', array($connection));
     }
@@ -152,7 +146,7 @@ class AccountingServerTest extends TestCase
         $socket = stream_socket_client('tcp://' . $tcp->getAddress());
         fclose($socket);
 
-        $server = new AccountingServer($tcp);
+        $server = new LimitingServer($tcp, 100);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
 
@@ -166,7 +160,7 @@ class AccountingServerTest extends TestCase
         $loop = Factory::create();
 
         $server = new Server(0, $loop);
-        $server = new AccountingServer($server, 1, true);
+        $server = new LimitingServer($server, 1, true);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
 
@@ -187,7 +181,7 @@ class AccountingServerTest extends TestCase
         $twice->expects($this->exactly(2))->method('__invoke');
 
         $server = new Server(0, $loop);
-        $server = new AccountingServer($server, 1, true);
+        $server = new LimitingServer($server, 1, true);
         $server->on('connection', $twice);
         $server->on('error', $this->expectCallableNever());
 

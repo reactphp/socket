@@ -5,18 +5,21 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 
 /**
- * The `AccountingServer` decorators wraps a given `ServerInterface` and is responsible
- * for keeping track of open connections to this server instance.
+ * The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible
+ * for limiting and keeping track of open connections to this server instance.
  *
- * Whenever the underlying server emits a `connection` event, it will keep track
- * of this connection by adding it to the list of open connections and then
- * forward the `connection` event (unless its limits are exceeded).
+ * Whenever the underlying server emits a `connection` event, it will check its
+ * limits and then either
+ * - keep track of this connection by adding it to the list of
+ *   open connections and then forward the `connection` event
+ * - or reject (close) the connection when its limits are exceeded and will
+ *   forward an `error` event instead.
  *
  * Whenever a connection closes, it will remove this connection from the list of
  * open connections.
  *
  * ```php
- * $server = new AccountingServer($server);
+ * $server = new LimitingServer($server, 100);
  * $server->on('connection', function (ConnectionInterface $connection) {
  *     $connection->write('hello there!' . PHP_EOL);
  *     …
@@ -28,7 +31,7 @@ use Evenement\EventEmitter;
  * @see ServerInterface
  * @see ConnectionInterface
  */
-class AccountingServer extends EventEmitter implements ServerInterface
+class LimitingServer extends EventEmitter implements ServerInterface
 {
     private $connections = array();
     private $server;
@@ -39,20 +42,26 @@ class AccountingServer extends EventEmitter implements ServerInterface
     private $manuPaused = false;
 
     /**
-     * Instantiates a new AccountingServer.
+     * Instantiates a new LimitingServer.
      *
-     * You can optionally pass a maximum number of open connections to ensure
+     * You have to pass a maximum number of open connections to ensure
      * the server will automatically reject (close) connections once this limit
      * is exceeded. In this case, it will emit an `error` event to inform about
      * this and no `connection` event will be emitted.
      *
      * ```php
-     * $server = new AccountingServer($server, 50);
+     * $server = new LimitingServer($server, 100);
      * $server->on('connection', function (ConnectionInterface $connection) {
      *     $connection->write('hello there!' . PHP_EOL);
      *     …
      * });
      * ```
+     *
+     * You MAY pass a `null` limit in order to put no limit on the number of
+     * open connections and keep accepting new connection until you run out of
+     * operating system resources (such as open file handles). This may be
+     * useful it you do not want to take care of applying a limit but still want
+     * to use the `getConnections()` method.
      *
      * You can optionally configure the server to pause accepting new
      * connections once the connection limit is reached. In this case, it will
@@ -70,7 +79,7 @@ class AccountingServer extends EventEmitter implements ServerInterface
      * an interactive chat).
      *
      * ```php
-     * $server = new AccountingServer($server, 50, true);
+     * $server = new LimitingServer($server, 100, true);
      * $server->on('connection', function (ConnectionInterface $connection) {
      *     $connection->write('hello there!' . PHP_EOL);
      *     …
@@ -78,10 +87,10 @@ class AccountingServer extends EventEmitter implements ServerInterface
      * ```
      *
      * @param ServerInterface $server
-     * @param null|int        $connectionLimit
+     * @param int|null        $connectionLimit
      * @param bool            $pauseOnLimit
      */
-    public function __construct(ServerInterface $server, $connectionLimit = null, $pauseOnLimit = false)
+    public function __construct(ServerInterface $server, $connectionLimit, $pauseOnLimit = false)
     {
         $this->server = $server;
         $this->limit = $connectionLimit;

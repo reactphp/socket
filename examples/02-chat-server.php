@@ -15,7 +15,7 @@ use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureServer;
-use React\Socket\AccountingServer;
+use React\Socket\LimitingServer;
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -30,7 +30,7 @@ if (isset($argv[2])) {
     ));
 }
 
-$server = new AccountingServer($server);
+$server = new LimitingServer($server, null);
 
 $server->on('connection', function (ConnectionInterface $client) use ($server) {
     // whenever a new message comes in
