@@ -16,20 +16,22 @@ use UnexpectedValueException;
 class StreamEncryption
 {
     private $loop;
-    private $method = STREAM_CRYPTO_METHOD_TLS_SERVER;
+    private $method;
+    private $server;
 
     private $errstr;
     private $errno;
 
     private $wrapSecure = false;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct(LoopInterface $loop, $server = true)
     {
         if (!function_exists('stream_socket_enable_crypto')) {
             throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)');
         }
 
         $this->loop = $loop;
+        $this->server = $server;
 
         // See https://bugs.php.net/bug.php?id=65137
         // https://bugs.php.net/bug.php?id=41631
@@ -40,14 +42,30 @@ class StreamEncryption
             $this->wrapSecure = true;
         }
 
-        if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER')) {
-            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
-        }
-        if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER')) {
-            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
-        }
-        if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER')) {
-            $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
+        if ($server) {
+            $this->method = STREAM_CRYPTO_METHOD_TLS_SERVER;
+
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
+            }
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
+            }
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
+            }
+        } else {
+            $this->method = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+            }
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+            }
+            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+            }
         }
     }
 
@@ -68,7 +86,10 @@ class StreamEncryption
 
         // TODO: add write() event to make sure we're not sending any excessive data
 
-        $deferred = new Deferred();
+        $deferred = new Deferred(function ($_, $reject) use ($toggle) {
+            // cancelling this leaves this stream in an inconsistent state…
+            $reject(new \RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
+        });
 
         // get actual stream socket from stream instance
         $socket = $stream->stream;
@@ -80,9 +101,16 @@ class StreamEncryption
 
         $this->loop->addReadStream($socket, $toggleCrypto);
 
-        $wrap = $this->wrapSecure && $toggle;
+        if (!$this->server) {
+            $toggleCrypto();
+        }
 
-        return $deferred->promise()->then(function () use ($stream, $wrap) {
+        $wrap = $this->wrapSecure && $toggle;
+        $loop = $this->loop;
+
+        return $deferred->promise()->then(function () use ($stream, $socket, $wrap, $loop) {
+            $loop->removeReadStream($socket);
+
             if ($wrap) {
                 $stream->bufferSize = null;
             }
@@ -90,7 +118,8 @@ class StreamEncryption
             $stream->resume();
 
             return $stream;
-        }, function($error) use ($stream) {
+        }, function($error) use ($stream, $socket, $loop) {
+            $loop->removeReadStream($socket);
             $stream->resume();
             throw $error;
         });
@@ -103,12 +132,8 @@ class StreamEncryption
         restore_error_handler();
 
         if (true === $result) {
-            $this->loop->removeStream($socket);
-
             $deferred->resolve();
         } else if (false === $result) {
-            $this->loop->removeStream($socket);
-
             $deferred->reject(new UnexpectedValueException(
                 sprintf("Unable to complete SSL/TLS handshake: %s", $this->errstr),
                 $this->errno

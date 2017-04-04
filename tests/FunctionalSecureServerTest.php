@@ -7,8 +7,8 @@ use React\Stream\Stream;
 use React\Socket\SecureServer;
 use React\Socket\ConnectionInterface;
 use React\Socket\Server;
-use React\SocketClient\TcpConnector;
-use React\SocketClient\SecureConnector;
+use React\Socket\TcpConnector;
+use React\Socket\SecureConnector;
 use Clue\React\Block;
 
 class FunctionalSecureServerTest extends TestCase

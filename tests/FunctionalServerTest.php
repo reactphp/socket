@@ -5,7 +5,7 @@ namespace React\Tests\Socket;
 use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
-use React\SocketClient\TcpConnector;
+use React\Socket\TcpConnector;
 use Clue\React\Block;
 
 class FunctionalServerTest extends TestCase
