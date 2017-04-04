@@ -21,6 +21,8 @@ and [`Stream`](https://github.com/reactphp/stream) components.
     * [close()](#close)
   * [Server](#server)
   * [SecureServer](#secureserver)
+  * [LimitingServer](#limitingserver)
+    * [getConnections()](#getconnections)
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
@@ -377,6 +379,84 @@ expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
+
+### LimitingServer
+
+The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible
+for limiting and keeping track of open connections to this server instance.
+
+Whenever the underlying server emits a `connection` event, it will check its
+limits and then either
+ - keep track of this connection by adding it to the list of
+   open connections and then forward the `connection` event
+ - or reject (close) the connection when its limits are exceeded and will
+   forward an `error` event instead.
+
+Whenever a connection closes, it will remove this connection from the list of
+open connections.
+
+```php
+$server = new LimitingServer($server, 100);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+See also the [second example](examples) for more details.
+
+You have to pass a maximum number of open connections to ensure
+the server will automatically reject (close) connections once this limit
+is exceeded. In this case, it will emit an `error` event to inform about
+this and no `connection` event will be emitted.
+
+```php
+$server = new LimitingServer($server, 100);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+You MAY pass a `null` limit in order to put no limit on the number of
+open connections and keep accepting new connection until you run out of
+operating system resources (such as open file handles). This may be
+useful it you do not want to take care of applying a limit but still want
+to use the `getConnections()` method.
+
+You can optionally configure the server to pause accepting new
+connections once the connection limit is reached. In this case, it will
+pause the underlying server and no longer process any new connections at
+all, thus also no longer closing any excessive connections.
+The underlying operating system is responsible for keeping a backlog of
+pending connections until its limit is reached, at which point it will
+start rejecting further connections.
+Once the server is below the connection limit, it will continue consuming
+connections from the backlog and will process any outstanding data on
+each connection.
+This mode may be useful for some protocols that are designed to wait for
+a response message (such as HTTP), but may be less useful for other
+protocols that demand immediate responses (such as a "welcome" message in
+an interactive chat).
+
+```php
+$server = new LimitingServer($server, 100, true);
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+#### getConnections()
+
+The `getConnections(): ConnectionInterface[]` method can be used to
+return an array with all currently active connections.
+
+```php
+foreach ($server->getConnection() as $connection) {
+    $connection->write('Hi!');
+}
+```
 
 ### ConnectionInterface
 
