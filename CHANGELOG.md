@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.6.0 (2017-04-04)
+
+* Feature: Add `LimitingServer` to limit and keep track of open connections
+  (#86 by @clue)
+
+  ```php
+  $server = new Server(0, $loop);
+  $server = new LimitingServer($server, 100);
+
+  $server->on('connection', function (ConnectionInterface $connection) {
+      $connection->write('hello there!' . PHP_EOL);
+      …
+  });
+  ```
+
+* Feature / BC break: Add `pause()` and `resume()` methods to limit active
+  connections
+  (#84 by @clue)
+
+  ```php
+  $server = new Server(0, $loop);
+  $server->pause();
+
+  $loop->addTimer(1.0, function() use ($server) {
+      $server->resume();
+  });
+  ```
+
 ## 0.5.1 (2017-03-09)
 
 * Feature: Forward compatibility with Stream v0.5 and upcoming v0.6
