@@ -22,7 +22,7 @@ final class SecureConnector implements ConnectorInterface
     public function connect($uri)
     {
         if (!function_exists('stream_socket_enable_crypto')) {
-            return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'));
+            return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)')); // @codeCoverageIgnore
         }
 
         if (strpos($uri, '://') === false) {

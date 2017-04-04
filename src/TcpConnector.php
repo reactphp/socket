@@ -69,7 +69,7 @@ final class TcpConnector implements ConnectorInterface
         // HHVM fails to parse URIs with a query but no path, so let's add a dummy path
         // See also https://3v4l.org/jEhLF
         if (defined('HHVM_VERSION') && isset($parts['query']) && !isset($parts['path'])) {
-            $uri = str_replace('?', '/?', $uri);
+            $uri = str_replace('?', '/?', $uri); // @codeCoverageIgnore
         }
 
         $socket = @stream_socket_client(

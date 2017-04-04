@@ -26,10 +26,6 @@ class StreamEncryption
 
     public function __construct(LoopInterface $loop, $server = true)
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)');
-        }
-
         $this->loop = $loop;
         $this->server = $server;
 
