@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 (2017-04-10)
+
+* Fix: Ignore HHVM errors when closing connection that is already closing
+  (#91 by @clue)
+
 ## 0.7.0 (2017-04-10)
 
 * Feature: Merge SocketClient component into this component
