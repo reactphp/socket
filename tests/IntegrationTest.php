@@ -82,6 +82,24 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
+    public function gettingPlaintextStuffFromEncryptedGoogleShouldNotWork()
+    {
+        $loop = new StreamSelectLoop();
+        $connector = new Connector($loop);
+
+        $conn = Block\await($connector->connect('google.com:443'), $loop);
+
+        $this->assertContains(':443', $conn->getRemoteAddress());
+        $this->assertNotEquals('google.com:443', $conn->getRemoteAddress());
+
+        $conn->write("GET / HTTP/1.0\r\n\r\n");
+
+        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+
+        $this->assertNotRegExp('#^HTTP/1\.0#', $response);
+    }
+
+    /** @test */
     public function testConnectingFailsIfDnsUsesInvalidResolver()
     {
         $loop = new StreamSelectLoop();
