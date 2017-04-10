@@ -5,22 +5,22 @@ namespace React\Socket;
 use React\Stream\DuplexStreamInterface;
 
 /**
- * Any incoming connection is represented by this interface.
+ * Any incoming and outgoing connection is represented by this interface,
+ * such as a normal TCP/IP connection.
  *
- * An incoming connection is a duplex stream (both readable and writable) that
- * implements React's DuplexStreamInterface.
+ * An incoming or outgoing connection is a duplex stream (both readable and
+ * writable) that implements React's
+ * [`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
  * It contains additional properties for the local and remote address (client IP)
- * where this connection has been established from.
+ * where this connection has been established to/from.
  *
- * Note that this interface is only to be used to represent the server-side end
- * of an incoming connection.
- * It MUST NOT be used to represent an outgoing connection in a client-side
- * context.
- * If you want to establish an outgoing connection,
- * use React's SocketClient component instead.
+ * Most commonly, instances implementing this `ConnectionInterface` are emitted
+ * by all classes implementing the [`ServerInterface`](#serverinterface) and
+ * used by all classes implementing the [`ConnectorInterface`](#connectorinterface).
  *
  * Because the `ConnectionInterface` implements the underlying
- * `DuplexStreamInterface` you can use any of its events and methods as usual:
+ * [`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface)
+ * you can use any of its events and methods as usual:
  *
  * ```php
  * $connection->on('data', function ($chunk) {
@@ -49,15 +49,17 @@ use React\Stream\DuplexStreamInterface;
  * [`DuplexStreamInterface`](https://github.com/reactphp/stream#duplexstreaminterface).
  *
  * @see DuplexStreamInterface
+ * @see ServerInterface
+ * @see ConnectorInterface
  */
 interface ConnectionInterface extends DuplexStreamInterface
 {
     /**
-     * Returns the remote address (client IP and port) where this connection has been established from
+     * Returns the remote address (client IP and port) where this connection has been established with
      *
      * ```php
      * $address = $connection->getRemoteAddress();
-     * echo 'Connection from ' . $address . PHP_EOL;
+     * echo 'Connection with ' . $address . PHP_EOL;
      * ```
      *
      * If the remote address can not be determined or is unknown at this time (such as
@@ -70,7 +72,7 @@ interface ConnectionInterface extends DuplexStreamInterface
      * ```php
      * $address = $connection->getRemoteAddress();
      * $ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
-     * echo 'Connection from ' . $ip . PHP_EOL;
+     * echo 'Connection with ' . $ip . PHP_EOL;
      * ```
      *
      * @return ?string remote address (client IP and port) or null if unknown
@@ -78,11 +80,11 @@ interface ConnectionInterface extends DuplexStreamInterface
     public function getRemoteAddress();
 
     /**
-     * Returns the full local address (client IP and port) where this connection has been established to
+     * Returns the full local address (client IP and port) where this connection has been established with
      *
      * ```php
      * $address = $connection->getLocalAddress();
-     * echo 'Connection to ' . $address . PHP_EOL;
+     * echo 'Connection with ' . $address . PHP_EOL;
      * ```
      *
      * If the local address can not be determined or is unknown at this time (such as
@@ -96,6 +98,10 @@ interface ConnectionInterface extends DuplexStreamInterface
      * If your `Server` instance is listening on multiple interfaces (e.g. using
      * the address `0.0.0.0`), you can use this method to find out which interface
      * actually accepted this connection (such as a public or local interface).
+     *
+     * If your system has multiple interfaces (e.g. a WAN and a LAN interface),
+     * you can use this method to find out which interface was actually
+     * used for this connection.
      *
      * @return ?string local address (client IP and port) or null if unknown
      * @see self::getRemoteAddress()

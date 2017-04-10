@@ -112,11 +112,16 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * @param ServerInterface|Server $tcp
      * @param LoopInterface $loop
      * @param array $context
+     * @throws \BadMethodCallException for legacy HHVM < 3.8 due to lack of support
      * @see Server
      * @link http://php.net/manual/en/context.ssl.php for TLS context options
      */
     public function __construct(ServerInterface $tcp, LoopInterface $loop, array $context)
     {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
+        }
+
         // default to empty passphrase to surpress blocking passphrase prompt
         $context += array(
             'passphrase' => ''
