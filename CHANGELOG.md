@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.7.0 (2017-04-10)
+
+* Feature: Merge SocketClient component into this component
+  (#87 by @clue)
+
+  This means that this package now provides async, streaming plaintext TCP/IP
+  and secure TLS socket server and client connections for ReactPHP.
+
+  ```
+  $connector = new React\Socket\Connector($loop);
+  $connector->connect('google.com:80')->then(function (ConnectionInterface $conn) {
+      $connection->write('…');
+  });
+  ```
+
+  Accordingly, the `ConnectionInterface` is now used to represent both incoming
+  server side connections as well as outgoing client side connections.
+
+  If you've previously used the SocketClient component to establish outgoing
+  client connections, upgrading should take no longer than a few minutes.
+  All classes have been merged as-is from the latest `v0.7.0` release with no
+  other changes, so you can simply update your code to use the updated namespace
+  like this:
+
+  ```php
+  // old from SocketClient component and namespace
+  $connector = new React\SocketClient\Connector($loop);
+  $connector->connect('google.com:80')->then(function (ConnectionInterface $conn) {
+      $connection->write('…');
+  });
+
+  // new
+  $connector = new React\Socket\Connector($loop);
+  $connector->connect('google.com:80')->then(function (ConnectionInterface $conn) {
+      $connection->write('…');
+  });
+  ```
+
 ## 0.6.0 (2017-04-04)
 
 * Feature: Add `LimitingServer` to limit and keep track of open connections
