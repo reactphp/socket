@@ -20,8 +20,11 @@ class Connection extends Stream implements ConnectionInterface
             return;
         }
 
-        // http://chat.stackoverflow.com/transcript/message/7727858#7727858
-        stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
+        // Try to cleanly shut down socket and ignore any errors in case other
+        // side already closed. Shutting down may return to blocking mode on
+        // some legacy versions, so reset to non-blocking just in case before
+        // continuing to close the socket resource.
+        @stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
         stream_set_blocking($this->stream, false);
         fclose($this->stream);
     }
