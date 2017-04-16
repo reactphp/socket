@@ -199,6 +199,11 @@ final class Server extends EventEmitter implements ServerInterface
         $this->loop->removeReadStream($this->master);
         $this->listening = false;
     }
+    
+    protected function getLoop()
+    {
+        return $this->loop;
+    }
 
     public function resume()
     {
