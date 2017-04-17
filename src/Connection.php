@@ -41,7 +41,8 @@ class Connection extends Stream implements ConnectionInterface
 
     private function parseAddress($address)
     {
-        if ($address === false) {
+        // work around https://bugs.php.net/bug.php?id=74458 by checking if  stream_socket_get_name has returned null string instead of address
+        if ($address === false || $address === "\0") {
             return null;
         }
 
