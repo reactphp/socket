@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2 (2017-04-24)
+
+* Fix: Work around latest PHP 7.0.18 and 7.1.4 no longer accepting full URIs
+  (#94 by @clue)
+
 ## 0.7.1 (2017-04-10)
 
 * Fix: Ignore HHVM errors when closing connection that is already closing
