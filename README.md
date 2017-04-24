@@ -56,7 +56,7 @@ Here is a server that closes the connection if you send it anything:
 $loop = React\EventLoop\Factory::create();
 
 $socket = new React\Socket\Server(8080, $loop);
-$socket->on('connection', function (ConnectionInterface $conn) {
+$socket->on('connection', function (React\Socket\ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
     $conn->write("Here's a tip: don't say anything.\n");
