@@ -30,7 +30,7 @@ handle multiple concurrent connections without blocking.
     * [pause()](#pause)
     * [resume()](#resume)
     * [close()](#close)
-  * [Server](#server)
+  * [TcpServer](#tcpserver)
   * [SecureServer](#secureserver)
   * [LimitingServer](#limitingserver)
     * [getConnections()](#getconnections)
@@ -55,7 +55,7 @@ Here is a server that closes the connection if you send it anything:
 ```php
 $loop = React\EventLoop\Factory::create();
 
-$socket = new React\Socket\Server(8080, $loop);
+$socket = new React\Socket\TcpServer(8080, $loop);
 $socket->on('connection', function (ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
@@ -173,7 +173,7 @@ Otherwise, it will return the full local address as a string value.
 
 This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
 so they should not be confused.
-If your `Server` instance is listening on multiple interfaces (e.g. using
+If your `TcpServer` instance is listening on multiple interfaces (e.g. using
 the address `0.0.0.0`), you can use this method to find out which interface
 actually accepted this connection (such as a public or local interface).
 
@@ -319,13 +319,13 @@ $server->close();
 
 Calling this method more than once on the same instance is a NO-OP.
 
-### Server
+### TcpServer
 
-The `Server` class implements the [`ServerInterface`](#serverinterface) and
+The `TcpServer` class implements the [`ServerInterface`](#serverinterface) and
 is responsible for accepting plaintext TCP/IP connections.
 
 ```php
-$server = new Server(8080, $loop);
+$server = new TcpServer(8080, $loop);
 ```
 
 As above, the `$uri` parameter can consist of only a port, in which case the
@@ -335,7 +335,7 @@ which means it will not be reachable from outside of this system.
 In order to use a random port assignment, you can use the port `0`:
 
 ```php
-$server = new Server(0, $loop);
+$server = new TcpServer(0, $loop);
 $address = $server->getAddress();
 ```
 
@@ -344,14 +344,14 @@ address through the first parameter provided to the constructor, optionally
 preceded by the `tcp://` scheme:
 
 ```php
-$server = new Server('192.168.0.1:8080', $loop);
+$server = new TcpServer('192.168.0.1:8080', $loop);
 ```
 
 If you want to listen on an IPv6 address, you MUST enclose the host in square
 brackets:
 
 ```php
-$server = new Server('[::1]:8080', $loop);
+$server = new TcpServer('[::1]:8080', $loop);
 ```
 
 If the given URI is invalid, does not contain a port, any other scheme or if it
@@ -359,7 +359,7 @@ contains a hostname, it will throw an `InvalidArgumentException`:
 
 ```php
 // throws InvalidArgumentException due to missing port
-$server = new Server('127.0.0.1', $loop);
+$server = new TcpServer('127.0.0.1', $loop);
 ```
 
 If the given URI appears to be valid, but listening on it fails (such as if port
@@ -367,10 +367,10 @@ is already in use or port below 1024 may require root access etc.), it will
 throw a `RuntimeException`:
 
 ```php
-$first = new Server(8080, $loop);
+$first = new TcpServer(8080, $loop);
 
 // throws RuntimeException because port is already in use
-$second = new Server(8080, $loop);
+$second = new TcpServer(8080, $loop);
 ```
 
 > Note that these error conditions may vary depending on your system and/or
@@ -382,7 +382,7 @@ Optionally, you can specify [socket context options](http://php.net/manual/en/co
 for the underlying stream socket resource like this:
 
 ```php
-$server = new Server('[::1]:8080', $loop, array(
+$server = new TcpServer('[::1]:8080', $loop, array(
     'backlog' => 200,
     'so_reuseport' => true,
     'ipv6_v6only' => true
@@ -408,7 +408,7 @@ $server->on('connection', function (ConnectionInterface $connection) {
 
 See also the [`ServerInterface`](#serverinterface) for more details.
 
-Note that the `Server` class is a concrete implementation for TCP/IP sockets.
+Note that the `TcpServer` class is a concrete implementation for TCP/IP sockets.
 If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ServerInterface`](#serverinterface) instead.
 
@@ -417,14 +417,14 @@ use the generic [`ServerInterface`](#serverinterface) instead.
 The `SecureServer` class implements the [`ServerInterface`](#serverinterface)
 and is responsible for providing a secure TLS (formerly known as SSL) server.
 
-It does so by wrapping a [`Server`](#server) instance which waits for plaintext
+It does so by wrapping a [`TcpServer`](#tcpserver) instance which waits for plaintext
 TCP/IP connections and then performs a TLS handshake for each connection.
 It thus requires valid [TLS context options](http://php.net/manual/en/context.ssl.php),
 which in its most basic form may look something like this if you're using a
 PEM encoded certificate file:
 
 ```php
-$server = new Server(8000, $loop);
+$server = new TcpServer(8000, $loop);
 $server = new SecureServer($server, $loop, array(
     'local_cert' => 'server.pem'
 ));
@@ -439,7 +439,7 @@ If your private key is encrypted with a passphrase, you have to specify it
 like this:
 
 ```php
-$server = new Server(8000, $loop);
+$server = new TcpServer(8000, $loop);
 $server = new SecureServer($server, $loop, array(
     'local_cert' => 'server.pem',
     'passphrase' => 'secret'
@@ -479,13 +479,13 @@ If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ServerInterface`](#serverinterface) instead.
 
 > Advanced usage: Despite allowing any `ServerInterface` as first parameter,
-you SHOULD pass a `Server` instance as first parameter, unless you
+you SHOULD pass a `TcpServer` instance as first parameter, unless you
 know what you're doing.
 Internally, the `SecureServer` has to set the required TLS context options on
 the underlying stream resources.
 These resources are not exposed through any of the interfaces defined in this
 package, but only through the `React\Stream\Stream` class.
-The `Server` class is guaranteed to emit connections that implement
+The `TcpServer` class is guaranteed to emit connections that implement
 the `ConnectionInterface` and also extend the `Stream` class in order to
 expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not

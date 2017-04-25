@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\Factory as LoopFactory;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\SecureServer;
 use React\Socket\TcpConnector;
 use React\Socket\SecureConnector;
@@ -30,7 +30,7 @@ class SecureIntegrationTest extends TestCase
         }
 
         $this->loop = LoopFactory::create();
-        $this->server = new Server(0, $this->loop);
+        $this->server = new TcpServer(0, $this->loop);
         $this->server = new SecureServer($this->server, $this->loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));

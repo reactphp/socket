@@ -4,9 +4,9 @@ namespace React\Tests\Socket;
 
 use React\EventLoop\StreamSelectLoop;
 use React\Stream\Stream;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 
-class ServerTest extends TestCase
+class TcpServerTest extends TestCase
 {
     private $loop;
     private $server;
@@ -18,19 +18,19 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @covers React\Socket\Server::__construct
-     * @covers React\Socket\Server::getAddress
+     * @covers React\Socket\TcpServer::__construct
+     * @covers React\Socket\TcpServer::getAddress
      */
     public function setUp()
     {
         $this->loop = $this->createLoop();
-        $this->server = new Server(0, $this->loop);
+        $this->server = new TcpServer(0, $this->loop);
 
         $this->port = parse_url($this->server->getAddress(), PHP_URL_PORT);
     }
 
     /**
-     * @covers React\Socket\Server::handleConnection
+     * @covers React\Socket\TcpServer::handleConnection
      */
     public function testConnection()
     {
@@ -41,7 +41,7 @@ class ServerTest extends TestCase
     }
 
     /**
-     * @covers React\Socket\Server::handleConnection
+     * @covers React\Socket\TcpServer::handleConnection
      */
     public function testConnectionWithManyClients()
     {
@@ -237,7 +237,7 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
     }
 
     public function testResumeWithoutPauseIsNoOp()
@@ -245,7 +245,7 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->resume();
     }
 
@@ -254,7 +254,7 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->pause();
     }
 
@@ -263,7 +263,7 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->pause();
         $server->pause();
     }
@@ -273,7 +273,7 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server->close();
     }
 
@@ -286,11 +286,11 @@ class ServerTest extends TestCase
             $this->markTestSkipped('Windows supports listening on same port multiple times');
         }
 
-        $another = new Server($this->port, $this->loop);
+        $another = new TcpServer($this->port, $this->loop);
     }
 
     /**
-     * @covers React\Socket\Server::close
+     * @covers React\Socket\TcpServer::close
      */
     public function tearDown()
     {

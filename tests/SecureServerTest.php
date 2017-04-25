@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use React\Socket\SecureServer;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 
 class SecureServerTest extends TestCase
 {
@@ -66,7 +66,7 @@ class SecureServerTest extends TestCase
     {
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->once())->method('end');
@@ -82,7 +82,7 @@ class SecureServerTest extends TestCase
     {
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $server = new SecureServer($tcp, $loop, array());
 

@@ -8,11 +8,11 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * The `Server` class implements the `ServerInterface` and
+ * The `TcpServer` class implements the `ServerInterface` and
  * is responsible for accepting plaintext TCP/IP connections.
  *
  * ```php
- * $server = new Server(8080, $loop);
+ * $server = new TcpServer(8080, $loop);
  * ```
  *
  * Whenever a client connects, it will emit a `connection` event with a connection
@@ -28,14 +28,14 @@ use RuntimeException;
  *
  * See also the `ServerInterface` for more details.
  *
- * Note that the `Server` class is a concrete implementation for TCP/IP sockets.
+ * Note that the `TcpServer` class is a concrete implementation for TCP/IP sockets.
  * If you want to typehint in your higher-level protocol implementation, you SHOULD
  * use the generic `ServerInterface` instead.
  *
  * @see ServerInterface
  * @see ConnectionInterface
  */
-final class Server extends EventEmitter implements ServerInterface
+final class TcpServer extends EventEmitter implements ServerInterface
 {
     private $master;
     private $loop;
@@ -49,7 +49,7 @@ final class Server extends EventEmitter implements ServerInterface
      * for more details.
      *
      * ```php
-     * $server = new Server(8080, $loop);
+     * $server = new TcpServer(8080, $loop);
      * ```
      *
      * As above, the `$uri` parameter can consist of only a port, in which case the
@@ -59,7 +59,7 @@ final class Server extends EventEmitter implements ServerInterface
      * In order to use a random port assignment, you can use the port `0`:
      *
      * ```php
-     * $server = new Server(0, $loop);
+     * $server = new TcpServer(0, $loop);
      * $address = $server->getAddress();
      * ```
      *
@@ -68,14 +68,14 @@ final class Server extends EventEmitter implements ServerInterface
      * preceded by the `tcp://` scheme:
      *
      * ```php
-     * $server = new Server('192.168.0.1:8080', $loop);
+     * $server = new TcpServer('192.168.0.1:8080', $loop);
      * ```
      *
      * If you want to listen on an IPv6 address, you MUST enclose the host in square
      * brackets:
      *
      * ```php
-     * $server = new Server('[::1]:8080', $loop);
+     * $server = new TcpServer('[::1]:8080', $loop);
      * ```
      *
      * If the given URI is invalid, does not contain a port, any other scheme or if it
@@ -83,7 +83,7 @@ final class Server extends EventEmitter implements ServerInterface
      *
      * ```php
      * // throws InvalidArgumentException due to missing port
-     * $server = new Server('127.0.0.1', $loop);
+     * $server = new TcpServer('127.0.0.1', $loop);
      * ```
      *
      * If the given URI appears to be valid, but listening on it fails (such as if port
@@ -91,10 +91,10 @@ final class Server extends EventEmitter implements ServerInterface
      * throw a `RuntimeException`:
      *
      * ```php
-     * $first = new Server(8080, $loop);
+     * $first = new TcpServer(8080, $loop);
      *
      * // throws RuntimeException because port is already in use
-     * $second = new Server(8080, $loop);
+     * $second = new TcpServer(8080, $loop);
      * ```
      *
      * Note that these error conditions may vary depending on your system and/or
@@ -106,7 +106,7 @@ final class Server extends EventEmitter implements ServerInterface
      * for the underlying stream socket resource like this:
      *
      * ```php
-     * $server = new Server('[::1]:8080', $loop, array(
+     * $server = new TcpServer('[::1]:8080', $loop, array(
      *     'backlog' => 200,
      *     'so_reuseport' => true,
      *     'ipv6_v6only' => true

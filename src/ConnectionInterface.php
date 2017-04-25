@@ -95,7 +95,7 @@ interface ConnectionInterface extends DuplexStreamInterface
      * This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
      * so they should not be confused.
      *
-     * If your `Server` instance is listening on multiple interfaces (e.g. using
+     * If your `TcpServer` instance is listening on multiple interfaces (e.g. using
      * the address `0.0.0.0`), you can use this method to find out which interface
      * actually accepted this connection (such as a public or local interface).
      *

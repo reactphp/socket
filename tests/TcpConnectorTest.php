@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\StreamSelectLoop;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\TcpConnector;
 use React\Socket\ConnectionInterface;
 use Clue\React\Block;
@@ -29,7 +29,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server(9999, $loop);
+        $server = new TcpServer(9999, $loop);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('connection', array($server, 'close'));
 
@@ -47,7 +47,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server(9999, $loop);
+        $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
@@ -65,7 +65,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server(9999, $loop);
+        $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
@@ -84,7 +84,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = new StreamSelectLoop();
 
-        $server = new Server(9999, $loop);
+        $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
@@ -117,7 +117,7 @@ class TcpConnectorTest extends TestCase
         $loop = new StreamSelectLoop();
 
         try {
-            $server = new Server('[::1]:9999', $loop);
+            $server = new TcpServer('[::1]:9999', $loop);
         } catch (\Exception $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (IPv6 not supported on this system?)');
         }
@@ -194,7 +194,7 @@ class TcpConnectorTest extends TestCase
         $loop = new StreamSelectLoop();
         $connector = new TcpConnector($loop);
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
 
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();

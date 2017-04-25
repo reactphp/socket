@@ -4,7 +4,7 @@ namespace React\Socket;
 
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\Socket\ConnectionInterface;
 use React\Stream\Stream;
 
@@ -12,11 +12,11 @@ use React\Stream\Stream;
  * The `SecureServer` class implements the `ServerInterface` and is responsible
  * for providing a secure TLS (formerly known as SSL) server.
  *
- * It does so by wrapping a `Server` instance which waits for plaintext
+ * It does so by wrapping a `TcpServer` instance which waits for plaintext
  * TCP/IP connections and then performs a TLS handshake for each connection.
  *
  * ```php
- * $server = new Server(8000, $loop);
+ * $server = new TcpServer(8000, $loop);
  * $server = new SecureServer($server, $loop, array(
  *     // tls context options here…
  * ));
@@ -61,14 +61,14 @@ final class SecureServer extends EventEmitter implements ServerInterface
     /**
      * Creates a secure TLS server and starts waiting for incoming connections
      *
-     * It does so by wrapping a `Server` instance which waits for plaintext
+     * It does so by wrapping a `TcpServer` instance which waits for plaintext
      * TCP/IP connections and then performs a TLS handshake for each connection.
      * It thus requires valid [TLS context options],
      * which in its most basic form may look something like this if you're using a
      * PEM encoded certificate file:
      *
      * ```php
-     * $server = new Server(8000, $loop);
+     * $server = new TcpServer(8000, $loop);
      * $server = new SecureServer($server, $loop, array(
      *     'local_cert' => 'server.pem'
      * ));
@@ -83,7 +83,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * like this:
      *
      * ```php
-     * $server = new Server(8000, $loop);
+     * $server = new TcpServer(8000, $loop);
      * $server = new SecureServer($server, $loop, array(
      *     'local_cert' => 'server.pem',
      *     'passphrase' => 'secret'
@@ -96,24 +96,24 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * Passing unknown context options has no effect.
      *
      * Advanced usage: Despite allowing any `ServerInterface` as first parameter,
-     * you SHOULD pass a `Server` instance as first parameter, unless you
+     * you SHOULD pass a `TcpServer` instance as first parameter, unless you
      * know what you're doing.
      * Internally, the `SecureServer` has to set the required TLS context options on
      * the underlying stream resources.
      * These resources are not exposed through any of the interfaces defined in this
      * package, but only through the `React\Stream\Stream` class.
-     * The `Server` class is guaranteed to emit connections that implement
+     * The `TcpServer` class is guaranteed to emit connections that implement
      * the `ConnectionInterface` and also extend the `Stream` class in order to
      * expose these underlying resources.
      * If you use a custom `ServerInterface` and its `connection` event does not
      * meet this requirement, the `SecureServer` will emit an `error` event and
      * then close the underlying connection.
      *
-     * @param ServerInterface|Server $tcp
+     * @param ServerInterface|TcpServer $tcp
      * @param LoopInterface $loop
      * @param array $context
      * @throws \BadMethodCallException for legacy HHVM < 3.8 due to lack of support
-     * @see Server
+     * @see TcpServer
      * @link http://php.net/manual/en/context.ssl.php for TLS context options
      */
     public function __construct(ServerInterface $tcp, LoopInterface $loop, array $context)

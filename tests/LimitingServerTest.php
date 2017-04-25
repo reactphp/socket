@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use React\Socket\LimitingServer;
-use React\Socket\Server;
+use React\Socket\TcpServer;
 use React\EventLoop\Factory;
 use Clue\React\Block;
 
@@ -77,7 +77,7 @@ class LimitingServerTest extends TestCase
     {
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $server = new LimitingServer($tcp, 100);
 
@@ -92,7 +92,7 @@ class LimitingServerTest extends TestCase
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $server = new LimitingServer($tcp, 100);
         $server->on('connection', $this->expectCallableOnceWith($connection));
@@ -112,7 +112,7 @@ class LimitingServerTest extends TestCase
 
         $loop = $this->getMock('React\EventLoop\LoopInterface');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $server = new LimitingServer($tcp, 1);
         $server->on('connection', $this->expectCallableOnceWith($first));
@@ -128,7 +128,7 @@ class LimitingServerTest extends TestCase
         $loop->expects($this->once())->method('addReadStream');
         $loop->expects($this->once())->method('removeReadStream');
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
@@ -141,7 +141,7 @@ class LimitingServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $tcp = new Server(0, $loop);
+        $tcp = new TcpServer(0, $loop);
 
         $socket = stream_socket_client('tcp://' . $tcp->getAddress());
         fclose($socket);
@@ -159,7 +159,7 @@ class LimitingServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new LimitingServer($server, 1, true);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
@@ -180,7 +180,7 @@ class LimitingServerTest extends TestCase
         $twice = $this->createCallableMock();
         $twice->expects($this->exactly(2))->method('__invoke');
 
-        $server = new Server(0, $loop);
+        $server = new TcpServer(0, $loop);
         $server = new LimitingServer($server, 1, true);
         $server->on('connection', $twice);
         $server->on('error', $this->expectCallableNever());
