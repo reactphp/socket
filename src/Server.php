@@ -11,7 +11,17 @@ final class Server extends EventEmitter implements ServerInterface
 
     public function __construct($uri, LoopInterface $loop, array $context = array())
     {
-        $server = new TcpServer($uri, $loop, $context);
+        // sanitize TCP context options if not properly wrapped
+        if ($context && !isset($context['tcp'])) {
+            $context = array('tcp' => $context);
+        }
+
+        // apply default options if not explicitly given
+        $context += array(
+            'tcp' => array(),
+        );
+
+        $server = new TcpServer($uri, $loop, $context['tcp']);
         $this->server = $server;
 
         $that = $this;

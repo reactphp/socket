@@ -5,6 +5,7 @@ namespace React\Tests\Socket;
 use React\EventLoop\Factory;
 use React\Socket\Server;
 use Clue\React\Block;
+use React\Socket\ConnectionInterface;
 
 class ServerTest extends TestCase
 {
@@ -80,5 +81,30 @@ class ServerTest extends TestCase
         Block\sleep(0.1, $loop);
 
         $this->assertFalse($client);
+    }
+
+    public function testEmitsConnectionWithInheritedContextOptions()
+    {
+        if (defined('HHVM_VERSION') && version_compare(HHVM_VERSION, '3.13', '<')) {
+            // https://3v4l.org/hB4Tc
+            $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
+        }
+
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop, array(
+            'backlog' => 4
+        ));
+
+        $all = null;
+        $server->on('connection', function (ConnectionInterface $conn) use (&$all) {
+            $all = stream_context_get_options($conn->stream);
+        });
+
+        $client = stream_socket_client($server->getAddress());
+
+        Block\sleep(0.1, $loop);
+
+        $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
     }
 }

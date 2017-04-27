@@ -377,25 +377,29 @@ $second = new Server(8080, $loop);
 ```
 
 > Note that these error conditions may vary depending on your system and/or
-configuration.
-See the exception message and code for more details about the actual error
-condition.
+  configuration.
+  See the exception message and code for more details about the actual error
+  condition.
 
-Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+Optionally, you can specify [TCP socket context options](http://php.net/manual/en/context.socket.php)
 for the underlying stream socket resource like this:
 
 ```php
 $server = new Server('[::1]:8080', $loop, array(
-    'backlog' => 200,
-    'so_reuseport' => true,
-    'ipv6_v6only' => true
+    'tcp' => array(
+        'backlog' => 200,
+        'so_reuseport' => true,
+        'ipv6_v6only' => true
+    )
 ));
 ```
 
 > Note that available [socket context options](http://php.net/manual/en/context.socket.php),
-their defaults and effects of changing these may vary depending on your system
-and/or PHP version.
-Passing unknown context options has no effect.
+  their defaults and effects of changing these may vary depending on your system
+  and/or PHP version.
+  Passing unknown context options has no effect.
+  For BC reasons, you can also pass the TCP socket context options as a simple
+  array without wrapping this in another array under the `tcp` key.
 
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
