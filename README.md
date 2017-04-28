@@ -138,7 +138,7 @@ For more details, see the
 #### getRemoteAddress()
 
 The `getRemoteAddress(): ?string` method returns the full remote address
-(client IP and port) where this connection has been established with.
+(URI) where this connection has been established with.
 
 ```php
 $address = $connection->getRemoteAddress();
@@ -148,20 +148,24 @@ echo 'Connection with ' . $address . PHP_EOL;
 If the remote address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
 
-Otherwise, it will return the full remote address as a string value.
+Otherwise, it will return the full address (URI) as a string value, such
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+Note that individual URI components are application specific and depend
+on the underlying transport protocol.
+
 If this is a TCP/IP based connection and you only want the remote IP, you may
 use something like this:
 
 ```php
 $address = $connection->getRemoteAddress();
-$ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+$ip = trim(parse_url($address, PHP_URL_HOST), '[]');
 echo 'Connection with ' . $ip . PHP_EOL;
 ```
 
 #### getLocalAddress()
 
 The `getLocalAddress(): ?string` method returns the full local address
-(client IP and port) where this connection has been established with.
+(URI) where this connection has been established with.
 
 ```php
 $address = $connection->getLocalAddress();
@@ -171,10 +175,14 @@ echo 'Connection with ' . $address . PHP_EOL;
 If the local address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
 
-Otherwise, it will return the full local address as a string value.
+Otherwise, it will return the full address (URI) as a string value, such
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+Note that individual URI components are application specific and depend
+on the underlying transport protocol.
 
 This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
 so they should not be confused.
+
 If your `TcpServer` instance is listening on multiple interfaces (e.g. using
 the address `0.0.0.0`), you can use this method to find out which interface
 actually accepted this connection (such as a public or local interface).
@@ -233,22 +241,27 @@ new connections even after this event.
 #### getAddress()
 
 The `getAddress(): ?string` method can be used to
-return the full address (IP and port) this server is currently listening on.
+return the full address (URI) this server is currently listening on.
 
 ```php
 $address = $server->getAddress();
 echo 'Server listening on ' . $address . PHP_EOL;
 ```
 
-It will return the full address (IP and port) or `NULL` if it is unknown
-(not applicable to this server socket or already closed).
+If the address can not be determined or is unknown at this time (such as
+after the socket has been closed), it MAY return a `NULL` value instead.
+
+Otherwise, it will return the full address (URI) as a string value, such
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+Note that individual URI components are application specific and depend
+on the underlying transport protocol.
 
 If this is a TCP/IP based server and you only want the local port, you may
 use something like this:
 
 ```php
 $address = $server->getAddress();
-$port = parse_url('tcp://' . $address, PHP_URL_PORT);
+$port = parse_url($address, PHP_URL_PORT);
 echo 'Server listening on port ' . $port . PHP_EOL;
 ```
 

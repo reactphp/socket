@@ -143,7 +143,7 @@ class LimitingServerTest extends TestCase
 
         $tcp = new TcpServer(0, $loop);
 
-        $socket = stream_socket_client('tcp://' . $tcp->getAddress());
+        $socket = stream_socket_client($tcp->getAddress());
         fclose($socket);
 
         $server = new LimitingServer($tcp, 100);
@@ -164,8 +164,8 @@ class LimitingServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
 
-        $first = stream_socket_client('tcp://' . $server->getAddress());
-        $second = stream_socket_client('tcp://' . $server->getAddress());
+        $first = stream_socket_client($server->getAddress());
+        $second = stream_socket_client($server->getAddress());
 
         Block\sleep(0.1, $loop);
 
@@ -185,9 +185,9 @@ class LimitingServerTest extends TestCase
         $server->on('connection', $twice);
         $server->on('error', $this->expectCallableNever());
 
-        $first = stream_socket_client('tcp://' . $server->getAddress());
+        $first = stream_socket_client($server->getAddress());
         fclose($first);
-        $second = stream_socket_client('tcp://' . $server->getAddress());
+        $second = stream_socket_client($server->getAddress());
         fclose($second);
 
         Block\sleep(0.1, $loop);

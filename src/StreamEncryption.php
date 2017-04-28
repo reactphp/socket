@@ -3,7 +3,6 @@
 namespace React\Socket;
 
 use React\Promise\Deferred;
-use React\Stream\Stream;
 use React\EventLoop\LoopInterface;
 use UnexpectedValueException;
 
@@ -65,17 +64,17 @@ class StreamEncryption
         }
     }
 
-    public function enable(Stream $stream)
+    public function enable(Connection $stream)
     {
         return $this->toggle($stream, true);
     }
 
-    public function disable(Stream $stream)
+    public function disable(Connection $stream)
     {
         return $this->toggle($stream, false);
     }
 
-    public function toggle(Stream $stream, $toggle)
+    public function toggle(Connection $stream, $toggle)
     {
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
@@ -104,13 +103,14 @@ class StreamEncryption
         $wrap = $this->wrapSecure && $toggle;
         $loop = $this->loop;
 
-        return $deferred->promise()->then(function () use ($stream, $socket, $wrap, $loop) {
+        return $deferred->promise()->then(function () use ($stream, $socket, $wrap, $loop, $toggle) {
             $loop->removeReadStream($socket);
 
             if ($wrap) {
                 $stream->bufferSize = null;
             }
 
+            $stream->encryptionEnabled = $toggle;
             $stream->resume();
 
             return $stream;

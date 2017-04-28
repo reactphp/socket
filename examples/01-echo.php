@@ -26,7 +26,7 @@ $server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
 ));
 
 $server->on('connection', function (ConnectionInterface $conn) {
-    echo '[connected]' . PHP_EOL;
+    echo '[' . $conn->getRemoteAddress() . ' connected]' . PHP_EOL;
     $conn->pipe($conn);
 });
 

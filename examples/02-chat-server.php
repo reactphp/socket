@@ -40,7 +40,7 @@ $server->on('connection', function (ConnectionInterface $client) use ($server) {
         }
 
         // prefix with client IP and broadcast to all connected clients
-        $data = $client->getRemoteAddress() . ': ' . $data . PHP_EOL;
+        $data = trim(parse_url($client->getRemoteAddress(), PHP_URL_HOST), '[]') . ': ' . $data . PHP_EOL;
         foreach ($server->getConnections() as $connection) {
             $connection->write($data);
         }

@@ -14,6 +14,16 @@ use React\Stream\Stream;
  */
 class Connection extends Stream implements ConnectionInterface
 {
+    /**
+     * Internal flag whether encryption has been enabled on this connection
+     *
+     * Mostly used by internal StreamEncryption so that connection returns
+     * `tls://` scheme for encrypted connections instead of `tcp://`.
+     *
+     * @internal
+     */
+    public $encryptionEnabled = false;
+
     public function handleClose()
     {
         if (!is_resource($this->stream)) {
@@ -52,6 +62,6 @@ class Connection extends Stream implements ConnectionInterface
             $address = '[' . substr($address, 0, $pos) . ']:' . $port;
         }
 
-        return $address;
+        return ($this->encryptionEnabled ? 'tls' : 'tcp') . '://' . $address;
     }
 }

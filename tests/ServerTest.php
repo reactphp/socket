@@ -123,7 +123,7 @@ class ServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableNever());
 
-        $client = stream_socket_client($server->getAddress());
+        $client = stream_socket_client(str_replace('tls://', '', $server->getAddress()));
 
         Block\sleep(0.1, $loop);
     }
