@@ -183,7 +183,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             $address = '[' . substr($address, 0, $pos) . ']:' . $port;
         }
 
-        return $address;
+        return 'tcp://' . $address;
     }
 
     public function pause()

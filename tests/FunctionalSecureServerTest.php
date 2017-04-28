@@ -326,7 +326,7 @@ class FunctionalSecureServerTest extends TestCase
         $server->on('error', $this->expectCallableNever());
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->connect($server->getAddress());
+        $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then($this->expectCallableOnce());
         Block\sleep(self::TIMEOUT, $loop);
@@ -344,7 +344,7 @@ class FunctionalSecureServerTest extends TestCase
         $server->on('error', $this->expectCallableOnce());
 
         $connector = new TcpConnector($loop);
-        $promise = $connector->connect($server->getAddress());
+        $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then(function (Stream $stream) {
             $stream->write("GET / HTTP/1.0\r\n\r\n");

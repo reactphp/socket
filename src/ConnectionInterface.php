@@ -55,7 +55,7 @@ use React\Stream\DuplexStreamInterface;
 interface ConnectionInterface extends DuplexStreamInterface
 {
     /**
-     * Returns the remote address (client IP and port) where this connection has been established with
+     * Returns the full remote address (URI) where this connection has been established with
      *
      * ```php
      * $address = $connection->getRemoteAddress();
@@ -65,22 +65,26 @@ interface ConnectionInterface extends DuplexStreamInterface
      * If the remote address can not be determined or is unknown at this time (such as
      * after the connection has been closed), it MAY return a `NULL` value instead.
      *
-     * Otherwise, it will return the full remote address as a string value.
+     * Otherwise, it will return the full address (URI) as a string value, such
+     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+     * Note that individual URI components are application specific and depend
+     * on the underlying transport protocol.
+     *
      * If this is a TCP/IP based connection and you only want the remote IP, you may
      * use something like this:
      *
      * ```php
      * $address = $connection->getRemoteAddress();
-     * $ip = trim(parse_url('tcp://' . $address, PHP_URL_HOST), '[]');
+     * $ip = trim(parse_url($address, PHP_URL_HOST), '[]');
      * echo 'Connection with ' . $ip . PHP_EOL;
      * ```
      *
-     * @return ?string remote address (client IP and port) or null if unknown
+     * @return ?string remote address (URI) or null if unknown
      */
     public function getRemoteAddress();
 
     /**
-     * Returns the full local address (client IP and port) where this connection has been established with
+     * Returns the full local address (full URI with scheme, IP and port) where this connection has been established with
      *
      * ```php
      * $address = $connection->getLocalAddress();
@@ -90,7 +94,10 @@ interface ConnectionInterface extends DuplexStreamInterface
      * If the local address can not be determined or is unknown at this time (such as
      * after the connection has been closed), it MAY return a `NULL` value instead.
      *
-     * Otherwise, it will return the full local address as a string value.
+     * Otherwise, it will return the full address (URI) as a string value, such
+     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+     * Note that individual URI components are application specific and depend
+     * on the underlying transport protocol.
      *
      * This method complements the [`getRemoteAddress()`](#getremoteaddress) method,
      * so they should not be confused.
@@ -103,7 +110,7 @@ interface ConnectionInterface extends DuplexStreamInterface
      * you can use this method to find out which interface was actually
      * used for this connection.
      *
-     * @return ?string local address (client IP and port) or null if unknown
+     * @return ?string local address (URI) or null if unknown
      * @see self::getRemoteAddress()
      */
     public function getLocalAddress();

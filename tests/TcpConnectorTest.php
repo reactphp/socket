@@ -55,7 +55,7 @@ class TcpConnectorTest extends TestCase
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
 
-        $this->assertEquals('127.0.0.1:9999', $connection->getRemoteAddress());
+        $this->assertEquals('tcp://127.0.0.1:9999', $connection->getRemoteAddress());
 
         $connection->close();
     }
@@ -73,8 +73,8 @@ class TcpConnectorTest extends TestCase
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
 
-        $this->assertContains('127.0.0.1:', $connection->getLocalAddress());
-        $this->assertNotEquals('127.0.0.1:9999', $connection->getLocalAddress());
+        $this->assertContains('tcp://127.0.0.1:', $connection->getLocalAddress());
+        $this->assertNotEquals('tcp://127.0.0.1:9999', $connection->getLocalAddress());
 
         $connection->close();
     }
@@ -130,10 +130,10 @@ class TcpConnectorTest extends TestCase
         $connection = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
 
-        $this->assertEquals('[::1]:9999', $connection->getRemoteAddress());
+        $this->assertEquals('tcp://[::1]:9999', $connection->getRemoteAddress());
 
-        $this->assertContains('[::1]:', $connection->getLocalAddress());
-        $this->assertNotEquals('[::1]:9999', $connection->getLocalAddress());
+        $this->assertContains('tcp://[::1]:', $connection->getLocalAddress());
+        $this->assertNotEquals('tcp://[::1]:9999', $connection->getLocalAddress());
 
         $connection->close();
     }
