@@ -401,6 +401,48 @@ $server = new Server('[::1]:8080', $loop, array(
   For BC reasons, you can also pass the TCP socket context options as a simple
   array without wrapping this in another array under the `tcp` key.
 
+You can start a secure TLS (formerly known as SSL) server by simply prepending
+the `tls://` URI scheme.
+Internally, it will wait for plaintext TCP/IP connections and then performs a
+TLS handshake for each connection.
+It thus requires valid [TLS context options](http://php.net/manual/en/context.ssl.php),
+which in its most basic form may look something like this if you're using a
+PEM encoded certificate file:
+
+```php
+$server = new Server('tls://127.0.0.1:8080', $loop, array(
+    'tls' => array(
+        'local_cert' => 'server.pem'
+    )
+));
+```
+
+> Note that the certificate file will not be loaded on instantiation but when an
+  incoming connection initializes its TLS context.
+  This implies that any invalid certificate file paths or contents will only cause
+  an `error` event at a later time.
+
+If your private key is encrypted with a passphrase, you have to specify it
+like this:
+
+```php
+$server = new Server('tls://127.0.0.1:8000', $loop, array(
+    'tls' => array(
+        'local_cert' => 'server.pem',
+        'passphrase' => 'secret'
+    )
+));
+```
+
+> Note that available [TLS context options](http://php.net/manual/en/context.ssl.php),
+  their defaults and effects of changing these may vary depending on your system
+  and/or PHP version.
+  The outer context array allows you to also use `tcp` (and possibly more)
+  context options at the same time.
+  Passing unknown context options has no effect.
+  If you do not use the `tls://` scheme, then passing `tls` context options
+  has no effect.
+
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
 

@@ -107,4 +107,24 @@ class ServerTest extends TestCase
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
     }
+
+    public function testDoesNotEmitSecureConnectionForNewPlainConnection()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = Factory::create();
+
+        $server = new Server('tls://127.0.0.1:0', $loop, array(
+            'tls' => array(
+                'local_cert' => __DIR__ . '/../examples/localhost.pem'
+            )
+        ));
+        $server->on('connection', $this->expectCallableNever());
+
+        $client = stream_socket_client($server->getAddress());
+
+        Block\sleep(0.1, $loop);
+    }
 }
