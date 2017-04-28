@@ -31,10 +31,11 @@ handle multiple concurrent connections without blocking.
     * [resume()](#resume)
     * [close()](#close)
   * [Server](#server)
-  * [TcpServer](#tcpserver)
-  * [SecureServer](#secureserver)
-  * [LimitingServer](#limitingserver)
-    * [getConnections()](#getconnections)
+  * [Advanced server usage](#advanced-server-usage)
+    * [TcpServer](#tcpserver)
+    * [SecureServer](#secureserver)
+    * [LimitingServer](#limitingserver)
+      * [getConnections()](#getconnections)
 * [Client usage](#client-usage)
   * [ConnectorInterface](#connectorinterface)
     * [connect()](#connect)
@@ -55,8 +56,8 @@ Here is a server that closes the connection if you send it anything:
 
 ```php
 $loop = React\EventLoop\Factory::create();
+$socket = new React\Socket\Server('127.0.0.1:8080', $loop);
 
-$socket = new React\Socket\TcpServer(8080, $loop);
 $socket->on('connection', function (ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
@@ -322,10 +323,9 @@ Calling this method more than once on the same instance is a NO-OP.
 
 ### Server
 
-The `Server` class implements the [`ServerInterface`](#serverinterface) and
-is responsible for accepting plaintext TCP/IP connections.
-It acts as a facade for the underlying [`TcpServer`](#tcpserver) and follows
-its exact semantics.
+The `Server` class is the main class in this package that implements the
+[`ServerInterface`](#serverinterface) and allows you to accept incoming
+streaming connections, such as plaintext TCP/IP or secure TLS connection streams.
 
 ```php
 $server = new Server(8080, $loop);
@@ -461,7 +461,9 @@ See also the [`ServerInterface`](#serverinterface) for more details.
   If you want to typehint in your higher-level protocol implementation, you SHOULD
   use the generic [`ServerInterface`](#serverinterface) instead.
 
-### TcpServer
+### Advanced server usage
+
+#### TcpServer
 
 The `TcpServer` class implements the [`ServerInterface`](#serverinterface) and
 is responsible for accepting plaintext TCP/IP connections.
@@ -550,7 +552,7 @@ $server->on('connection', function (ConnectionInterface $connection) {
 
 See also the [`ServerInterface`](#serverinterface) for more details.
 
-### SecureServer
+#### SecureServer
 
 The `SecureServer` class implements the [`ServerInterface`](#serverinterface)
 and is responsible for providing a secure TLS (formerly known as SSL) server.
@@ -630,7 +632,7 @@ If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
 
-### LimitingServer
+#### LimitingServer
 
 The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible
 for limiting and keeping track of open connections to this server instance.
@@ -697,7 +699,7 @@ $server->on('connection', function (ConnectionInterface $connection) {
 });
 ```
 
-#### getConnections()
+##### getConnections()
 
 The `getConnections(): ConnectionInterface[]` method can be used to
 return an array with all currently active connections.
