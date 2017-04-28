@@ -30,10 +30,12 @@ handle multiple concurrent connections without blocking.
     * [pause()](#pause)
     * [resume()](#resume)
     * [close()](#close)
-  * [TcpServer](#tcpserver)
-  * [SecureServer](#secureserver)
-  * [LimitingServer](#limitingserver)
-    * [getConnections()](#getconnections)
+  * [Server](#server)
+  * [Advanced server usage](#advanced-server-usage)
+    * [TcpServer](#tcpserver)
+    * [SecureServer](#secureserver)
+    * [LimitingServer](#limitingserver)
+      * [getConnections()](#getconnections)
 * [Client usage](#client-usage)
   * [ConnectorInterface](#connectorinterface)
     * [connect()](#connect)
@@ -54,8 +56,8 @@ Here is a server that closes the connection if you send it anything:
 
 ```php
 $loop = React\EventLoop\Factory::create();
+$socket = new React\Socket\Server('127.0.0.1:8080', $loop);
 
-$socket = new React\Socket\TcpServer(8080, $loop);
 $socket->on('connection', function (ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
@@ -319,7 +321,149 @@ $server->close();
 
 Calling this method more than once on the same instance is a NO-OP.
 
-### TcpServer
+### Server
+
+The `Server` class is the main class in this package that implements the
+[`ServerInterface`](#serverinterface) and allows you to accept incoming
+streaming connections, such as plaintext TCP/IP or secure TLS connection streams.
+
+```php
+$server = new Server(8080, $loop);
+```
+
+As above, the `$uri` parameter can consist of only a port, in which case the
+server will default to listening on the localhost address `127.0.0.1`,
+which means it will not be reachable from outside of this system.
+
+In order to use a random port assignment, you can use the port `0`:
+
+```php
+$server = new Server(0, $loop);
+$address = $server->getAddress();
+```
+
+In order to change the host the socket is listening on, you can provide an IP
+address through the first parameter provided to the constructor, optionally
+preceded by the `tcp://` scheme:
+
+```php
+$server = new Server('192.168.0.1:8080', $loop);
+```
+
+If you want to listen on an IPv6 address, you MUST enclose the host in square
+brackets:
+
+```php
+$server = new Server('[::1]:8080', $loop);
+```
+
+If the given URI is invalid, does not contain a port, any other scheme or if it
+contains a hostname, it will throw an `InvalidArgumentException`:
+
+```php
+// throws InvalidArgumentException due to missing port
+$server = new Server('127.0.0.1', $loop);
+```
+
+If the given URI appears to be valid, but listening on it fails (such as if port
+is already in use or port below 1024 may require root access etc.), it will
+throw a `RuntimeException`:
+
+```php
+$first = new Server(8080, $loop);
+
+// throws RuntimeException because port is already in use
+$second = new Server(8080, $loop);
+```
+
+> Note that these error conditions may vary depending on your system and/or
+  configuration.
+  See the exception message and code for more details about the actual error
+  condition.
+
+Optionally, you can specify [TCP socket context options](http://php.net/manual/en/context.socket.php)
+for the underlying stream socket resource like this:
+
+```php
+$server = new Server('[::1]:8080', $loop, array(
+    'tcp' => array(
+        'backlog' => 200,
+        'so_reuseport' => true,
+        'ipv6_v6only' => true
+    )
+));
+```
+
+> Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+  their defaults and effects of changing these may vary depending on your system
+  and/or PHP version.
+  Passing unknown context options has no effect.
+  For BC reasons, you can also pass the TCP socket context options as a simple
+  array without wrapping this in another array under the `tcp` key.
+
+You can start a secure TLS (formerly known as SSL) server by simply prepending
+the `tls://` URI scheme.
+Internally, it will wait for plaintext TCP/IP connections and then performs a
+TLS handshake for each connection.
+It thus requires valid [TLS context options](http://php.net/manual/en/context.ssl.php),
+which in its most basic form may look something like this if you're using a
+PEM encoded certificate file:
+
+```php
+$server = new Server('tls://127.0.0.1:8080', $loop, array(
+    'tls' => array(
+        'local_cert' => 'server.pem'
+    )
+));
+```
+
+> Note that the certificate file will not be loaded on instantiation but when an
+  incoming connection initializes its TLS context.
+  This implies that any invalid certificate file paths or contents will only cause
+  an `error` event at a later time.
+
+If your private key is encrypted with a passphrase, you have to specify it
+like this:
+
+```php
+$server = new Server('tls://127.0.0.1:8000', $loop, array(
+    'tls' => array(
+        'local_cert' => 'server.pem',
+        'passphrase' => 'secret'
+    )
+));
+```
+
+> Note that available [TLS context options](http://php.net/manual/en/context.ssl.php),
+  their defaults and effects of changing these may vary depending on your system
+  and/or PHP version.
+  The outer context array allows you to also use `tcp` (and possibly more)
+  context options at the same time.
+  Passing unknown context options has no effect.
+  If you do not use the `tls://` scheme, then passing `tls` context options
+  has no effect.
+
+Whenever a client connects, it will emit a `connection` event with a connection
+instance implementing [`ConnectionInterface`](#connectioninterface):
+
+```php
+$server->on('connection', function (ConnectionInterface $connection) {
+    echo 'Plaintext connection from ' . $connection->getRemoteAddress() . PHP_EOL;
+    
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+See also the [`ServerInterface`](#serverinterface) for more details.
+
+> Note that the `Server` class is a concrete implementation for TCP/IP sockets.
+  If you want to typehint in your higher-level protocol implementation, you SHOULD
+  use the generic [`ServerInterface`](#serverinterface) instead.
+
+### Advanced server usage
+
+#### TcpServer
 
 The `TcpServer` class implements the [`ServerInterface`](#serverinterface) and
 is responsible for accepting plaintext TCP/IP connections.
@@ -408,11 +552,7 @@ $server->on('connection', function (ConnectionInterface $connection) {
 
 See also the [`ServerInterface`](#serverinterface) for more details.
 
-Note that the `TcpServer` class is a concrete implementation for TCP/IP sockets.
-If you want to typehint in your higher-level protocol implementation, you SHOULD
-use the generic [`ServerInterface`](#serverinterface) instead.
-
-### SecureServer
+#### SecureServer
 
 The `SecureServer` class implements the [`ServerInterface`](#serverinterface)
 and is responsible for providing a secure TLS (formerly known as SSL) server.
@@ -492,7 +632,7 @@ If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
 
-### LimitingServer
+#### LimitingServer
 
 The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible
 for limiting and keeping track of open connections to this server instance.
@@ -559,7 +699,7 @@ $server->on('connection', function (ConnectionInterface $connection) {
 });
 ```
 
-#### getConnections()
+##### getConnections()
 
 The `getConnections(): ConnectionInterface[]` method can be used to
 return an array with all currently active connections.

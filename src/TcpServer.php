@@ -28,10 +28,6 @@ use RuntimeException;
  *
  * See also the `ServerInterface` for more details.
  *
- * Note that the `TcpServer` class is a concrete implementation for TCP/IP sockets.
- * If you want to typehint in your higher-level protocol implementation, you SHOULD
- * use the generic `ServerInterface` instead.
- *
  * @see ServerInterface
  * @see ConnectionInterface
  */
