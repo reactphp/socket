@@ -6,7 +6,6 @@ use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use React\Socket\TcpServer;
 use React\Socket\ConnectionInterface;
-use React\Stream\Stream;
 
 /**
  * The `SecureServer` class implements the `ServerInterface` and is responsible
@@ -101,9 +100,9 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * Internally, the `SecureServer` has to set the required TLS context options on
      * the underlying stream resources.
      * These resources are not exposed through any of the interfaces defined in this
-     * package, but only through the `React\Stream\Stream` class.
+     * package, but only through the internal `Connection` class.
      * The `TcpServer` class is guaranteed to emit connections that implement
-     * the `ConnectionInterface` and also extend the `Stream` class in order to
+     * the `ConnectionInterface` and uses the internal `Connection` class in order to
      * expose these underlying resources.
      * If you use a custom `ServerInterface` and its `connection` event does not
      * meet this requirement, the `SecureServer` will emit an `error` event and
@@ -163,8 +162,8 @@ final class SecureServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection(ConnectionInterface $connection)
     {
-        if (!$connection instanceof Stream) {
-            $this->emit('error', array(new \UnexpectedValueException('Connection event MUST emit an instance extending Stream in order to access underlying stream resource')));
+        if (!$connection instanceof Connection) {
+            $this->emit('error', array(new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
             $connection->end();
             return;
         }

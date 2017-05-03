@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
-use React\Stream\Stream;
 use React\Socket\SecureServer;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpServer;
@@ -60,7 +59,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
 
         $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local React\Stream\Stream */
+        /* @var $local ConnectionInterface */
 
         $local->on('data', $this->expectCallableOnceWith('foo'));
 
@@ -346,7 +345,7 @@ class FunctionalSecureServerTest extends TestCase
         $connector = new TcpConnector($loop);
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
-        $promise->then(function (Stream $stream) {
+        $promise->then(function (ConnectionInterface $stream) {
             $stream->write("GET / HTTP/1.0\r\n\r\n");
         });
 

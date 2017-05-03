@@ -637,9 +637,9 @@ know what you're doing.
 Internally, the `SecureServer` has to set the required TLS context options on
 the underlying stream resources.
 These resources are not exposed through any of the interfaces defined in this
-package, but only through the `React\Stream\Stream` class.
+package, but only through the internal `Connection` class.
 The `TcpServer` class is guaranteed to emit connections that implement
-the `ConnectionInterface` and also extend the `Stream` class in order to
+the `ConnectionInterface` and uses the internal `Connection` class in order to
 expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and

@@ -4,6 +4,9 @@ namespace React\Socket;
 
 use React\Stream\Stream;
 use React\EventLoop\LoopInterface;
+use Evenement\EventEmitter;
+use React\Stream\Util;
+use React\Stream\WritableStreamInterface;
 
 /**
  * The actual connection implementation for ConnectionInterface
@@ -13,7 +16,7 @@ use React\EventLoop\LoopInterface;
  * @see ConnectionInterface
  * @internal
  */
-class Connection extends Stream implements ConnectionInterface
+class Connection extends EventEmitter implements ConnectionInterface
 {
     /**
      * Internal flag whether encryption has been enabled on this connection
@@ -25,9 +28,19 @@ class Connection extends Stream implements ConnectionInterface
      */
     public $encryptionEnabled = false;
 
-    public function __construct($stream, LoopInterface $loop)
+    /** @internal */
+    public $stream;
+
+    private $input;
+
+    public function __construct($resource, LoopInterface $loop)
     {
-        parent::__construct($stream, $loop);
+        $this->input = new Stream($resource, $loop);
+        $this->stream = $resource;
+
+        Util::forwardEvents($this->input, $this, array('data', 'end', 'error', 'close', 'pipe', 'drain'));
+
+        $this->input->on('close', array($this, 'close'));
 
         // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
         // as a work-around we always read the complete buffer until its end.
@@ -37,8 +50,50 @@ class Connection extends Stream implements ConnectionInterface
         // https://bugs.php.net/bug.php?id=41631
         // https://github.com/reactphp/socket-client/issues/24
         if (version_compare(PHP_VERSION, '5.6.8', '<')) {
-            $this->bufferSize = null;
+            $this->input->bufferSize = null;
         }
+    }
+
+    public function isReadable()
+    {
+        return $this->input->isReadable();
+    }
+
+    public function isWritable()
+    {
+        return $this->input->isWritable();
+    }
+
+    public function pause()
+    {
+        $this->input->pause();
+    }
+
+    public function resume()
+    {
+        $this->input->resume();
+    }
+
+    public function pipe(WritableStreamInterface $dest, array $options = array())
+    {
+        return $this->input->pipe($dest, $options);
+    }
+
+    public function write($data)
+    {
+        return $this->input->write($data);
+    }
+
+    public function end($data = null)
+    {
+        $this->input->end($data);
+    }
+
+    public function close()
+    {
+        $this->input->close();
+        $this->handleClose();
+        $this->removeAllListeners();
     }
 
     public function handleClose()

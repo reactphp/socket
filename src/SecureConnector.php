@@ -3,7 +3,6 @@
 namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
-use React\Stream\Stream;
 use React\Promise;
 
 final class SecureConnector implements ConnectorInterface
@@ -41,9 +40,9 @@ final class SecureConnector implements ConnectorInterface
         return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption) {
             // (unencrypted) TCP/IP connection succeeded
 
-            if (!$connection instanceof Stream) {
+            if (!$connection instanceof Connection) {
                 $connection->close();
-                throw new \UnexpectedValueException('Connection MUST extend Stream in order to access underlying stream resource');
+                throw new \UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
             }
 
             // set required SSL/TLS context options
