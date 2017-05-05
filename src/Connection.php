@@ -2,9 +2,10 @@
 
 namespace React\Socket;
 
-use React\Stream\Stream;
-use React\EventLoop\LoopInterface;
 use Evenement\EventEmitter;
+use React\EventLoop\LoopInterface;
+use React\Stream\DuplexResourceStream;
+use React\Stream\Stream;
 use React\Stream\Util;
 use React\Stream\WritableStreamInterface;
 
@@ -35,13 +36,6 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     public function __construct($resource, LoopInterface $loop)
     {
-        $this->input = new Stream($resource, $loop);
-        $this->stream = $resource;
-
-        Util::forwardEvents($this->input, $this, array('data', 'end', 'error', 'close', 'pipe', 'drain'));
-
-        $this->input->on('close', array($this, 'close'));
-
         // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
         // as a work-around we always read the complete buffer until its end.
         // The buffer size is limited due to TCP/IP buffers anyway, so this
@@ -49,9 +43,26 @@ class Connection extends EventEmitter implements ConnectionInterface
         // See https://bugs.php.net/bug.php?id=65137
         // https://bugs.php.net/bug.php?id=41631
         // https://github.com/reactphp/socket-client/issues/24
-        if (version_compare(PHP_VERSION, '5.6.8', '<')) {
-            $this->input->bufferSize = null;
+        $clearCompleteBuffer = (version_compare(PHP_VERSION, '5.6.8', '<'));
+
+        // @codeCoverageIgnoreStart
+        if (class_exists('React\Stream\Stream')) {
+            // legacy react/stream < 0.7 requires additional buffer property
+            $this->input = new Stream($resource, $loop);
+            if ($clearCompleteBuffer) {
+                $this->input->bufferSize = null;
+            }
+        } else {
+            // preferred react/stream >= 0.7 accepts buffer parameter
+            $this->input = new DuplexResourceStream($resource, $loop, $clearCompleteBuffer ? -1 : null);
         }
+        // @codeCoverageIgnoreEnd
+
+        $this->stream = $resource;
+
+        Util::forwardEvents($this->input, $this, array('data', 'end', 'error', 'close', 'pipe', 'drain'));
+
+        $this->input->on('close', array($this, 'close'));
     }
 
     public function isReadable()

@@ -11,7 +11,6 @@ use Clue\React\Block;
 use React\Promise\Promise;
 use Evenement\EventEmitterInterface;
 use React\Promise\Deferred;
-use React\Stream\BufferedSink;
 use React\Socket\ConnectionInterface;
 
 class SecureIntegrationTest extends TestCase
@@ -164,7 +163,7 @@ class SecureIntegrationTest extends TestCase
         /* @var $client ConnectionInterface */
 
         // await data from client until it closes
-        $received = Block\await(BufferedSink::createPromise($client), $this->loop, self::TIMEOUT);
+        $received = $this->buffer($client, $this->loop, self::TIMEOUT);
 
         $this->assertEquals($data, $received);
     }

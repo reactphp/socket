@@ -3,8 +3,8 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\StreamSelectLoop;
-use React\Stream\Stream;
 use React\Socket\TcpServer;
+use React\Stream\DuplexResourceStream;
 
 class TcpServerTest extends TestCase
 {
@@ -139,7 +139,7 @@ class TcpServerTest extends TestCase
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
-        $stream = new Stream($client, $this->loop);
+        $stream = new DuplexResourceStream($client, $this->loop);
 
         $bytes = 1024 * 1024;
         $stream->end(str_repeat('*', $bytes));
