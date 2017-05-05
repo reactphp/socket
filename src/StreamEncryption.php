@@ -21,21 +21,10 @@ class StreamEncryption
     private $errstr;
     private $errno;
 
-    private $wrapSecure = false;
-
     public function __construct(LoopInterface $loop, $server = true)
     {
         $this->loop = $loop;
         $this->server = $server;
-
-        // See https://bugs.php.net/bug.php?id=65137
-        // https://bugs.php.net/bug.php?id=41631
-        // https://github.com/reactphp/socket-client/issues/24
-        // On versions affected by this bug we need to fread the stream until we
-        //  get an empty string back because the buffer indicator could be wrong
-        if (version_compare(PHP_VERSION, '5.6.8', '<')) {
-            $this->wrapSecure = true;
-        }
 
         if ($server) {
             $this->method = STREAM_CRYPTO_METHOD_TLS_SERVER;
@@ -100,15 +89,10 @@ class StreamEncryption
             $toggleCrypto();
         }
 
-        $wrap = $this->wrapSecure && $toggle;
         $loop = $this->loop;
 
-        return $deferred->promise()->then(function () use ($stream, $socket, $wrap, $loop, $toggle) {
+        return $deferred->promise()->then(function () use ($stream, $socket, $loop, $toggle) {
             $loop->removeReadStream($socket);
-
-            if ($wrap) {
-                $stream->bufferSize = null;
-            }
 
             $stream->encryptionEnabled = $toggle;
             $stream->resume();

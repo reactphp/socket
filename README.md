@@ -1237,8 +1237,11 @@ options as described above.
 All versions of PHP prior to 5.6.8 suffered from a buffering issue where reading
 from a streaming TLS connection could be one `data` event behind.
 This library implements a work-around to try to flush the complete incoming
-data buffers on these versions, but we have seen reports of people saying this
-could still affect some older versions (`5.5.23`, `5.6.7`, and `5.6.8`).
+data buffers on these legacy PHP versions, which has a penalty of around 10% of
+throughput on all connections.
+With this work-around, we have not been able to reproduce this issue anymore,
+but we have seen reports of people saying this could still affect some of the
+older PHP versions (`5.5.23`, `5.6.7`, and `5.6.8`).
 Note that this only affects *some* higher-level streaming protocols, such as
 IRC over TLS, but should not affect HTTP over TLS (HTTPS).
 Further investigation of this issue is needed.

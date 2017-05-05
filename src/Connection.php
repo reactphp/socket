@@ -3,6 +3,7 @@
 namespace React\Socket;
 
 use React\Stream\Stream;
+use React\EventLoop\LoopInterface;
 
 /**
  * The actual connection implementation for ConnectionInterface
@@ -23,6 +24,22 @@ class Connection extends Stream implements ConnectionInterface
      * @internal
      */
     public $encryptionEnabled = false;
+
+    public function __construct($stream, LoopInterface $loop)
+    {
+        parent::__construct($stream, $loop);
+
+        // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
+        // as a work-around we always read the complete buffer until its end.
+        // The buffer size is limited due to TCP/IP buffers anyway, so this
+        // should not affect usage otherwise.
+        // See https://bugs.php.net/bug.php?id=65137
+        // https://bugs.php.net/bug.php?id=41631
+        // https://github.com/reactphp/socket-client/issues/24
+        if (version_compare(PHP_VERSION, '5.6.8', '<')) {
+            $this->bufferSize = null;
+        }
+    }
 
     public function handleClose()
     {
