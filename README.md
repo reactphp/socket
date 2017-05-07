@@ -637,9 +637,9 @@ know what you're doing.
 Internally, the `SecureServer` has to set the required TLS context options on
 the underlying stream resources.
 These resources are not exposed through any of the interfaces defined in this
-package, but only through the `React\Stream\Stream` class.
+package, but only through the internal `Connection` class.
 The `TcpServer` class is guaranteed to emit connections that implement
-the `ConnectionInterface` and also extend the `Stream` class in order to
+the `ConnectionInterface` and uses the internal `Connection` class in order to
 expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
@@ -1237,8 +1237,11 @@ options as described above.
 All versions of PHP prior to 5.6.8 suffered from a buffering issue where reading
 from a streaming TLS connection could be one `data` event behind.
 This library implements a work-around to try to flush the complete incoming
-data buffers on these versions, but we have seen reports of people saying this
-could still affect some older versions (`5.5.23`, `5.6.7`, and `5.6.8`).
+data buffers on these legacy PHP versions, which has a penalty of around 10% of
+throughput on all connections.
+With this work-around, we have not been able to reproduce this issue anymore,
+but we have seen reports of people saying this could still affect some of the
+older PHP versions (`5.5.23`, `5.6.7`, and `5.6.8`).
 Note that this only affects *some* higher-level streaming protocols, such as
 IRC over TLS, but should not affect HTTP over TLS (HTTPS).
 Further investigation of this issue is needed.

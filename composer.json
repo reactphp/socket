@@ -8,14 +8,14 @@
         "evenement/evenement": "~2.0|~1.0",
         "react/dns": "0.4.*|0.3.*",
         "react/event-loop": "0.4.*|0.3.*",
-        "react/stream": "^0.6 || ^0.5 || ^0.4.5",
+        "react/stream": "^1.0 || ^0.7 || ^0.6 || ^0.5 || ^0.4.5",
         "react/promise": "^2.1 || ^1.2",
         "react/promise-timer": "~1.0"
     },
     "require-dev": {
         "clue/block-react": "^1.1",
         "phpunit/phpunit": "~4.8",
-        "react/stream": "^0.6"
+        "react/stream": "^1.0 || ^0.7 || ^0.6"
     },
     "autoload": {
         "psr-4": {

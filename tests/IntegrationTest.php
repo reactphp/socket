@@ -7,7 +7,6 @@ use React\EventLoop\StreamSelectLoop;
 use React\Socket\Connector;
 use React\Socket\SecureConnector;
 use React\Socket\TcpConnector;
-use React\Stream\BufferedSink;
 use Clue\React\Block;
 use React\Socket\DnsConnector;
 
@@ -28,7 +27,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
@@ -47,7 +46,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
@@ -76,7 +75,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
         $this->assertRegExp('#^HTTP/1\.0#', $response);
     }
@@ -94,7 +93,7 @@ class IntegrationTest extends TestCase
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = Block\await(BufferedSink::createPromise($conn), $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
         $this->assertNotRegExp('#^HTTP/1\.0#', $response);
     }

@@ -3,8 +3,8 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\StreamSelectLoop;
-use React\Stream\Stream;
 use React\Socket\TcpServer;
+use React\Stream\DuplexResourceStream;
 
 class TcpServerTest extends TestCase
 {
@@ -55,10 +55,6 @@ class TcpServerTest extends TestCase
         $this->loop->tick();
     }
 
-    /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
-     * @covers React\Socket\Connection::handleData
-     */
     public function testDataEventWillNotBeEmittedWhenClientSendsNoData()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
@@ -72,10 +68,6 @@ class TcpServerTest extends TestCase
         $this->loop->tick();
     }
 
-    /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
-     * @covers React\Socket\Connection::handleData
-     */
     public function testDataWillBeEmittedWithDataClientSends()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
@@ -91,10 +83,6 @@ class TcpServerTest extends TestCase
         $this->loop->tick();
     }
 
-    /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
-     * @covers React\Socket\Connection::handleData
-     */
     public function testDataWillBeEmittedEvenWhenClientShutsDownAfterSending()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
@@ -104,22 +92,6 @@ class TcpServerTest extends TestCase
         $mock = $this->expectCallableOnceWith("foo\n");
 
         $this->server->on('connection', function ($conn) use ($mock) {
-            $conn->on('data', $mock);
-        });
-        $this->loop->tick();
-        $this->loop->tick();
-    }
-
-    public function testDataWillBeFragmentedToBufferSize()
-    {
-        $client = stream_socket_client('tcp://localhost:' . $this->port);
-
-        fwrite($client, "Hello World!\n");
-
-        $mock = $this->expectCallableOnceWith("He");
-
-        $this->server->on('connection', function ($conn) use ($mock) {
-            $conn->bufferSize = 2;
             $conn->on('data', $mock);
         });
         $this->loop->tick();
@@ -167,7 +139,7 @@ class TcpServerTest extends TestCase
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
-        $stream = new Stream($client, $this->loop);
+        $stream = new DuplexResourceStream($client, $this->loop);
 
         $bytes = 1024 * 1024;
         $stream->end(str_repeat('*', $bytes));

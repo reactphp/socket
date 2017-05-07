@@ -7,12 +7,11 @@ use React\Socket\TcpServer;
 use React\Socket\SecureServer;
 use React\Socket\TcpConnector;
 use React\Socket\SecureConnector;
-use React\Stream\Stream;
 use Clue\React\Block;
 use React\Promise\Promise;
 use Evenement\EventEmitterInterface;
 use React\Promise\Deferred;
-use React\Stream\BufferedSink;
+use React\Socket\ConnectionInterface;
 
 class SecureIntegrationTest extends TestCase
 {
@@ -49,7 +48,7 @@ class SecureIntegrationTest extends TestCase
     public function testConnectToServer()
     {
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         $client->close();
     }
@@ -61,7 +60,7 @@ class SecureIntegrationTest extends TestCase
         $promiseClient = $this->connector->connect($this->address);
 
         list($_, $client) = Block\awaitAll(array($promiseServer, $promiseClient), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         $client->close();
     }
@@ -70,14 +69,14 @@ class SecureIntegrationTest extends TestCase
     {
         // server expects one connection which emits one data event
         $received = new Deferred();
-        $this->server->on('connection', function (Stream $peer) use ($received) {
+        $this->server->on('connection', function (ConnectionInterface $peer) use ($received) {
             $peer->on('data', function ($chunk) use ($received) {
                 $received->resolve($chunk);
             });
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         $client->write('hello');
 
@@ -92,7 +91,7 @@ class SecureIntegrationTest extends TestCase
     public function testSendDataWithEndToServerReceivesAllData()
     {
         $disconnected = new Deferred();
-        $this->server->on('connection', function (Stream $peer) use ($disconnected) {
+        $this->server->on('connection', function (ConnectionInterface $peer) use ($disconnected) {
             $received = '';
             $peer->on('data', function ($chunk) use (&$received) {
                 $received .= $chunk;
@@ -103,7 +102,7 @@ class SecureIntegrationTest extends TestCase
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         $data = str_repeat('a', 200000);
         $client->end($data);
@@ -117,14 +116,14 @@ class SecureIntegrationTest extends TestCase
     public function testSendDataWithoutEndingToServerReceivesAllData()
     {
         $received = '';
-        $this->server->on('connection', function (Stream $peer) use (&$received) {
+        $this->server->on('connection', function (ConnectionInterface $peer) use (&$received) {
             $peer->on('data', function ($chunk) use (&$received) {
                 $received .= $chunk;
             });
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         $data = str_repeat('d', 200000);
         $client->write($data);
@@ -139,12 +138,12 @@ class SecureIntegrationTest extends TestCase
 
     public function testConnectToServerWhichSendsSmallDataReceivesOneChunk()
     {
-        $this->server->on('connection', function (Stream $peer) {
+        $this->server->on('connection', function (ConnectionInterface $peer) {
             $peer->write('hello');
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         // await client to report one "data" event
         $receive = $this->createPromiseForEvent($client, 'data', $this->expectCallableOnceWith('hello'));
@@ -156,15 +155,15 @@ class SecureIntegrationTest extends TestCase
     public function testConnectToServerWhichSendsDataWithEndReceivesAllData()
     {
         $data = str_repeat('b', 100000);
-        $this->server->on('connection', function (Stream $peer) use ($data) {
+        $this->server->on('connection', function (ConnectionInterface $peer) use ($data) {
             $peer->end($data);
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         // await data from client until it closes
-        $received = Block\await(BufferedSink::createPromise($client), $this->loop, self::TIMEOUT);
+        $received = $this->buffer($client, $this->loop, self::TIMEOUT);
 
         $this->assertEquals($data, $received);
     }
@@ -172,12 +171,12 @@ class SecureIntegrationTest extends TestCase
     public function testConnectToServerWhichSendsDataWithoutEndingReceivesAllData()
     {
         $data = str_repeat('c', 100000);
-        $this->server->on('connection', function (Stream $peer) use ($data) {
+        $this->server->on('connection', function (ConnectionInterface $peer) use ($data) {
             $peer->write($data);
         });
 
         $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client Stream */
+        /* @var $client ConnectionInterface */
 
         // buffer incoming data for 0.1s (should be plenty of time)
         $received = '';

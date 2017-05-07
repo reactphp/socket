@@ -2,7 +2,12 @@
 
 namespace React\Socket;
 
+use Evenement\EventEmitter;
+use React\EventLoop\LoopInterface;
+use React\Stream\DuplexResourceStream;
 use React\Stream\Stream;
+use React\Stream\Util;
+use React\Stream\WritableStreamInterface;
 
 /**
  * The actual connection implementation for ConnectionInterface
@@ -12,7 +17,7 @@ use React\Stream\Stream;
  * @see ConnectionInterface
  * @internal
  */
-class Connection extends Stream implements ConnectionInterface
+class Connection extends EventEmitter implements ConnectionInterface
 {
     /**
      * Internal flag whether encryption has been enabled on this connection
@@ -23,6 +28,84 @@ class Connection extends Stream implements ConnectionInterface
      * @internal
      */
     public $encryptionEnabled = false;
+
+    /** @internal */
+    public $stream;
+
+    private $input;
+
+    public function __construct($resource, LoopInterface $loop)
+    {
+        // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
+        // as a work-around we always read the complete buffer until its end.
+        // The buffer size is limited due to TCP/IP buffers anyway, so this
+        // should not affect usage otherwise.
+        // See https://bugs.php.net/bug.php?id=65137
+        // https://bugs.php.net/bug.php?id=41631
+        // https://github.com/reactphp/socket-client/issues/24
+        $clearCompleteBuffer = (version_compare(PHP_VERSION, '5.6.8', '<'));
+
+        // @codeCoverageIgnoreStart
+        if (class_exists('React\Stream\Stream')) {
+            // legacy react/stream < 0.7 requires additional buffer property
+            $this->input = new Stream($resource, $loop);
+            if ($clearCompleteBuffer) {
+                $this->input->bufferSize = null;
+            }
+        } else {
+            // preferred react/stream >= 0.7 accepts buffer parameter
+            $this->input = new DuplexResourceStream($resource, $loop, $clearCompleteBuffer ? -1 : null);
+        }
+        // @codeCoverageIgnoreEnd
+
+        $this->stream = $resource;
+
+        Util::forwardEvents($this->input, $this, array('data', 'end', 'error', 'close', 'pipe', 'drain'));
+
+        $this->input->on('close', array($this, 'close'));
+    }
+
+    public function isReadable()
+    {
+        return $this->input->isReadable();
+    }
+
+    public function isWritable()
+    {
+        return $this->input->isWritable();
+    }
+
+    public function pause()
+    {
+        $this->input->pause();
+    }
+
+    public function resume()
+    {
+        $this->input->resume();
+    }
+
+    public function pipe(WritableStreamInterface $dest, array $options = array())
+    {
+        return $this->input->pipe($dest, $options);
+    }
+
+    public function write($data)
+    {
+        return $this->input->write($data);
+    }
+
+    public function end($data = null)
+    {
+        $this->input->end($data);
+    }
+
+    public function close()
+    {
+        $this->input->close();
+        $this->handleClose();
+        $this->removeAllListeners();
+    }
 
     public function handleClose()
     {
