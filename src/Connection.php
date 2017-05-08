@@ -146,8 +146,15 @@ class Connection extends EventEmitter implements ConnectionInterface
         }
 
         if ($this->unix) {
-            // unknown addresses should not return a NULL-byte string
-            if ($address === "\x00") {
+            // remove trailing colon from address for HHVM < 3.19: https://3v4l.org/5C1lo
+            // note that techncially ":" is a valid address, so keep this in place otherwise
+            if (substr($address, -1) === ':' && defined('HHVM_VERSION_ID') && HHVM_VERSION_ID < 31900) {
+                $address = (string)substr($address, 0, -1);
+            }
+
+            // work around unknown addresses should return null value: https://3v4l.org/5C1lo
+            // PHP uses "\0" string and HHVM uses empty string (colon removed above)
+            if ($address === "\x00" || $address === '') {
                 return null;
             }
 
