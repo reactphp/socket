@@ -36,6 +36,9 @@ final class UnixConnector implements ConnectorInterface
             return Promise\reject(new RuntimeException('Unable to connect to unix domain socket "' . $path . '": ' . $errstr, $errno));
         }
 
-        return Promise\resolve(new Connection($resource, $this->loop));
+        $connection = new Connection($resource, $this->loop);
+        $connection->unix = true;
+
+        return Promise\resolve($connection);
     }
 }
