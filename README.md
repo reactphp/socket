@@ -149,7 +149,8 @@ If the remote address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
 
 Otherwise, it will return the full address (URI) as a string value, such
-as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+`unix://example.sock` or `unix:///path/to/example.sock`.
 Note that individual URI components are application specific and depend
 on the underlying transport protocol.
 
@@ -176,7 +177,8 @@ If the local address can not be determined or is unknown at this time (such as
 after the connection has been closed), it MAY return a `NULL` value instead.
 
 Otherwise, it will return the full address (URI) as a string value, such
-as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+`unix://example.sock` or `unix:///path/to/example.sock`.
 Note that individual URI components are application specific and depend
 on the underlying transport protocol.
 
@@ -831,6 +833,12 @@ $connector->connect('unix:///tmp/demo.sock')->then(function (ConnectionInterface
 });
 ```
 
+> The [`getRemoteAddress()`](#getremoteaddress) method will return the target
+  Unix domain socket (UDS) path as given to the `connect()` method, including
+  the `unix://` scheme, for example `unix:///tmp/demo.sock`.
+  The [`getLocalAddress()`](#getlocaladdress) method will most likely return a
+  `null` value as this value is not applicable to UDS connections here.
+
 Under the hood, the `Connector` is implemented as a *higher-level facade*
 for the lower-level connectors implemented in this package. This means it
 also shares all of their features and implementation details.
@@ -1208,6 +1216,12 @@ $loop->run();
 Connecting to Unix domain sockets is an atomic operation, i.e. its promise will
 settle (either resolve or reject) immediately.
 As such, calling `cancel()` on the resulting promise has no effect.
+
+> The [`getRemoteAddress()`](#getremoteaddress) method will return the target
+  Unix domain socket (UDS) path as given to the `connect()` method, prepended
+  with the `unix://` scheme, for example `unix:///tmp/demo.sock`.
+  The [`getLocalAddress()`](#getlocaladdress) method will most likely return a
+  `null` value as this value is not applicable to UDS connections here.
 
 ## Install
 

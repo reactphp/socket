@@ -66,7 +66,8 @@ interface ConnectionInterface extends DuplexStreamInterface
      * after the connection has been closed), it MAY return a `NULL` value instead.
      *
      * Otherwise, it will return the full address (URI) as a string value, such
-     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+     * `unix://example.sock` or `unix:///path/to/example.sock`.
      * Note that individual URI components are application specific and depend
      * on the underlying transport protocol.
      *
@@ -95,7 +96,8 @@ interface ConnectionInterface extends DuplexStreamInterface
      * after the connection has been closed), it MAY return a `NULL` value instead.
      *
      * Otherwise, it will return the full address (URI) as a string value, such
-     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+     * `unix://example.sock` or `unix:///path/to/example.sock`.
      * Note that individual URI components are application specific and depend
      * on the underlying transport protocol.
      *

@@ -20,6 +20,13 @@ use React\Stream\WritableStreamInterface;
 class Connection extends EventEmitter implements ConnectionInterface
 {
     /**
+     * Internal flag whether this is a Unix domain socket (UDS) connection
+     *
+     * @internal
+     */
+    public $unix = false;
+
+    /**
      * Internal flag whether encryption has been enabled on this connection
      *
      * Mostly used by internal StreamEncryption so that connection returns
@@ -136,6 +143,15 @@ class Connection extends EventEmitter implements ConnectionInterface
     {
         if ($address === false) {
             return null;
+        }
+
+        if ($this->unix) {
+            // unknown addresses should not return a NULL-byte string
+            if ($address === "\x00") {
+                return null;
+            }
+
+            return 'unix://' . $address;
         }
 
         // check if this is an IPv6 address which includes multiple colons but no square brackets

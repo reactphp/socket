@@ -3,6 +3,8 @@
 namespace React\Tests\Socket;
 
 use React\Socket\UnixConnector;
+use Clue\React\Block;
+use React\Socket\ConnectionInterface;
 
 class UnixConnectorTest extends TestCase
 {
@@ -45,8 +47,19 @@ class UnixConnectorTest extends TestCase
         $promise = $this->connector->connect($path);
         $promise->then($this->expectCallableOnce());
 
+        // remember remote and local address of this connection and close again
+        $remote = $local = false;
+        $promise->then(function(ConnectionInterface $conn) use (&$remote, &$local) {
+            $remote = $conn->getRemoteAddress();
+            $local = $conn->getLocalAddress();
+            $conn->close();
+        });
+
         // clean up server
         fclose($server);
         unlink($path);
+
+        $this->assertNull($local);
+        $this->assertEquals('unix://' . $path, $remote);
     }
 }
