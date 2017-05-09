@@ -1231,12 +1231,13 @@ The recommended way to install this library is [through Composer](http://getcomp
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:^0.7.2
+$ composer require react/socket:^0.8
 ```
 
 More details about version upgrades can be found in the [CHANGELOG](CHANGELOG.md).
 
-This project supports running on legacy PHP 5.3 through current PHP 7+ and HHVM.
+This project aims to run on any platform and thus does not require any PHP
+extensions and supports running on legacy PHP 5.3 through current PHP 7+ and HHVM.
 It's *highly recommended to use PHP 7+* for this project, partly due to its vast
 performance improvements and partly because legacy PHP versions require several
 workarounds as described below.

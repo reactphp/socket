@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.8.0 (2017-05-09)
+
+* Feature: New `Server` class now acts as a facade for existing server classes
+  and renamed old `Server` to `TcpServer` for advanced usage.
+  (#96 and #97 by @clue)
+
+  The `Server` class is now the main class in this package that implements the
+  `ServerInterface` and allows you to accept incoming streaming connections,
+  such as plaintext TCP/IP or secure TLS connection streams.
+
+  > This is not a BC break and consumer code does not have to be updated.
+
+* Feature / BC break: All addresses are now URIs that include the URI scheme
+  (#98 by @clue)
+
+  ```diff
+  - $parts = parse_url('tcp://' . $conn->getRemoteAddress());
+  + $parts = parse_url($conn->getRemoteAddress());
+  ```
+
+* Fix: Fix `unix://` addresses for Unix domain socket (UDS) paths
+  (#100 by @clue)
+
+* Feature: Forward compatibility with Stream v1.0 and v0.7
+  (#99 by @clue)
+
 ## 0.7.2 (2017-04-24)
 
 * Fix: Work around latest PHP 7.0.18 and 7.1.4 no longer accepting full URIs
