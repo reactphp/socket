@@ -45,6 +45,13 @@ final class Server extends EventEmitter implements ServerInterface
         });
     }
 
+    /**
+     * @return resource master stream
+     */
+    public function getMasterStream(){
+        return $this->master;
+    }
+    
     public function getAddress()
     {
         return $this->server->getAddress();
