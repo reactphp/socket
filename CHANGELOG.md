@@ -11,7 +11,7 @@
   (#109 and #110 by @clue)
 
 * Minor documentation fixes
-  (#103 by @christiaan and #108 from hansott)
+  (#103 by @christiaan and #108 by @hansott)
 
 ## 0.8.0 (2017-05-09)
 
