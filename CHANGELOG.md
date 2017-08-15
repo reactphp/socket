@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.1 (2017-08-15)
+
+* Feature: Forward compatibility with upcoming EventLoop v1.0 and v0.5 and
+  target evenement 3.0 a long side 2.0 and 1.0
+  (#104 by @clue and #111 by @WyriHaximus)
+
+* Improve test suite by locking Travis distro so new defaults will not break the build and
+  fix HHVM build for now again and ignore future HHVM build errors
+  (#109 and #110 by @clue)
+
+* Minor documentation fixes
+  (#103 by @christiaan and #108 from hansott)
+
 ## 0.8.0 (2017-05-09)
 
 * Feature: New `Server` class now acts as a facade for existing server classes
