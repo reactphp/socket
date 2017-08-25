@@ -846,12 +846,9 @@ If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ConnectorInterface`](#connectorinterface) instead.
 
 In particular, the `Connector` class uses Google's public DNS server `8.8.8.8`
-to resolve all hostnames into underlying IP addresses by default.
-This implies that it also ignores your `hosts` file and `resolve.conf`, which
-means you won't be able to connect to `localhost` and other non-public
-hostnames by default.
-If you want to use a custom DNS server (such as a local DNS relay), you can set
-up the `Connector` like this:
+to resolve all public hostnames into underlying IP addresses by default.
+If you want to use a custom DNS server (such as a local DNS relay or a company
+wide DNS server), you can set up the `Connector` like this:
 
 ```php
 $connector = new Connector($loop, array(
