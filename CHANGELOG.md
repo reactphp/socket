@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.2 (2017-08-25)
+
+*   Feature: Update DNS dependency to support hosts file on all platforms
+    (#112 by @clue)
+
+    This means that connecting to hosts such as `localhost` will now work as
+    expected across all platforms with no changes required:
+
+    ```php
+    $connector = new Connector($loop);
+    $connector->connect('localhost:8080')->then(function ($connection) {
+        // …
+    });
+    ```
+
 ## 0.8.1 (2017-08-15)
 
 * Feature: Forward compatibility with upcoming EventLoop v1.0 and v0.5 and
