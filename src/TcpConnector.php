@@ -90,21 +90,26 @@ final class TcpConnector implements ConnectorInterface
 
         // wait for connection
 
-        return $this
-            ->waitForStreamOnce($socket)
-            ->then(array($this, 'checkConnectedSocket'))
-            ->then(array($this, 'handleConnectedSocket'));
+        return $this->waitForStreamOnce($socket);
     }
 
     private function waitForStreamOnce($stream)
     {
         $loop = $this->loop;
 
-        return new Promise\Promise(function ($resolve) use ($loop, $stream) {
-            $loop->addWriteStream($stream, function ($stream) use ($loop, $resolve) {
+        return new Promise\Promise(function ($resolve, $reject) use ($loop, $stream) {
+            $loop->addWriteStream($stream, function ($stream) use ($loop, $resolve, $reject) {
                 $loop->removeWriteStream($stream);
 
-                $resolve($stream);
+                // The following hack looks like the only way to
+                // detect connection refused errors with PHP's stream sockets.
+                if (false === stream_socket_get_name($stream, true)) {
+                    fclose($stream);
+
+                    $reject(new \RuntimeException('Connection refused'));
+                } else {
+                    $resolve(new Connection($stream, $loop));
+                }
             });
         }, function () use ($loop, $stream) {
             $loop->removeWriteStream($stream);
@@ -112,25 +117,5 @@ final class TcpConnector implements ConnectorInterface
 
             throw new \RuntimeException('Cancelled while waiting for TCP/IP connection to be established');
         });
-    }
-
-    /** @internal */
-    public function checkConnectedSocket($socket)
-    {
-        // The following hack looks like the only way to
-        // detect connection refused errors with PHP's stream sockets.
-        if (false === stream_socket_get_name($socket, true)) {
-            fclose($socket);
-
-            return Promise\reject(new \RuntimeException('Connection refused'));
-        }
-
-        return Promise\resolve($socket);
-    }
-
-    /** @internal */
-    public function handleConnectedSocket($socket)
-    {
-        return new Connection($socket, $this->loop);
     }
 }
