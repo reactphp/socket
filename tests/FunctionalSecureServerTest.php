@@ -98,6 +98,38 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertEquals(400000, $received);
     }
 
+    public function testWritesMoreDataInMultipleChunksToConnection()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+        $server->on('connection', $this->expectCallableOnce());
+
+        $server->on('connection', function (ConnectionInterface $conn) {
+            $conn->write(str_repeat('*', 2000000));
+        });
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        $local = Block\await($promise, $loop, self::TIMEOUT);
+        /* @var $local React\Stream\Stream */
+
+        $received = 0;
+        $local->on('data', function ($chunk) use (&$received) {
+            $received += strlen($chunk);
+        });
+
+        Block\sleep(self::TIMEOUT, $loop);
+
+        $this->assertEquals(2000000, $received);
+    }
+
     public function testEmitsDataFromConnection()
     {
         $loop = Factory::create();
