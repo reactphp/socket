@@ -1222,13 +1222,13 @@ As such, calling `cancel()` on the resulting promise has no effect.
 
 ## Install
 
-The recommended way to install this library is [through Composer](http://getcomposer.org).
-[New to Composer?](http://getcomposer.org/doc/00-intro.md)
+The recommended way to install this library is [through Composer](https://getcomposer.org).
+[New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
 This will install the latest supported version:
 
 ```bash
-$ composer require react/socket:^0.8.2
+$ composer require react/socket:^0.8.3
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
@@ -1277,7 +1277,7 @@ on affected versions.
 ## Tests
 
 To run the test suite, you first need to clone this repo and then install all
-dependencies [through Composer](http://getcomposer.org).
+dependencies [through Composer](https://getcomposer.org).
 Because the test suite contains some circular dependencies, you may have to
 manually specify the root package version like this:
 

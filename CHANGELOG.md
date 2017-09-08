@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.3 (2017-09-08)
+
+*   Feature: Reduce memory consumption for failed connections
+    (#113 by @valga)
+
+*   Fix: Work around write chunk size for TLS streams for PHP < 7.1.14
+    (#114 by @clue)
+
 ## 0.8.2 (2017-08-25)
 
 *   Feature: Update DNS dependency to support hosts file on all platforms
