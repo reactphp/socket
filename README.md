@@ -1259,6 +1259,13 @@ IRC over TLS, but should not affect HTTP over TLS (HTTPS).
 Further investigation of this issue is needed.
 For more insights, this issue is also covered by our test suite.
 
+PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
+chunks of data over TLS streams at once.
+We try to work around this by limiting the write chunk size to 8192
+bytes for older PHP versions only.
+This is only a work-around and has a noticable performance penalty on
+affected versions.
+
 This project also supports running on HHVM.
 Note that really old HHVM < 3.8 does not support secure TLS connections, as it
 lacks the required `stream_socket_enable_crypto()` function.

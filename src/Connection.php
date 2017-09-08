@@ -5,9 +5,9 @@ namespace React\Socket;
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use React\Stream\DuplexResourceStream;
-use React\Stream\Stream;
 use React\Stream\Util;
 use React\Stream\WritableStreamInterface;
+use React\Stream\WritableResourceStream;
 
 /**
  * The actual connection implementation for ConnectionInterface
@@ -50,20 +50,24 @@ class Connection extends EventEmitter implements ConnectionInterface
         // See https://bugs.php.net/bug.php?id=65137
         // https://bugs.php.net/bug.php?id=41631
         // https://github.com/reactphp/socket-client/issues/24
-        $clearCompleteBuffer = (version_compare(PHP_VERSION, '5.6.8', '<'));
+        $clearCompleteBuffer = PHP_VERSION_ID < 50608;
 
-        // @codeCoverageIgnoreStart
-        if (class_exists('React\Stream\Stream')) {
-            // legacy react/stream < 0.7 requires additional buffer property
-            $this->input = new Stream($resource, $loop);
-            if ($clearCompleteBuffer) {
-                $this->input->bufferSize = null;
-            }
-        } else {
-            // preferred react/stream >= 0.7 accepts buffer parameter
-            $this->input = new DuplexResourceStream($resource, $loop, $clearCompleteBuffer ? -1 : null);
-        }
-        // @codeCoverageIgnoreEnd
+        // PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
+        // chunks of data over TLS streams at once.
+        // We try to work around this by limiting the write chunk size to 8192
+        // bytes for older PHP versions only.
+        // This is only a work-around and has a noticable performance penalty on
+        // affected versions. Please update your PHP version.
+        // This applies to all streams because TLS may be enabled later on.
+        // See https://github.com/reactphp/socket/issues/105
+        $limitWriteChunks = (PHP_VERSION_ID < 70018 || (PHP_VERSION_ID >= 70100 && PHP_VERSION_ID < 70104));
+
+        $this->input = new DuplexResourceStream(
+            $resource,
+            $loop,
+            $clearCompleteBuffer ? -1 : null,
+            new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null)
+        );
 
         $this->stream = $resource;
 
