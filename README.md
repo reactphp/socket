@@ -46,6 +46,7 @@ handle multiple concurrent connections without blocking.
     * [SecureConnector](#secureconnector)
     * [TimeoutConnector](#timeoutconnector)
     * [UnixConnector](#unixconnector)
+    * [FixUriConnector](#fixeduriconnector)
 * [Install](#install)
 * [Tests](#tests)
 * [License](#license)
@@ -1219,6 +1220,26 @@ As such, calling `cancel()` on the resulting promise has no effect.
   with the `unix://` scheme, for example `unix:///tmp/demo.sock`.
   The [`getLocalAddress()`](#getlocaladdress) method will most likely return a
   `null` value as this value is not applicable to UDS connections here.
+
+#### FixedUriConnector
+
+The `FixedUriConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and decorates an existing Connector
+to always use a fixed, preconfigured URI.
+
+This can be useful for consumers that do not support certain URIs, such as
+when you want to explicitly connect to a Unix domain socket (UDS) path
+instead of connecting to a default address assumed by an higher-level API:
+
+```php
+$connector = new FixedUriConnector(
+    'unix:///var/run/docker.sock',
+    new UnixConnector($loop)
+);
+
+// destination will be ignored, actually connects to Unix domain socket
+$promise = $connector->connect('localhost:80');
+```
 
 ## Install
 
