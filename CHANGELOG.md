@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.4 (2017-09-16)
+
+*   Feature: Add `FixedUriConnector` decorator to use fixed, preconfigured URI instead
+    (#117 by @clue)
+
+    This can be useful for consumers that do not support certain URIs, such as
+    when you want to explicitly connect to a Unix domain socket (UDS) path
+    instead of connecting to a default address assumed by an higher-level API:
+
+    ```php
+    $connector = new FixedUriConnector(
+        'unix:///var/run/docker.sock',
+        new UnixConnector($loop)
+    );
+
+    // destination will be ignored, actually connects to Unix domain socket
+    $promise = $connector->connect('localhost:80');
+    ```
+
 ## 0.8.3 (2017-09-08)
 
 *   Feature: Reduce memory consumption for failed connections
