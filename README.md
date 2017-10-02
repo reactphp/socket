@@ -1,6 +1,6 @@
 # Socket
 
-[![Build Status](https://secure.travis-ci.org/reactphp/socket.png?branch=master)](http://travis-ci.org/reactphp/socket)
+[![Build Status](https://travis-ci.org/reactphp/socket.svg?branch=master)](https://travis-ci.org/reactphp/socket)
 
 Async, streaming plaintext TCP/IP and secure TLS socket server and client
 connections for [ReactPHP](https://reactphp.org/)
