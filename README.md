@@ -34,6 +34,7 @@ handle multiple concurrent connections without blocking.
   * [Advanced server usage](#advanced-server-usage)
     * [TcpServer](#tcpserver)
     * [SecureServer](#secureserver)
+    * [UnixServer](#unixserver)
     * [LimitingServer](#limitingserver)
       * [getConnections()](#getconnections)
 * [Client usage](#client-usage)
@@ -255,7 +256,8 @@ If the address can not be determined or is unknown at this time (such as
 after the socket has been closed), it MAY return a `NULL` value instead.
 
 Otherwise, it will return the full address (URI) as a string value, such
-as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`
+`unix://example.sock` or `unix:///path/to/example.sock`.
 Note that individual URI components are application specific and depend
 on the underlying transport protocol.
 
@@ -647,6 +649,43 @@ expose these underlying resources.
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
+
+#### UnixServer
+
+The `UnixServer` class implements the [`ServerInterface`](#serverinterface) and
+is responsible for accepting connections on Unix domain sockets (UDS).
+
+```php
+$server = new UnixServer('/tmp/server.sock', $loop);
+```
+
+As above, the `$uri` parameter can consist of only a socket path or socket path
+prefixed by the `unix://` scheme.
+
+If the given URI appears to be valid, but listening on it fails (such as if the
+socket is already in use or the file not accessible etc.), it will throw a
+`RuntimeException`:
+
+```php
+$first = new UnixServer('/tmp/same.sock', $loop);
+
+// throws RuntimeException because socket is already in use
+$second = new UnixServer('/tmp/same.sock', $loop);
+```
+
+Whenever a client connects, it will emit a `connection` event with a connection
+instance implementing [`ConnectionInterface`](#connectioninterface):
+
+```php
+$server->on('connection', function (ConnectionInterface $connection) {
+    echo 'New connection' . PHP_EOL;
+
+    $connection->write('hello there!' . PHP_EOL);
+    …
+});
+```
+
+See also the [`ServerInterface`](#serverinterface) for more details.
 
 #### LimitingServer
 
