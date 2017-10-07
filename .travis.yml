@@ -19,6 +19,7 @@ matrix:
   include:
     - php: 7
       os: osx
+      dist: ""
   allow_failures:
     - php: hhvm
 
