@@ -156,9 +156,9 @@ class Connection extends EventEmitter implements ConnectionInterface
                 $address = (string)substr($address, 0, -1);
             }
 
-            // work around unknown addresses should return null value: https://3v4l.org/5C1lo
+            // work around unknown addresses should return null value: https://3v4l.org/5C1lo and https://bugs.php.net/bug.php?id=74556
             // PHP uses "\0" string and HHVM uses empty string (colon removed above)
-            if ($address === "\x00" || $address === '') {
+            if ($address === '' || $address[0] === "\x00" ) {
                 return null;
             }
 
