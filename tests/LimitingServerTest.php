@@ -75,7 +75,7 @@ class LimitingServerTest extends TestCase
 
     public function testSocketErrorWillBeForwarded()
     {
-        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $tcp = new TcpServer(0, $loop);
 
@@ -90,7 +90,7 @@ class LimitingServerTest extends TestCase
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
 
-        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $tcp = new TcpServer(0, $loop);
 
@@ -110,7 +110,7 @@ class LimitingServerTest extends TestCase
         $second = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $second->expects($this->once())->method('close');
 
-        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $tcp = new TcpServer(0, $loop);
 
@@ -124,7 +124,7 @@ class LimitingServerTest extends TestCase
 
     public function testPausingServerWillBePausedOnceLimitIsReached()
     {
-        $loop = $this->getMock('React\EventLoop\LoopInterface');
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
         $loop->expects($this->once())->method('removeReadStream');
 

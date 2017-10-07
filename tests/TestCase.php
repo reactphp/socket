@@ -52,7 +52,7 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
     protected function createCallableMock()
     {
-        return $this->getMock('React\Tests\Socket\Stub\CallableStub');
+        return $this->getMockBuilder('React\Tests\Socket\Stub\CallableStub')->getMock();
     }
 
     protected function buffer(ReadableStreamInterface $stream, LoopInterface $loop, $timeout)
