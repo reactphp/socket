@@ -344,6 +344,7 @@ Calling this method more than once on the same instance is a NO-OP.
 The `Server` class is the main class in this package that implements the
 [`ServerInterface`](#serverinterface) and allows you to accept incoming
 streaming connections, such as plaintext TCP/IP or secure TLS connection streams.
+Connections can also be accepted on Unix domain sockets.
 
 ```php
 $server = new Server(8080, $loop);
@@ -373,6 +374,13 @@ brackets:
 
 ```php
 $server = new Server('[::1]:8080', $loop);
+```
+
+To listen on a Unix domain socket (UDS) path, you MUST prefix the URI with the
+`unix://` scheme:
+
+```php
+$server = new Server('unix:///tmp/server.sock', $loop);
 ```
 
 If the given URI is invalid, does not contain a port, any other scheme or if it
