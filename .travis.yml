@@ -28,11 +28,15 @@ matrix:
 sudo: false
 
 install:
+  # OSX install inspired by https://github.com/kiler129/TravisCI-OSX-PHP
   - |
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then 
+      echo "Adding brew PHP dependencies..."
       brew tap homebrew/homebrew-php 
       brew install "${PACKAGE}"
+      brew link "${PACKAGE}"
       curl -s http://getcomposer.org/installer | php
+      mv composer.phar /usr/local/bin/composer
     fi
   - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
 
