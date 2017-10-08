@@ -17,15 +17,18 @@ matrix:
     - php: 5.3
       dist: precise
   include:
-    - php: 7.0
-      os: osx
-      dist: ""
+    - os: osx
+      language: generic
+      env:
+        - PACKAGE: php70
   allow_failures:
     - php: hhvm
 
 sudo: false
 
 install:
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew install "${PACKAGE}" ; fi
+  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then curl -s http://getcomposer.org/installer | php; fi
   - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
 
 script:
