@@ -13,7 +13,7 @@
         "react/promise-timer": "~1.0"
     },
     "require-dev": {
-        "clue/block-react": "^1.1",
+        "clue/block-react": "^1.2",
         "phpunit/phpunit": "^5.0 || ^4.8"
     },
     "autoload": {

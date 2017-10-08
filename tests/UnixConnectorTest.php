@@ -2,9 +2,8 @@
 
 namespace React\Tests\Socket;
 
-use React\Socket\UnixConnector;
-use Clue\React\Block;
 use React\Socket\ConnectionInterface;
+use React\Socket\UnixConnector;
 
 class UnixConnectorTest extends TestCase
 {

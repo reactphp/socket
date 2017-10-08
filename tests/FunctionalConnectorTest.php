@@ -3,9 +3,9 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\StreamSelectLoop;
-use React\Socket\TcpServer;
+use React\EventLoop\Factory;
 use React\Socket\Connector;
+use React\Socket\TcpServer;
 
 class FunctionalConnectorTest extends TestCase
 {
@@ -14,7 +14,7 @@ class FunctionalConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithLocalhost()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $server = new TcpServer(9998, $loop);
         $server->on('connection', $this->expectCallableOnce());

@@ -2,13 +2,13 @@
 
 namespace React\Tests\Socket;
 
-use React\Dns\Resolver\Factory;
-use React\EventLoop\StreamSelectLoop;
+use Clue\React\Block;
+use React\Dns\Resolver\Factory as ResolverFactory;
+use React\EventLoop\Factory;
 use React\Socket\Connector;
+use React\Socket\DnsConnector;
 use React\Socket\SecureConnector;
 use React\Socket\TcpConnector;
-use Clue\React\Block;
-use React\Socket\DnsConnector;
 
 class IntegrationTest extends TestCase
 {
@@ -17,7 +17,7 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingStuffFromGoogleShouldWork()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
         $connector = new Connector($loop);
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
@@ -39,7 +39,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
         $secureConnector = new Connector($loop);
 
         $conn = Block\await($secureConnector->connect('tls://google.com:443'), $loop);
@@ -58,9 +58,9 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
-        $factory = new Factory();
+        $factory = new ResolverFactory();
         $dns = $factory->create('8.8.8.8', $loop);
 
         $connector = new DnsConnector(
@@ -83,7 +83,7 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingPlaintextStuffFromEncryptedGoogleShouldNotWork()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
         $connector = new Connector($loop);
 
         $conn = Block\await($connector->connect('google.com:443'), $loop);
@@ -101,9 +101,9 @@ class IntegrationTest extends TestCase
     /** @test */
     public function testConnectingFailsIfDnsUsesInvalidResolver()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
-        $factory = new Factory();
+        $factory = new ResolverFactory();
         $dns = $factory->create('demo.invalid', $loop);
 
         $connector = new Connector($loop, array(
@@ -121,7 +121,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new Connector($loop, array(
             'timeout' => 0.001
@@ -138,7 +138,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new Connector($loop, array(
             'tls' => array(
@@ -157,7 +157,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new Connector($loop, array(
             'tls' => array(
@@ -171,7 +171,7 @@ class IntegrationTest extends TestCase
 
     public function testCancelPendingConnection()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new TcpConnector($loop);
         $pending = $connector->connect('8.8.8.8:80');

@@ -2,7 +2,8 @@
 
 namespace React\Tests\Socket;
 
-use React\EventLoop\StreamSelectLoop;
+use Clue\React\Block;
+use React\EventLoop\Factory;
 use React\Socket\TcpServer;
 use React\Stream\DuplexResourceStream;
 
@@ -14,7 +15,7 @@ class TcpServerTest extends TestCase
 
     private function createLoop()
     {
-        return new StreamSelectLoop();
+        return Factory::create();
     }
 
     /**
@@ -37,7 +38,8 @@ class TcpServerTest extends TestCase
         $client = stream_socket_client('tcp://localhost:'.$this->port);
 
         $this->server->on('connection', $this->expectCallableOnce());
-        $this->loop->tick();
+
+        $this->tick();
     }
 
     /**
@@ -50,9 +52,9 @@ class TcpServerTest extends TestCase
         $client3 = stream_socket_client('tcp://localhost:'.$this->port);
 
         $this->server->on('connection', $this->expectCallableExactly(3));
-        $this->loop->tick();
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
+        $this->tick();
     }
 
     public function testDataEventWillNotBeEmittedWhenClientSendsNoData()
@@ -79,8 +81,8 @@ class TcpServerTest extends TestCase
         $this->server->on('connection', function ($conn) use ($mock) {
             $conn->on('data', $mock);
         });
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
     }
 
     public function testDataWillBeEmittedEvenWhenClientShutsDownAfterSending()
@@ -94,8 +96,8 @@ class TcpServerTest extends TestCase
         $this->server->on('connection', function ($conn) use ($mock) {
             $conn->on('data', $mock);
         });
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
     }
 
     public function testLoopWillEndWhenServerIsClosed()
@@ -169,9 +171,6 @@ class TcpServerTest extends TestCase
         $this->assertEquals($bytes, $received);
     }
 
-    /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
-     */
     public function testConnectionDoesNotEndWhenClientDoesNotClose()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
@@ -181,12 +180,11 @@ class TcpServerTest extends TestCase
         $this->server->on('connection', function ($conn) use ($mock) {
             $conn->on('end', $mock);
         });
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
     }
 
     /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::end
      */
     public function testConnectionDoesEndWhenClientCloses()
@@ -200,8 +198,8 @@ class TcpServerTest extends TestCase
         $this->server->on('connection', function ($conn) use ($mock) {
             $conn->on('end', $mock);
         });
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
     }
 
     public function testCtorAddsResourceToLoop()
@@ -269,5 +267,10 @@ class TcpServerTest extends TestCase
         if ($this->server) {
             $this->server->close();
         }
+    }
+
+    private function tick()
+    {
+        Block\sleep(0, $this->loop);
     }
 }
