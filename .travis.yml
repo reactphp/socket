@@ -31,11 +31,12 @@ install:
   # OSX install inspired by https://github.com/kiler129/TravisCI-OSX-PHP
   - |
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then 
-      echo "Installing PHP"
       brew tap homebrew/homebrew-php 
+      echo "Installing PHP ..."
       brew install "${PACKAGE}"
+      brew install "${PACKAGE}"-xdebug
       brew link "${PACKAGE}"
-      echo "Installing composer"
+      echo "Installing composer ..."
       curl -s http://getcomposer.org/installer | php
       mv composer.phar /usr/local/bin/composer
     fi
