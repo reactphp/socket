@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\StreamSelectLoop;
+use React\EventLoop\Factory;
 use React\Socket\TcpServer;
 use React\Stream\DuplexResourceStream;
 
@@ -15,7 +15,7 @@ class TcpServerTest extends TestCase
 
     private function createLoop()
     {
-        return new StreamSelectLoop();
+        return Factory::create();
     }
 
     /**

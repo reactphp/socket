@@ -2,11 +2,11 @@
 
 namespace React\Tests\Socket;
 
-use React\EventLoop\StreamSelectLoop;
-use React\Socket\TcpServer;
-use React\Socket\TcpConnector;
-use React\Socket\ConnectionInterface;
 use Clue\React\Block;
+use React\EventLoop\Factory;
+use React\Socket\ConnectionInterface;
+use React\Socket\TcpConnector;
+use React\Socket\TcpServer;
 
 class TcpConnectorTest extends TestCase
 {
@@ -15,7 +15,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToEmptyPortShouldFail()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new TcpConnector($loop);
         $connector->connect('127.0.0.1:9999')
@@ -27,7 +27,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceed()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
         $server->on('connection', $this->expectCallableOnce());
@@ -45,7 +45,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithRemoteAdressSameAsTarget()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
@@ -63,7 +63,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithLocalAdressOnLocalhost()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
@@ -82,7 +82,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithNullAddressesAfterConnectionClosed()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
         $server->on('connection', array($server, 'close'));
@@ -101,7 +101,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToEmptyIp6PortShouldFail()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         $connector = new TcpConnector($loop);
         $connector
@@ -114,7 +114,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToIp6TcpServerShouldSucceed()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
 
         try {
             $server = new TcpServer('[::1]:9999', $loop);
@@ -191,7 +191,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function cancellingConnectionShouldRejectPromise()
     {
-        $loop = new StreamSelectLoop();
+        $loop = Factory::create();
         $connector = new TcpConnector($loop);
 
         $server = new TcpServer(0, $loop);
