@@ -19,6 +19,7 @@ matrix:
   include:
     - os: osx
       language: generic
+      php: 7.0 # just to look right on travis
       env:
         - PACKAGE: php70
   allow_failures:
@@ -27,8 +28,12 @@ matrix:
 sudo: false
 
 install:
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew install "${PACKAGE}" ; fi
-  - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then curl -s http://getcomposer.org/installer | php; fi
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then 
+      brew tap homebrew/homebrew-php 
+      brew install "${PACKAGE}"
+      curl -s http://getcomposer.org/installer | php
+    fi
   - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
 
 script:
