@@ -66,8 +66,8 @@ class TcpServerTest extends TestCase
         $this->server->on('connection', function ($conn) use ($mock) {
             $conn->on('data', $mock);
         });
-        $this->loop->tick();
-        $this->loop->tick();
+        $this->tick();
+        $this->tick();
     }
 
     public function testDataWillBeEmittedWithDataClientSends()
