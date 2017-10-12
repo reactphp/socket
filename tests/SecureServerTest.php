@@ -23,7 +23,7 @@ class SecureServerTest extends TestCase
 
         $server = new SecureServer($tcp, $loop, array());
 
-        $this->assertEquals('127.0.0.1:1234', $server->getAddress());
+        $this->assertEquals('tls://127.0.0.1:1234', $server->getAddress());
     }
 
     public function testPauseWillBePassedThroughToTcpServer()
