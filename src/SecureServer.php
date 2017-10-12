@@ -141,7 +141,14 @@ final class SecureServer extends EventEmitter implements ServerInterface
 
     public function getAddress()
     {
-        return str_replace('tcp://' , 'tls://', $this->tcp->getAddress());
+        $tcpAddress = $this->tcp->getAddress();
+        $schemePos = strpos($tcpAddress, '://');
+
+        if ($schemePos === false) {
+            return 'tls://' . $tcpAddress;
+        }
+
+        return 'tls' . substr($tcpAddress, $schemePos);
     }
 
     public function pause()
