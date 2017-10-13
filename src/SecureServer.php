@@ -121,7 +121,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
             throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
         }
 
-        // default to empty passphrase to surpress blocking passphrase prompt
+        // default to empty passphrase to suppress blocking passphrase prompt
         $context += array(
             'passphrase' => ''
         );
@@ -141,7 +141,12 @@ final class SecureServer extends EventEmitter implements ServerInterface
 
     public function getAddress()
     {
-        return str_replace('tcp://' , 'tls://', $this->tcp->getAddress());
+        $address = $this->tcp->getAddress();
+        if ($address === null) {
+            return null;
+        }
+
+        return str_replace('tcp://' , 'tls://', $address);
     }
 
     public function pause()

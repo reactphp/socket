@@ -26,6 +26,18 @@ class SecureServerTest extends TestCase
         $this->assertEquals('127.0.0.1:1234', $server->getAddress());
     }
 
+    public function testGetAddressWillReturnNullIfTcpServerReturnsNull()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+        $tcp->expects($this->once())->method('getAddress')->willReturn(null);
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $server = new SecureServer($tcp, $loop, array());
+
+        $this->assertNull($server->getAddress());
+    }
+
     public function testPauseWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
