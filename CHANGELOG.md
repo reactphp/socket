@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.8.5 (2017-10-23)
+
+*   Fix: Work around PHP bug with Unix domain socket (UDS) paths for Mac OS X
+    (#123 by @andig)
+
+*   Fix: Fix `SecureServer` to return `null` URI if server socket is already closed
+    (#129 by @clue)
+
+*   Improve test sutie by adding forward compatibility with PHPUnit v5 and
+    forward compatibility with upcoming EventLoop releases in tests and
+    test Mac OS X on Travis
+    (#122 by @andig and #125, #127 and #130 by @clue)
+
+*   Readme improvements
+    (#118 by @jsor)
+
 ## 0.8.4 (2017-09-16)
 
 *   Feature: Add `FixedUriConnector` decorator to use fixed, preconfigured URI instead
