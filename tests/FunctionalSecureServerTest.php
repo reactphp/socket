@@ -326,6 +326,10 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorIfConnectionIsCancelled()
     {
+        if (PHP_OS !== 'Linux') {
+            $this->markTestSkipped('Linux only (OS is ' . PHP_OS . ')');
+        }
+
         $loop = Factory::create();
 
         $server = new TcpServer(0, $loop);
