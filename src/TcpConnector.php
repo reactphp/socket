@@ -11,10 +11,11 @@ final class TcpConnector implements ConnectorInterface
     private $loop;
     private $context;
 
-    public function __construct(LoopInterface $loop, array $context = array())
+    public function __construct(LoopInterface $loop, array $context = array(), array $options = array())
     {
         $this->loop = $loop;
         $this->context = $context;
+        $this->options = $options;
     }
 
     public function connect($uri)
@@ -108,7 +109,7 @@ final class TcpConnector implements ConnectorInterface
 
                     $reject(new \RuntimeException('Connection refused'));
                 } else {
-                    $resolve(new Connection($stream, $loop));
+                    $resolve(new Connection($stream, $loop, $this->options));
                 }
             });
         }, function () use ($loop, $stream) {

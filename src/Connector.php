@@ -48,7 +48,8 @@ final class Connector implements ConnectorInterface
         } else {
             $tcp = new TcpConnector(
                 $loop,
-                is_array($options['tcp']) ? $options['tcp'] : array()
+                is_array($options['tcp']) ? $options['tcp'] : array(),
+                $options
             );
         }
 
