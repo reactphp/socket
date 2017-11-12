@@ -6,8 +6,9 @@ use React\Stream\ReadableStreamInterface;
 use React\EventLoop\LoopInterface;
 use Clue\React\Block;
 use React\Promise\Promise;
+use PHPUnit\Framework\TestCase as BaseTestCase;
 
-class TestCase extends \PHPUnit_Framework_TestCase
+class TestCase extends BaseTestCase
 {
     protected function expectCallableExactly($amount)
     {
