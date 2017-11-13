@@ -81,4 +81,21 @@ class TestCase extends BaseTestCase
             }
         ), $loop, $timeout);
     }
+
+    public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
+    {
+        if (method_exists($this, 'expectException')) {
+            // PHPUnit 5+
+            $this->expectException($exception);
+            if ($exceptionMessage !== '') {
+                $this->expectExceptionMessage($exceptionMessage);
+            }
+            if ($exceptionCode !== null) {
+                $this->expectExceptionCode($exceptionCode);
+            }
+        } else {
+            // legacy PHPUnit 4
+            parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
+        }
+    }
 }
