@@ -4,11 +4,15 @@ namespace React\Tests\Socket;
 
 use React\EventLoop\Factory;
 use React\Socket\Server;
+use React\Socket\TcpConnector;
+use React\Socket\UnixConnector;
 use Clue\React\Block;
 use React\Socket\ConnectionInterface;
 
 class ServerTest extends TestCase
 {
+    const TIMEOUT = 0.1;
+
     public function testCreateServer()
     {
         $loop = Factory::create();
@@ -24,6 +28,38 @@ class ServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $server = new Server('invalid URI', $loop);
+    }
+
+    public function testConstructorCreatesExpectedTcpServer()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+
+        $connector = new TcpConnector($loop);
+        $connector->connect($server->getAddress())
+            ->then($this->expectCallableOnce(), $this->expectCallableNever());
+
+        $connection = Block\await($connector->connect($server->getAddress()), $loop, self::TIMEOUT);
+
+        $connection->close();
+        $server->close();
+    }
+
+    public function testConstructorCreatesExpectedUnixServer()
+    {
+        $loop = Factory::create();
+
+        $server = new Server($this->getRandomSocketUri(), $loop);
+
+        $connector = new UnixConnector($loop);
+        $connector->connect($server->getAddress())
+            ->then($this->expectCallableOnce(), $this->expectCallableNever());
+
+        $connection = Block\await($connector->connect($server->getAddress()), $loop, self::TIMEOUT);
+
+        $connection->close();
+        $server->close();
     }
 
     public function testEmitsConnectionForNewConnection()
@@ -126,5 +162,10 @@ class ServerTest extends TestCase
         $client = stream_socket_client(str_replace('tls://', '', $server->getAddress()));
 
         Block\sleep(0.1, $loop);
+    }
+
+    private function getRandomSocketUri()
+    {
+        return "unix://" . sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(rand(), true) . '.sock';
     }
 }

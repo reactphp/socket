@@ -10,6 +10,11 @@
 //
 // $ php examples/02-chat-server.php tls://127.0.0.1:8000 examples/localhost.pem
 // $ openssl s_client -connect localhost:8000
+//
+// You can also run a Unix domain socket (UDS) server like this:
+//
+// $ php examples/02-chat-server.php unix:///tmp/server.sock
+// $ nc -U /tmp/server.sock
 
 use React\EventLoop\Factory;
 use React\Socket\Server;

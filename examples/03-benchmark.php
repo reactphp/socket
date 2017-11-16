@@ -6,8 +6,8 @@
 //
 // $ php examples/03-benchmark.php 8000
 // $ telnet localhost 8000
-// $ echo hello world | nc -v localhost 8000
-// $ dd if=/dev/zero bs=1M count=1000 | nc -v localhost 8000
+// $ echo hello world | nc -N localhost 8000
+// $ dd if=/dev/zero bs=1M count=1000 | nc -N localhost 8000
 //
 // You can also run a secure TLS benchmarking server like this:
 //
@@ -15,6 +15,12 @@
 // $ openssl s_client -connect localhost:8000
 // $ echo hello world | openssl s_client -connect localhost:8000
 // $ dd if=/dev/zero bs=1M count=1000 | openssl s_client -connect localhost:8000
+//
+// You can also run a Unix domain socket (UDS) server benchmark like this:
+//
+// $ php examples/03-benchmark.php unix:///tmp/server.sock
+// $ nc -N -U /tmp/server.sock
+// $ dd if=/dev/zero bs=1M count=1000 | nc -N -U /tmp/server.sock
 
 use React\EventLoop\Factory;
 use React\Socket\Server;
