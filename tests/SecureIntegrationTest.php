@@ -51,6 +51,9 @@ class SecureIntegrationTest extends TestCase
         /* @var $client ConnectionInterface */
 
         $client->close();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testConnectToServerEmitsConnection()

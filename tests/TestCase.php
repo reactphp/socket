@@ -6,8 +6,9 @@ use React\Stream\ReadableStreamInterface;
 use React\EventLoop\LoopInterface;
 use Clue\React\Block;
 use React\Promise\Promise;
+use PHPUnit\Framework\TestCase as BaseTestCase;
 
-class TestCase extends \PHPUnit_Framework_TestCase
+class TestCase extends BaseTestCase
 {
     protected function expectCallableExactly($amount)
     {
@@ -79,5 +80,22 @@ class TestCase extends \PHPUnit_Framework_TestCase
                 throw new \RuntimeException();
             }
         ), $loop, $timeout);
+    }
+
+    public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
+    {
+        if (method_exists($this, 'expectException')) {
+            // PHPUnit 5+
+            $this->expectException($exception);
+            if ($exceptionMessage !== '') {
+                $this->expectExceptionMessage($exceptionMessage);
+            }
+            if ($exceptionCode !== null) {
+                $this->expectExceptionCode($exceptionCode);
+            }
+        } else {
+            // legacy PHPUnit 4
+            parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
+        }
     }
 }

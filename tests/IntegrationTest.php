@@ -98,7 +98,6 @@ class IntegrationTest extends TestCase
         $this->assertNotRegExp('#^HTTP/1\.0#', $response);
     }
 
-    /** @test */
     public function testConnectingFailsIfDnsUsesInvalidResolver()
     {
         $loop = Factory::create();
@@ -114,7 +113,6 @@ class IntegrationTest extends TestCase
         Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
     }
 
-    /** @test */
     public function testConnectingFailsIfTimeoutIsTooSmall()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -131,7 +129,6 @@ class IntegrationTest extends TestCase
         Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
     }
 
-    /** @test */
     public function testSelfSignedRejectsIfVerificationIsEnabled()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -150,7 +147,6 @@ class IntegrationTest extends TestCase
         Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
     }
 
-    /** @test */
     public function testSelfSignedResolvesIfVerificationIsDisabled()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
@@ -167,6 +163,9 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
         $conn->close();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testCancelPendingConnection()

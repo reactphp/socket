@@ -175,20 +175,6 @@ class TcpConnectorTest extends TestCase
     }
 
     /** @test */
-    public function connectionWithInvalidContextShouldFailImmediately()
-    {
-        $this->markTestIncomplete();
-
-        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-
-        $connector = new TcpConnector($loop, array('bindto' => 'invalid.invalid:123456'));
-        $connector->connect('127.0.0.1:80')->then(
-            $this->expectCallableNever(),
-            $this->expectCallableOnce()
-        );
-    }
-
-    /** @test */
     public function cancellingConnectionShouldRejectPromise()
     {
         $loop = Factory::create();

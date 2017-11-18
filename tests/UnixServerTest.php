@@ -100,12 +100,18 @@ class UnixServerTest extends TestCase
         $this->server = null;
 
         $this->loop->run();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testCloseTwiceIsNoOp()
     {
         $this->server->close();
         $this->server->close();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testGetAddressAfterCloseReturnsNull()
@@ -129,6 +135,9 @@ class UnixServerTest extends TestCase
         });
 
         $this->loop->run();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
@@ -164,9 +173,6 @@ class UnixServerTest extends TestCase
         $this->assertEquals($bytes, $received);
     }
 
-    /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
-     */
     public function testConnectionDoesNotEndWhenClientDoesNotClose()
     {
         $client = stream_socket_client($this->uds);
@@ -181,7 +187,6 @@ class UnixServerTest extends TestCase
     }
 
     /**
-     * @covers React\EventLoop\StreamSelectLoop::tick
      * @covers React\Socket\Connection::end
      */
     public function testConnectionDoesEndWhenClientCloses()
