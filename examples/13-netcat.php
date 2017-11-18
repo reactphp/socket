@@ -1,5 +1,10 @@
 <?php
 
+// Simple plaintext TCP/IP and secure TLS client example that pipes console I/O.
+// This shows how a plaintext TCP/IP or secure TLS connection is established and
+// then everything you type on STDIN will be sent and everything the server
+// sends will be piped to your STDOUT.
+
 use React\EventLoop\Factory;
 use React\Socket\Connector;
 use React\Socket\ConnectionInterface;
@@ -7,6 +12,16 @@ use React\Stream\ReadableResourceStream;
 use React\Stream\WritableResourceStream;
 
 require __DIR__ . '/../vendor/autoload.php';
+
+if (!defined('STDIN')) {
+    echo 'STDIO streams require CLI SAPI' . PHP_EOL;
+    exit(1);
+}
+
+if (DIRECTORY_SEPARATOR === '\\') {
+    fwrite(STDERR, 'Non-blocking console I/O not supported on Microsoft Windows' . PHP_EOL);
+    exit(1);
+}
 
 if (!isset($argv[1])) {
     fwrite(STDERR, 'Usage error: required argument <host:port>' . PHP_EOL);

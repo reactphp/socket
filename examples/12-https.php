@@ -1,5 +1,10 @@
 <?php
 
+// Simple secure HTTPS client example (for illustration purposes only).
+// This shows how a secure TLS connection is established to then send an
+// application level protocol message (HTTP).
+// Real applications should use react/http-client instead
+
 use React\EventLoop\Factory;
 use React\Socket\Connector;
 use React\Socket\ConnectionInterface;

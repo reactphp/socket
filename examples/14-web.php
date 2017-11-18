@@ -1,5 +1,11 @@
 <?php
 
+// Simple plaintext HTTP and secure HTTPS client example (for illustration purposes only).
+// This shows how an URI parameter can parsed to decide whether to establish
+// a plaintext TCP/IP or secure TLS connection and then send an
+// application level protocol message (HTTP).
+// Real applications should use react/http-client instead
+
 use React\EventLoop\Factory;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
