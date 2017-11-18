@@ -1065,7 +1065,7 @@ $tcpConnector->connect('127.0.0.1:80')->then(function (ConnectionInterface $conn
 $loop->run();
 ```
 
-See also the [first example](examples).
+See also the [examples](examples).
 
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
@@ -1133,7 +1133,7 @@ $dnsConnector->connect('www.google.com:80')->then(function (ConnectionInterface 
 $loop->run();
 ```
 
-See also the [first example](examples).
+See also the [examples](examples).
 
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 
@@ -1178,7 +1178,7 @@ $secureConnector->connect('www.google.com:443')->then(function (ConnectionInterf
 $loop->run();
 ```
 
-See also the [second example](examples).
+See also the [examples](examples).
 
 Pending connection attempts can be cancelled by cancelling its pending promise like so:
 

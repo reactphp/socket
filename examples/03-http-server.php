@@ -12,21 +12,21 @@
 //
 // Just start this server and send a request to it:
 //
-// $ php examples/04-http-server.php 8000
+// $ php examples/03-http-server.php 8000
 // $ curl -v http://localhost:8000/
 // $ ab -n1000 -c10 http://localhost:8000/
 // $ docker run -it --rm --net=host jordi/ab ab -n1000 -c10 http://localhost:8000/
 //
 // You can also run a secure HTTPS echo server like this:
 //
-// $ php examples/04-http-server.php tls://127.0.0.1:8000 examples/localhost.pem
+// $ php examples/03-http-server.php tls://127.0.0.1:8000 examples/localhost.pem
 // $ curl -v --insecure https://localhost:8000/
 // $ ab -n1000 -c10 https://localhost:8000/
 // $ docker run -it --rm --net=host jordi/ab ab -n1000 -c10 https://localhost:8000/
 //
 // You can also run a Unix domain socket (UDS) server like this:
 //
-// $ php examples/04-http-server.php unix:///tmp/server.sock
+// $ php examples/03-http-server.php unix:///tmp/server.sock
 // $ nc -U /tmp/server.sock
 
 use React\EventLoop\Factory;

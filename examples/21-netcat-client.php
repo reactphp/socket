@@ -4,6 +4,9 @@
 // This shows how a plaintext TCP/IP or secure TLS connection is established and
 // then everything you type on STDIN will be sent and everything the server
 // sends will be piped to your STDOUT.
+//
+// $ php examples/21-netcat-client.php www.google.com:80
+// $ php examples/21-netcat-client.php tls://www.google.com:443
 
 use React\EventLoop\Factory;
 use React\Socket\Connector;
