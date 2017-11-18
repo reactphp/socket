@@ -13,11 +13,13 @@ class ServerTest extends TestCase
 {
     const TIMEOUT = 0.1;
 
-    public function testCreateServer()
+    public function testCreateServerWithZeroPortAssignsRandomPort()
     {
         $loop = Factory::create();
 
         $server = new Server(0, $loop);
+        $this->assertNotEquals(0, $server->getAddress());
+        $server->close();
     }
 
     /**
@@ -80,7 +82,7 @@ class ServerTest extends TestCase
 
         $server = new Server(0, $loop);
         $server->pause();
-
+        $server->on('connection', $this->expectCallableNever());
 
         $client = stream_socket_client($server->getAddress());
 

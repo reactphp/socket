@@ -163,6 +163,9 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
         $conn->close();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testCancelPendingConnection()

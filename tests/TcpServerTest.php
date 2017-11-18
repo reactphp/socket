@@ -107,12 +107,18 @@ class TcpServerTest extends TestCase
         $this->server = null;
 
         $this->loop->run();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testCloseTwiceIsNoOp()
     {
         $this->server->close();
         $this->server->close();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testGetAddressAfterCloseReturnsNull()
@@ -136,6 +142,9 @@ class TcpServerTest extends TestCase
         });
 
         $this->loop->run();
+
+        // if we reach this, then everything is good
+        $this->assertNull(null);
     }
 
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
