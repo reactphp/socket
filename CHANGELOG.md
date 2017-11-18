@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.8.6 (2017-11-18)
+
+*   Feature: Add Unix domain socket (UDS) support to `Server` with `unix://` URI scheme
+    and add advanced `UnixServer` class.
+    (#120 by @andig)
+
+    ```php
+    // new: Server now supports "unix://" scheme
+    $server = new Server('unix:///tmp/server.sock', $loop);
+
+    // new: advanced usage
+    $server = new UnixServer('/tmp/server.sock', $loop);
+    ```
+
+*   Restructure examples to ease getting started
+    (#136 by @clue)
+
+*   Improve test suite by adding forward compatibility with PHPUnit 6 and
+    ignore Mac OS X test failures for now until Travis tests work again
+    (#133 by @gabriel-caruso and #134 by @clue)
+
 ## 0.8.5 (2017-10-23)
 
 *   Fix: Work around PHP bug with Unix domain socket (UDS) paths for Mac OS X
@@ -8,7 +29,7 @@
 *   Fix: Fix `SecureServer` to return `null` URI if server socket is already closed
     (#129 by @clue)
 
-*   Improve test sutie by adding forward compatibility with PHPUnit v5 and
+*   Improve test suite by adding forward compatibility with PHPUnit v5 and
     forward compatibility with upcoming EventLoop releases in tests and
     test Mac OS X on Travis
     (#122 by @andig and #125, #127 and #130 by @clue)
