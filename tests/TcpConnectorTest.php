@@ -99,6 +99,28 @@ class TcpConnectorTest extends TestCase
     }
 
     /** @test */
+    public function connectionToTcpServerWillCloseWhenOtherSideCloses()
+    {
+        $loop = Factory::create();
+
+        // immediately close connection and server once connection is in
+        $server = new TcpServer(0, $loop);
+        $server->on('connection', function (ConnectionInterface $conn) use ($server) {
+            $conn->close();
+            $server->close();
+        });
+
+        $once = $this->expectCallableOnce();
+        $connector = new TcpConnector($loop);
+        $connector->connect($server->getAddress())->then(function (ConnectionInterface $conn) use ($once) {
+            $conn->write('hello');
+            $conn->on('close', $once);
+        });
+
+        $loop->run();
+    }
+
+    /** @test */
     public function connectionToEmptyIp6PortShouldFail()
     {
         $loop = Factory::create();
