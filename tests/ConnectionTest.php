@@ -8,6 +8,10 @@ class ConnectionTest extends TestCase
 {
     public function testCloseConnectionWillCloseSocketResource()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('HHVM does not support socket operation on test memory stream');
+        }
+
         $resource = fopen('php://memory', 'r+');
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -19,6 +23,10 @@ class ConnectionTest extends TestCase
 
     public function testCloseConnectionWillRemoveResourceFromLoopBeforeClosingResource()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('HHVM does not support socket operation on test memory stream');
+        }
+
         $resource = fopen('php://memory', 'r+');
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addWriteStream')->with($resource);
