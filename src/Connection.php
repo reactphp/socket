@@ -128,9 +128,10 @@ class Connection extends EventEmitter implements ConnectionInterface
         // side already closed. Shutting down may return to blocking mode on
         // some legacy versions, so reset to non-blocking just in case before
         // continuing to close the socket resource.
+        // Underlying Stream implementation will take care of closing file
+        // handle, so we otherwise keep this open here.
         @stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
         stream_set_blocking($this->stream, false);
-        fclose($this->stream);
     }
 
     public function getRemoteAddress()
