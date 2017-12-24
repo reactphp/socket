@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.7 (2017-12-24)
+
+*   Fix: Fix closing socket resource before removing from loop
+    (#141 by @clue)
+
+    This fixes the root cause of an uncaught `Exception` that only manifested
+    itself after the recent Stream v0.7.4 component update and only if you're
+    using `ext-event` (`ExtEventLoop`).
+
+*   Improve test suite by testing against PHP 7.2
+    (#140 by @carusogabriel)
+
 ## 0.8.6 (2017-11-18)
 
 *   Feature: Add Unix domain socket (UDS) support to `Server` with `unix://` URI scheme
