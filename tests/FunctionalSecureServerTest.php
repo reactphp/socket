@@ -224,6 +224,54 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertEquals(400000, $received);
     }
 
+    /**
+     * @requires PHP 5.6
+     */
+    public function testEmitsConnectionForNewTlsv11Connection()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem',
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_SERVER
+        ));
+        $server->on('connection', $this->expectCallableOnce());
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false,
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        Block\await($promise, $loop, self::TIMEOUT);
+    }
+
+    /**
+     * @requires PHP 5.6
+     */
+    public function testEmitsErrorForClientWithTlsVersionMismatch()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem',
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_SERVER|STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+        ));
+        $server->on('connection', $this->expectCallableNever());
+        $server->on('error', $this->expectCallableOnce());
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false,
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        $this->setExpectedException('RuntimeException', 'handshake');
+        Block\await($promise, $loop, self::TIMEOUT);
+    }
+
     public function testEmitsConnectionForNewConnectionWithEncryptedCertificate()
     {
         $loop = Factory::create();

@@ -460,6 +460,19 @@ $server = new Server('tls://127.0.0.1:8000', $loop, array(
 ));
 ```
 
+By default, this server supports TLSv1.0+ and excludes support for legacy
+SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
+want to negotiate with the remote side:
+
+```php
+$server = new Server('tls://127.0.0.1:8000', $loop, array(
+    'tls' => array(
+        'local_cert' => 'server.pem',
+        'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+    )
+));
+```
+
 > Note that available [TLS context options](http://php.net/manual/en/context.ssl.php),
   their defaults and effects of changing these may vary depending on your system
   and/or PHP version.
@@ -609,6 +622,18 @@ $server = new TcpServer(8000, $loop);
 $server = new SecureServer($server, $loop, array(
     'local_cert' => 'server.pem',
     'passphrase' => 'secret'
+));
+```
+
+By default, this server supports TLSv1.0+ and excludes support for legacy
+SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
+want to negotiate with the remote side:
+
+```php
+$server = new TcpServer(8000, $loop);
+$server = new SecureServer($server, $loop, array(
+    'local_cert' => 'server.pem',
+    'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
 ));
 ```
 
@@ -1000,6 +1025,18 @@ $connector->connect('tls://localhost:443')->then(function (ConnectionInterface $
 });
 ```
 
+By default, this connector supports TLSv1.0+ and excludes support for legacy
+SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
+want to negotiate with the remote side:
+
+```php
+$connector = new Connector($loop, array(
+    'tls' => array(
+        'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+    )
+));
+```
+
 > For more details about context options, please refer to the PHP documentation
   about [socket context options](http://php.net/manual/en/context.socket.php)
   and [SSL context options](http://php.net/manual/en/context.ssl.php).
@@ -1189,7 +1226,7 @@ $promise->cancel();
 ```
 
 Calling `cancel()` on a pending promise will cancel the underlying TCP/IP
-connection and/or the SSL/TLS negonation and reject the resulting promise.
+connection and/or the SSL/TLS negotiation and reject the resulting promise.
 
 You can optionally pass additional
 [SSL context options](http://php.net/manual/en/context.ssl.php)
@@ -1199,6 +1236,16 @@ to the constructor like this:
 $secureConnector = new React\Socket\SecureConnector($dnsConnector, $loop, array(
     'verify_peer' => false,
     'verify_peer_name' => false
+));
+```
+
+By default, this connector supports TLSv1.0+ and excludes support for legacy
+SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
+want to negotiate with the remote side:
+
+```php
+$secureConnector = new React\Socket\SecureConnector($dnsConnector, $loop, array(
+    'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
 ));
 ```
 
