@@ -60,7 +60,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
      * You MAY pass a `null` limit in order to put no limit on the number of
      * open connections and keep accepting new connection until you run out of
      * operating system resources (such as open file handles). This may be
-     * useful it you do not want to take care of applying a limit but still want
+     * useful if you do not want to take care of applying a limit but still want
      * to use the `getConnections()` method.
      *
      * You can optionally configure the server to pause accepting new
