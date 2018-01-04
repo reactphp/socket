@@ -167,20 +167,4 @@ class IntegrationTest extends TestCase
         // if we reach this, then everything is good
         $this->assertNull(null);
     }
-
-    public function testCancelPendingConnection()
-    {
-        $loop = Factory::create();
-
-        $connector = new TcpConnector($loop);
-        $pending = $connector->connect('8.8.8.8:80');
-
-        $loop->addTimer(0.001, function () use ($pending) {
-            $pending->cancel();
-        });
-
-        $pending->then($this->expectCallableNever(), $this->expectCallableOnce());
-
-        $loop->run();
-    }
 }
