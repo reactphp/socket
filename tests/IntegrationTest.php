@@ -10,6 +10,7 @@ use React\Socket\DnsConnector;
 use React\Socket\SecureConnector;
 use React\Socket\TcpConnector;
 
+/** @group internet */
 class IntegrationTest extends TestCase
 {
     const TIMEOUT = 5.0;
