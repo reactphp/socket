@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.8 (2018-01-06)
+
+*   Improve test suite by adding test group to skip integration tests relying on
+    internet connection and fix minor documentation typo.
+    (#146 by @clue and #145 by @cn007b)
+
 ## 0.8.7 (2017-12-24)
 
 *   Fix: Fix closing socket resource before removing from loop
