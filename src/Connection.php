@@ -40,9 +40,12 @@ class Connection extends EventEmitter implements ConnectionInterface
     public $stream;
 
     private $input;
+    private $options;
 
-    public function __construct($resource, LoopInterface $loop)
+    public function __construct($resource, LoopInterface $loop, array $options = array())
     {
+        $this->options = $options;
+
         // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
         // as a work-around we always read the complete buffer until its end.
         // The buffer size is limited due to TCP/IP buffers anyway, so this
@@ -66,7 +69,8 @@ class Connection extends EventEmitter implements ConnectionInterface
             $resource,
             $loop,
             $clearCompleteBuffer ? -1 : null,
-            new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null)
+            new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null, $this->options),
+            $this->options
         );
 
         $this->stream = $resource;

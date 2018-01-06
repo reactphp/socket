@@ -36,6 +36,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
     private $master;
     private $loop;
     private $listening = false;
+    private $context = array();
 
     /**
      * Creates a plaintext TCP/IP socket server and starts listening on the given address
@@ -123,6 +124,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
     public function __construct($uri, LoopInterface $loop, array $context = array())
     {
         $this->loop = $loop;
+        $this->context = $context;
 
         // a single port has been given => assume localhost
         if ((string)(int)$uri === (string)$uri) {
@@ -230,7 +232,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
     public function handleConnection($socket)
     {
         $this->emit('connection', array(
-            new Connection($socket, $this->loop)
+            new Connection($socket, $this->loop, $this->context)
         ));
     }
 }
