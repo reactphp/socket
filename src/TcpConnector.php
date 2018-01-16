@@ -3,8 +3,9 @@
 namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
-use React\Stream\Stream;
 use React\Promise;
+use InvalidArgumentException;
+use RuntimeException;
 
 final class TcpConnector implements ConnectorInterface
 {
@@ -25,12 +26,12 @@ final class TcpConnector implements ConnectorInterface
 
         $parts = parse_url($uri);
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
         $ip = trim($parts['host'], '[]');
         if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
+            return Promise\reject(new InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
         }
 
         // use context given in constructor
@@ -80,7 +81,7 @@ final class TcpConnector implements ConnectorInterface
         );
 
         if (false === $socket) {
-            return Promise\reject(new \RuntimeException(
+            return Promise\reject(new RuntimeException(
                 sprintf("Connection to %s failed: %s", $uri, $errstr),
                 $errno
             ));
@@ -106,7 +107,7 @@ final class TcpConnector implements ConnectorInterface
                 if (false === stream_socket_get_name($stream, true)) {
                     fclose($stream);
 
-                    $reject(new \RuntimeException('Connection refused'));
+                    $reject(new RuntimeException('Connection refused'));
                 } else {
                     $resolve(new Connection($stream, $loop));
                 }
@@ -115,7 +116,7 @@ final class TcpConnector implements ConnectorInterface
             $loop->removeWriteStream($stream);
             fclose($stream);
 
-            throw new \RuntimeException('Cancelled while waiting for TCP/IP connection to be established');
+            throw new RuntimeException('Cancelled while waiting for TCP/IP connection to be established');
         });
     }
 }

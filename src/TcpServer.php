@@ -206,7 +206,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
         $this->loop->addReadStream($this->master, function ($master) use ($that) {
             $newSocket = @stream_socket_accept($master);
             if (false === $newSocket) {
-                $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
+                $that->emit('error', array(new RuntimeException('Error accepting new connection')));
 
                 return;
             }

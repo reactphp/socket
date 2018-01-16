@@ -2,9 +2,9 @@
 
 namespace React\Socket;
 
-use React\Socket\ConnectorInterface;
 use React\EventLoop\LoopInterface;
 use React\Promise;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -27,7 +27,7 @@ final class UnixConnector implements ConnectorInterface
         if (strpos($path, '://') === false) {
             $path = 'unix://' . $path;
         } elseif (substr($path, 0, 7) !== 'unix://') {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $path . '" is invalid'));
+            return Promise\reject(new InvalidArgumentException('Given URI "' . $path . '" is invalid'));
         }
 
         $resource = @stream_socket_client($path, $errno, $errstr, 1.0);
