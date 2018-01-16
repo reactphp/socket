@@ -6,8 +6,8 @@ use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
 use React\Stream\DuplexResourceStream;
 use React\Stream\Util;
-use React\Stream\WritableStreamInterface;
 use React\Stream\WritableResourceStream;
+use React\Stream\WritableStreamInterface;
 
 /**
  * The actual connection implementation for ConnectionInterface

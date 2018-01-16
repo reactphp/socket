@@ -4,6 +4,9 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise;
+use BadMethodCallException;
+use InvalidArgumentException;
+use UnexpectedValueException;
 
 final class SecureConnector implements ConnectorInterface
 {
@@ -21,7 +24,7 @@ final class SecureConnector implements ConnectorInterface
     public function connect($uri)
     {
         if (!function_exists('stream_socket_enable_crypto')) {
-            return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)')); // @codeCoverageIgnore
+            return Promise\reject(new BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)')); // @codeCoverageIgnore
         }
 
         if (strpos($uri, '://') === false) {
@@ -30,7 +33,7 @@ final class SecureConnector implements ConnectorInterface
 
         $parts = parse_url($uri);
         if (!$parts || !isset($parts['scheme']) || $parts['scheme'] !== 'tls') {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
         $uri = str_replace('tls://', '', $uri);
@@ -42,7 +45,7 @@ final class SecureConnector implements ConnectorInterface
 
             if (!$connection instanceof Connection) {
                 $connection->close();
-                throw new \UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
+                throw new UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
             }
 
             // set required SSL/TLS context options

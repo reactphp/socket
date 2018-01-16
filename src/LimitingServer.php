@@ -3,6 +3,8 @@
 namespace React\Socket;
 
 use Evenement\EventEmitter;
+use Exception;
+use OverflowException;
 
 /**
  * The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible
@@ -155,7 +157,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
     {
         // close connection if limit exceeded
         if ($this->limit !== null && count($this->connections) >= $this->limit) {
-            $this->handleError(new \OverflowException('Connection closed because server reached connection limit'));
+            $this->handleError(new OverflowException('Connection closed because server reached connection limit'));
             $connection->close();
             return;
         }
@@ -194,7 +196,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
     }
 
     /** @internal */
-    public function handleError(\Exception $error)
+    public function handleError(Exception $error)
     {
         $this->emit('error', array($error));
     }

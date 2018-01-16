@@ -2,8 +2,6 @@
 
 namespace React\Socket;
 
-use React\Socket\ConnectorInterface;
-
 /**
  * Decorates an existing Connector to always use a fixed, preconfigured URI
  *

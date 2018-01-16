@@ -2,8 +2,9 @@
 
 namespace React\Socket;
 
-use React\Promise\Deferred;
 use React\EventLoop\LoopInterface;
+use React\Promise\Deferred;
+use RuntimeException;
 use UnexpectedValueException;
 
 /**
@@ -72,7 +73,7 @@ class StreamEncryption
 
         $deferred = new Deferred(function ($_, $reject) use ($toggle) {
             // cancelling this leaves this stream in an inconsistent state…
-            $reject(new \RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
+            $reject(new RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
         });
 
         // get actual stream socket from stream instance

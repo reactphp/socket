@@ -4,6 +4,7 @@ namespace React\Socket;
 
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
+use Exception;
 
 final class Server extends EventEmitter implements ServerInterface
 {
@@ -45,7 +46,7 @@ final class Server extends EventEmitter implements ServerInterface
         $server->on('connection', function (ConnectionInterface $conn) use ($that) {
             $that->emit('connection', array($conn));
         });
-        $server->on('error', function (\Exception $error) use ($that) {
+        $server->on('error', function (Exception $error) use ($that) {
             $that->emit('error', array($error));
         });
     }

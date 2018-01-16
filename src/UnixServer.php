@@ -50,7 +50,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
         if (strpos($path, '://') === false) {
             $path = 'unix://' . $path;
         } elseif (substr($path, 0, 7) !== 'unix://') {
-            throw new \InvalidArgumentException('Given URI "' . $path . '" is invalid');
+            throw new InvalidArgumentException('Given URI "' . $path . '" is invalid');
         }
 
         $this->master = @stream_socket_server(
@@ -97,7 +97,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
         $this->loop->addReadStream($this->master, function ($master) use ($that) {
             $newSocket = @stream_socket_accept($master);
             if (false === $newSocket) {
-                $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
+                $that->emit('error', array(new RuntimeException('Error accepting new connection')));
 
                 return;
             }

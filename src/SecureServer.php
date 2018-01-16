@@ -4,8 +4,8 @@ namespace React\Socket;
 
 use Evenement\EventEmitter;
 use React\EventLoop\LoopInterface;
-use React\Socket\TcpServer;
-use React\Socket\ConnectionInterface;
+use BadMethodCallException;
+use UnexpectedValueException;
 
 /**
  * The `SecureServer` class implements the `ServerInterface` and is responsible
@@ -111,14 +111,14 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * @param ServerInterface|TcpServer $tcp
      * @param LoopInterface $loop
      * @param array $context
-     * @throws \BadMethodCallException for legacy HHVM < 3.8 due to lack of support
+     * @throws BadMethodCallException for legacy HHVM < 3.8 due to lack of support
      * @see TcpServer
      * @link http://php.net/manual/en/context.ssl.php for TLS context options
      */
     public function __construct(ServerInterface $tcp, LoopInterface $loop, array $context)
     {
         if (!function_exists('stream_socket_enable_crypto')) {
-            throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
+            throw new BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
         }
 
         // default to empty passphrase to suppress blocking passphrase prompt
@@ -168,7 +168,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
     public function handleConnection(ConnectionInterface $connection)
     {
         if (!$connection instanceof Connection) {
-            $this->emit('error', array(new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
+            $this->emit('error', array(new UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
             $connection->end();
             return;
         }

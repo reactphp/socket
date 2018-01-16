@@ -2,9 +2,9 @@
 
 namespace React\Socket;
 
-use React\EventLoop\LoopInterface;
-use React\Dns\Resolver\Resolver;
 use React\Dns\Resolver\Factory;
+use React\Dns\Resolver\Resolver;
+use React\EventLoop\LoopInterface;
 use React\Promise;
 use RuntimeException;
 
