@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.8.9 (2017-01-18)
+
+*   Feature: Support explicitly choosing TLS version to negotiate with remote side
+    by respecting `crypto_method` context parameter for all classes.
+    (#149 by @clue)
+
+    By default, all connector and server classes support TLSv1.0+ and exclude
+    support for legacy SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly
+    choose the TLS version you want to negotiate with the remote side:
+
+    ```php
+    // new: now supports 'crypto_method` context parameter for all classes
+    $connector = new Connector($loop, array(
+        'tls' => array(
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+        )
+    ));
+    ```
+
+*   Minor internal clean up to unify class imports
+    (#148 by @clue)
+
 ## 0.8.8 (2018-01-06)
 
 *   Improve test suite by adding test group to skip integration tests relying on
