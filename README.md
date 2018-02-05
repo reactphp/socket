@@ -918,10 +918,12 @@ also shares all of their features and implementation details.
 If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ConnectorInterface`](#connectorinterface) instead.
 
-In particular, the `Connector` class uses Google's public DNS server `8.8.8.8`
-to resolve all public hostnames into underlying IP addresses by default.
-If you want to use a custom DNS server (such as a local DNS relay or a company
-wide DNS server), you can set up the `Connector` like this:
+The `Connector` class will try to detect your system DNS settings (and uses
+Google's public DNS server `8.8.8.8` as a fallback if unable to determine your
+system settings) to resolve all public hostnames into underlying IP addresses by
+default.
+If you explicitly want to use a custom DNS server (such as a local DNS relay or
+a company wide DNS server), you can set up the `Connector` like this:
 
 ```php
 $connector = new Connector($loop, array(
