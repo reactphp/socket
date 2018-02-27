@@ -2,6 +2,7 @@
 
 namespace React\Socket;
 
+use React\Dns\Config\Config;
 use React\Dns\Resolver\Factory;
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
@@ -56,9 +57,17 @@ final class Connector implements ConnectorInterface
             if ($options['dns'] instanceof Resolver) {
                 $resolver = $options['dns'];
             } else {
+                if ($options['dns'] !== true) {
+                    $server = $options['dns'];
+                } else {
+                    // try to load nameservers from system config or default to Google's public DNS
+                    $config = Config::loadSystemConfigBlocking();
+                    $server = $config->nameservers ? reset($config->nameservers) : '8.8.8.8';
+                }
+
                 $factory = new Factory();
                 $resolver = $factory->create(
-                    $options['dns'] === true ? '8.8.8.8' : $options['dns'],
+                    $server,
                     $loop
                 );
             }

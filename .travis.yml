@@ -43,7 +43,7 @@ install:
       curl -s http://getcomposer.org/installer | php
       mv composer.phar /usr/local/bin/composer
     fi
-  - COMPOSER_ROOT_VERSION=`git describe --abbrev=0` composer install --no-interaction
+  - composer install --no-interaction
 
 script:
   - ./vendor/bin/phpunit --coverage-text
