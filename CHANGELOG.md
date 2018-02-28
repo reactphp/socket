@@ -1,6 +1,24 @@
 # Changelog
 
-## 0.8.9 (2017-01-18)
+## 0.8.10 (2018-02-28)
+
+*   Feature: Update DNS dependency to support loading system default DNS
+    nameserver config on all supported platforms
+    (`/etc/resolv.conf` on Unix/Linux/Mac/Docker/WSL and WMIC on Windows)
+    (#152 by @clue)
+
+    This means that connecting to hosts that are managed by a local DNS server,
+    such as a corporate DNS server or when using Docker containers, will now
+    work as expected across all platforms with no changes required:
+
+    ```php
+    $connector = new Connector($loop);
+    $connector->connect('intranet.example:80')->then(function ($connection) {
+        // …
+    });
+    ```
+
+## 0.8.9 (2018-01-18)
 
 *   Feature: Support explicitly choosing TLS version to negotiate with remote side
     by respecting `crypto_method` context parameter for all classes.
