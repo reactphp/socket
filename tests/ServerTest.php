@@ -165,9 +165,4 @@ class ServerTest extends TestCase
 
         Block\sleep(0.1, $loop);
     }
-
-    private function getRandomSocketUri()
-    {
-        return "unix://" . sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(rand(), true) . '.sock';
-    }
 }

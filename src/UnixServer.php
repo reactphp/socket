@@ -120,8 +120,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection($socket)
     {
-        $connection = new Connection($socket, $this->loop);
-        $connection->unix = true;
+        $connection = new UnixConnection($socket, $this->loop);
 
         $this->emit('connection', array(
             $connection

@@ -22,6 +22,9 @@ handle multiple concurrent connections without blocking.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
+  * [UnixConnection](#connectioninterface)
+    * [getRemotePid()](#getremotepid)
+    * [getLocalPid()](#getlocalpid)
 * [Server usage](#server-usage)
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
@@ -194,6 +197,36 @@ actually accepted this connection (such as a public or local interface).
 If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
+
+
+### UnixConnection
+The `UnixConnection` is a specific implementation of a `ConnectionInterface` used to represent any
+incoming and outgoing connection over a Unix domain socket (UDS).
+
+#### getRemotePid()
+The `getRemotePid(): ?int` method returns the PID where this connection has been established with.
+
+```php
+$pid = $connection->getRemotePid();
+echo 'Remote PID: ' . $pid . PHP_EOL;
+```
+
+If the remote PID can not be determined or is unknown at this time (such as
+after the connection has been closed), it MAY return a `NULL` value instead.
+If the remote PID was already requested before the connection was closed the PID will still be cached.
+The return value of this method should NOT be used to determine if the remote side of the socket is
+The return value of this method should NOT be used to determine if the remote side of the socket is
+still connected.
+
+If the remote PID is known, it will return the PID as an integer value, such as `1640`.
+
+#### getLocalPid()
+The `getLocalPid(): ?int` method returns the PID where this connection has been established from (the current process).
+
+```php
+$pid = $connection->getLocalPid();
+echo 'Local PID: ' . $pid . PHP_EOL;
+```
 
 ## Server usage
 
@@ -706,11 +739,12 @@ $first = new UnixServer('/tmp/same.sock', $loop);
 $second = new UnixServer('/tmp/same.sock', $loop);
 ```
 
-Whenever a client connects, it will emit a `connection` event with a connection
-instance implementing [`ConnectionInterface`](#connectioninterface):
+Whenever a client connects, it will emit a `connection` event with a `UnixConnection`
+instance implementing [`ConnectionInterface`](#connectioninterface). The `UnixConnection` has extra methods for
+retrieving the PID (process identifier) from both sides of the socket (remote and local).
 
 ```php
-$server->on('connection', function (ConnectionInterface $connection) {
+$server->on('connection', function (UnixConnection $connection) {
     echo 'New connection' . PHP_EOL;
 
     $connection->write('hello there!' . PHP_EOL);
@@ -900,7 +934,7 @@ In order to create a local Unix domain socket connection, you can use the
 `unix://` URI scheme like this:
 
 ```php
-$connector->connect('unix:///tmp/demo.sock')->then(function (ConnectionInterface $connection) {
+$connector->connect('unix:///tmp/demo.sock')->then(function (UnixConnection $connection) {
     $connection->write('...');
     $connection->end();
 });
@@ -1300,7 +1334,7 @@ Unix domain socket (UDS) paths like this:
 ```php
 $connector = new React\Socket\UnixConnector($loop);
 
-$connector->connect('/tmp/demo.sock')->then(function (ConnectionInterface $connection) {
+$connector->connect('/tmp/demo.sock')->then(function (UnixConnection $connection) {
     $connection->write("HELLO\n");
 });
 

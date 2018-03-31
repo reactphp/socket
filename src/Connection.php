@@ -20,13 +20,6 @@ use React\Stream\WritableStreamInterface;
 class Connection extends EventEmitter implements ConnectionInterface
 {
     /**
-     * Internal flag whether this is a Unix domain socket (UDS) connection
-     *
-     * @internal
-     */
-    public $unix = false;
-
-    /**
      * Internal flag whether encryption has been enabled on this connection
      *
      * Mostly used by internal StreamEncryption so that connection returns
@@ -144,26 +137,10 @@ class Connection extends EventEmitter implements ConnectionInterface
         return $this->parseAddress(@stream_socket_get_name($this->stream, false));
     }
 
-    private function parseAddress($address)
+    protected function parseAddress($address)
     {
         if ($address === false) {
             return null;
-        }
-
-        if ($this->unix) {
-            // remove trailing colon from address for HHVM < 3.19: https://3v4l.org/5C1lo
-            // note that technically ":" is a valid address, so keep this in place otherwise
-            if (substr($address, -1) === ':' && defined('HHVM_VERSION_ID') && HHVM_VERSION_ID < 31900) {
-                $address = (string)substr($address, 0, -1);
-            }
-
-            // work around unknown addresses should return null value: https://3v4l.org/5C1lo and https://bugs.php.net/bug.php?id=74556
-            // PHP uses "\0" string and HHVM uses empty string (colon removed above)
-            if ($address === '' || $address[0] === "\x00" ) {
-                return null;
-            }
-
-            return 'unix://' . $address;
         }
 
         // check if this is an IPv6 address which includes multiple colons but no square brackets

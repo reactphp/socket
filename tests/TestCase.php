@@ -51,6 +51,12 @@ class TestCase extends BaseTestCase
         return $mock;
     }
 
+    protected function assertValidPid($pid)
+    {
+        $this->assertGreaterThan(1, $pid);
+        $this->assertInternalType("int", $pid);
+    }
+
     protected function createCallableMock()
     {
         return $this->getMockBuilder('React\Tests\Socket\Stub\CallableStub')->getMock();
@@ -97,5 +103,10 @@ class TestCase extends BaseTestCase
             // legacy PHPUnit 4
             parent::setExpectedException($exception, $exceptionMessage, $exceptionCode);
         }
+    }
+
+    protected function getRandomSocketUri()
+    {
+        return "unix://" . sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(rand(), true) . '.sock';
     }
 }

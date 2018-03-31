@@ -271,11 +271,6 @@ class UnixServerTest extends TestCase
         }
     }
 
-    private function getRandomSocketUri()
-    {
-        return "unix://" . sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(rand(), true) . '.sock';
-    }
-
     private function tick()
     {
         Block\sleep(0, $this->loop);

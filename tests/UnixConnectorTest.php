@@ -2,12 +2,16 @@
 
 namespace React\Tests\Socket;
 
-use React\Socket\ConnectionInterface;
+use PHPUnit\Framework\MockObject\MockObject;
+use React\EventLoop\LoopInterface;
+use React\Socket\UnixConnection;
 use React\Socket\UnixConnector;
 
 class UnixConnectorTest extends TestCase
 {
+    /** @var LoopInterface|MockObject */
     private $loop;
+    /** @var UnixConnector */
     private $connector;
 
     public function setUp()
@@ -38,7 +42,7 @@ class UnixConnectorTest extends TestCase
 
         // skip test if we can not create a test server (Windows etc.)
         if (!$server) {
-            $this->markTestSkipped('Unable to create socket "' . $path . '": ' . $errstr . '(' . $errno .')');
+            $this->markTestSkipped('Unable to create socket "' . $path . '": ' . $errstr . '(' . $errno . ')');
             return;
         }
 
@@ -46,11 +50,16 @@ class UnixConnectorTest extends TestCase
         $promise = $this->connector->connect($path);
         $promise->then($this->expectCallableOnce());
 
-        // remember remote and local address of this connection and close again
-        $remote = $local = false;
-        $promise->then(function(ConnectionInterface $conn) use (&$remote, &$local) {
-            $remote = $conn->getRemoteAddress();
-            $local = $conn->getLocalAddress();
+        // remember remote and local address and pid of this connection and close again
+        $remote_address = false;
+        $remote_pid = false;
+        $local_address = false;
+        $local_pid = false;
+        $promise->then(function (UnixConnection $conn) use (&$remote_address, &$remote_pid, &$local_address, &$local_pid) {
+            $remote_address = $conn->getRemoteAddress();
+            $remote_pid = $conn->getRemotePid();
+            $local_address = $conn->getLocalAddress();
+            $local_pid = $conn->getLocalPid();
             $conn->close();
         });
 
@@ -58,7 +67,10 @@ class UnixConnectorTest extends TestCase
         fclose($server);
         unlink($path);
 
-        $this->assertNull($local);
-        $this->assertEquals('unix://' . $path, $remote);
+        $this->assertNull($local_address);
+        $this->assertSame('unix://' . $path, $remote_address);
+
+        $this->assertValidPid($local_pid);
+        $this->assertValidPid($remote_pid);
     }
 }
