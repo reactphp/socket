@@ -35,6 +35,11 @@ final class DnsConnector implements ConnectorInterface
         $host = trim($parts['host'], '[]');
         $connector = $this->connector;
 
+        // skip DNS lookup / URI manipulation if this URI already contains an IP
+        if (false !== filter_var($host, FILTER_VALIDATE_IP)) {
+            return $connector->connect($uri);
+        }
+
         return $this
             ->resolveHostname($host)
             ->then(function ($ip) use ($connector, $host, $parts) {
@@ -86,10 +91,6 @@ final class DnsConnector implements ConnectorInterface
 
     private function resolveHostname($host)
     {
-        if (false !== filter_var($host, FILTER_VALIDATE_IP)) {
-            return Promise\resolve($host);
-        }
-
         $promise = $this->resolver->resolve($host);
 
         return new Promise\Promise(
