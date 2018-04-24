@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.11 (2018-04-24)
+
+*   Feature: Improve memory consumption for cancelled connection attempts and
+    simplify skipping DNS lookup when connecting to IP addresses.
+    (#159 and #160 by @clue)
+
 ## 0.8.10 (2018-02-28)
 
 *   Feature: Update DNS dependency to support loading system default DNS
