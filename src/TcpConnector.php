@@ -116,6 +116,13 @@ final class TcpConnector implements ConnectorInterface
             $loop->removeWriteStream($stream);
             fclose($stream);
 
+            // @codeCoverageIgnoreStart
+            // legacy PHP 5.3 sometimes requires a second close call (see tests)
+            if (PHP_VERSION_ID < 50400 && is_resource($stream)) {
+                fclose($stream);
+            }
+            // @codeCoverageIgnoreEnd
+
             $resolve = $reject = $progress = null;
             throw new RuntimeException('Cancelled while waiting for TCP/IP connection to be established');
         });

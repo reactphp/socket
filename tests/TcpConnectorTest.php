@@ -221,6 +221,7 @@ class TcpConnectorTest extends TestCase
         $connector = new TcpConnector($loop);
 
         $server = new TcpServer(0, $loop);
+        $server->on('connection', $this->expectCallableNever());
 
         $loop->expects($this->once())->method('addWriteStream');
         $promise = $connector->connect($server->getAddress());
@@ -234,7 +235,11 @@ class TcpConnectorTest extends TestCase
         }));
         $promise->cancel();
 
+        // ensure that this was a valid resource during the removeWriteStream() call
         $this->assertTrue($valid);
+
+        // ensure that this resource should now be closed after the cancel() call
+        $this->assertInternalType('resource', $resource);
         $this->assertFalse(is_resource($resource));
     }
 
