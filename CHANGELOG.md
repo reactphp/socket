@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.12 (2018-06-11)
+
+*   Feature: Improve memory consumption for failed and cancelled connection attempts.
+    (#161 by @clue)
+
+*   Improve test suite to fix Travis config to test against legacy PHP 5.3 again.
+    (#162 by @clue)
+
 ## 0.8.11 (2018-04-24)
 
 *   Feature: Improve memory consumption for cancelled connection attempts and
