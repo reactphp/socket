@@ -19,6 +19,10 @@ class UnixServerTest extends TestCase
      */
     public function setUp()
     {
+        if (!in_array('unix', stream_get_transports())) {
+            $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
+        }
+
         $this->loop = Factory::create();
         $this->uds = $this->getRandomSocketUri();
         $this->server = new UnixServer($this->uds, $this->loop);
