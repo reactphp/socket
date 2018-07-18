@@ -19,9 +19,6 @@ class StreamEncryption
     private $method;
     private $server;
 
-    private $errstr;
-    private $errno;
-
     public function __construct(LoopInterface $loop, $server = true)
     {
         $this->loop = $loop;
@@ -88,7 +85,7 @@ class StreamEncryption
 
         // get crypto method from context options or use global setting from constructor
         $method = $this->method;
-        $context = stream_context_get_options($socket);
+        $context = \stream_context_get_options($socket);
         if (isset($context['ssl']['crypto_method'])) {
             $method = $context['ssl']['crypto_method'];
         }
@@ -122,25 +119,37 @@ class StreamEncryption
 
     public function toggleCrypto($socket, Deferred $deferred, $toggle, $method)
     {
-        set_error_handler(array($this, 'handleError'));
-        $result = stream_socket_enable_crypto($socket, $toggle, $method);
-        restore_error_handler();
+        $error = null;
+        \set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = \str_replace(array("\r", "\n"), ' ', $errstr);
+
+            // remove useless function name from error message
+            if (($pos = \strpos($error, "): ")) !== false) {
+                $error = \substr($error, $pos + 3);
+            }
+        });
+
+        $result = \stream_socket_enable_crypto($socket, $toggle, $method);
+
+        \restore_error_handler();
 
         if (true === $result) {
             $deferred->resolve();
         } else if (false === $result) {
-            $deferred->reject(new UnexpectedValueException(
-                sprintf("Unable to complete SSL/TLS handshake: %s", $this->errstr),
-                $this->errno
-            ));
+            if (\feof($socket) || $error === null) {
+                // EOF or failed without error => connection closed during handshake
+                $deferred->reject(new UnexpectedValueException(
+                    'Connection lost during TLS handshake',
+                    \defined('SOCKET_ECONNRESET') ? \SOCKET_ECONNRESET : 0
+                ));
+            } else {
+                // handshake failed with error message
+                $deferred->reject(new UnexpectedValueException(
+                    'Unable to complete TLS handshake: ' . $error
+                ));
+            }
         } else {
             // need more data, will retry
         }
-    }
-
-    public function handleError($errno, $errstr)
-    {
-        $this->errstr = str_replace(array("\r", "\n"), ' ', $errstr);
-        $this->errno  = $errno;
     }
 }
