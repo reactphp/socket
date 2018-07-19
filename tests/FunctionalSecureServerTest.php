@@ -489,7 +489,12 @@ class FunctionalSecureServerTest extends TestCase
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
         $this->assertTrue($error instanceof \RuntimeException);
-        $this->assertStringEndsWith(':http request', $error->getMessage());
+
+        // OpenSSL error messages are version/platform specific
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:SSL3_GET_RECORD:http request
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:func(143):reason(267)
+        // Unable to complete TLS handshake: Failed setting RSA key
     }
 
     public function testEmitsErrorIfConnectionIsUnknownProtocolInsteadOfSecureHandshake()
@@ -513,7 +518,12 @@ class FunctionalSecureServerTest extends TestCase
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
         $this->assertTrue($error instanceof \RuntimeException);
-        $this->assertStringEndsWith(':unknown protocol', $error->getMessage());
+
+        // OpenSSL error messages are version/platform specific
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:SSL3_GET_RECORD:unknown protocol
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
+        // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:func(143):reason(267)
+        // Unable to complete TLS handshake: Failed setting RSA key
     }
 
     private function createPromiseForServerError(ServerInterface $server)
