@@ -41,7 +41,7 @@ final class DnsConnector implements ConnectorInterface
         }
 
         return $this
-            ->resolveHostname($host)
+            ->resolveHostname($host, $uri)
             ->then(function ($ip) use ($connector, $host, $parts) {
                 $uri = '';
 
@@ -89,18 +89,20 @@ final class DnsConnector implements ConnectorInterface
             });
     }
 
-    private function resolveHostname($host)
+    private function resolveHostname($host, $uri)
     {
         $promise = $this->resolver->resolve($host);
 
         return new Promise\Promise(
-            function ($resolve, $reject) use ($promise) {
+            function ($resolve, $reject) use ($promise, $uri) {
                 // resolve/reject with result of DNS lookup
-                $promise->then($resolve, $reject);
+                $promise->then($resolve, function ($e) use ($uri, $reject) {
+                    $reject(new RuntimeException('Connection to ' . $uri .' failed during DNS lookup: ' . $e->getMessage(), 0, $e));
+                });
             },
-            function ($_, $reject) use ($promise) {
+            function ($_, $reject) use ($promise, $uri) {
                 // cancellation should reject connection attempt
-                $reject(new RuntimeException('Connection attempt cancelled during DNS lookup'));
+                $reject(new RuntimeException('Connection to ' . $uri . ' cancelled during DNS lookup'));
 
                 // (try to) cancel pending DNS lookup
                 if ($promise instanceof CancellablePromiseInterface) {

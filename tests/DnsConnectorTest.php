@@ -77,14 +77,38 @@ class DnsConnectorTest extends TestCase
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
     }
 
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to example.invalid:80 failed during DNS lookup: DNS error
+     */
     public function testSkipConnectionIfDnsFails()
     {
-        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->will($this->returnValue(Promise\reject()));
+        $promise = Promise\reject(new \RuntimeException('DNS error'));
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->willReturn($promise);
         $this->tcp->expects($this->never())->method('connect');
 
-        $this->connector->connect('example.invalid:80');
+        $promise = $this->connector->connect('example.invalid:80');
+
+        $this->throwRejection($promise);
     }
 
+    public function testRejectionExceptionUsesPreviousExceptionIfDnsFails()
+    {
+        $exception = new \RuntimeException();
+
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->willReturn(Promise\reject($exception));
+
+        $promise = $this->connector->connect('example.invalid:80');
+
+        $promise->then(null, function ($e) {
+            throw $e->getPrevious();
+        })->then(null, $this->expectCallableOnceWith($this->identicalTo($exception)));
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to example.com:80 cancelled during DNS lookup
+     */
     public function testCancelDuringDnsCancelsDnsAndDoesNotStartTcpConnection()
     {
         $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
@@ -94,7 +118,7 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $this->throwRejection($promise);
     }
 
     public function testCancelDuringTcpConnectionCancelsTcpConnection()
@@ -107,5 +131,15 @@ class DnsConnectorTest extends TestCase
         $promise->cancel();
 
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+    }
+
+    private function throwRejection($promise)
+    {
+        $ex = null;
+        $promise->then(null, function ($e) use (&$ex) {
+            $ex = $e;
+        });
+
+        throw $ex;
     }
 }
