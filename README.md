@@ -706,6 +706,14 @@ $first = new UnixServer('/tmp/same.sock', $loop);
 $second = new UnixServer('/tmp/same.sock', $loop);
 ```
 
+> Note that these error conditions may vary depending on your system and/or
+  configuration.
+  In particular, Zend PHP does only report "Unknown error" when the UDS path
+  already exists and can not be bound. You may want to check `is_file()` on the
+  given UDS path to report a more user-friendly error message in this case.
+  See the exception message and code for more details about the actual error
+  condition.
+
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
 

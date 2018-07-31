@@ -50,6 +50,10 @@ class ServerTest extends TestCase
 
     public function testConstructorCreatesExpectedUnixServer()
     {
+        if (!in_array('unix', stream_get_transports())) {
+            $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
+        }
+
         $loop = Factory::create();
 
         $server = new Server($this->getRandomSocketUri(), $loop);
@@ -62,6 +66,28 @@ class ServerTest extends TestCase
 
         $connection->close();
         $server->close();
+    }
+
+    public function testConstructorThrowsForExistingUnixPath()
+    {
+        if (!in_array('unix', stream_get_transports())) {
+            $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
+        }
+
+        $loop = Factory::create();
+
+        try {
+            $server = new Server('unix://' . __FILE__, $loop);
+            $this->fail();
+        } catch (\RuntimeException $e) {
+            if ($e->getCode() === 0) {
+                // Zend PHP does not currently report a sane error
+                $this->assertStringEndsWith('Unknown error', $e->getMessage());
+            } else {
+                $this->assertEquals(SOCKET_EADDRINUSE, $e->getCode());
+                $this->assertStringEndsWith('Address already in use', $e->getMessage());
+            }
+        }
     }
 
     public function testEmitsConnectionForNewConnection()

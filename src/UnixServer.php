@@ -61,7 +61,18 @@ final class UnixServer extends EventEmitter implements ServerInterface
             stream_context_create(array('socket' => $context))
         );
         if (false === $this->master) {
-            throw new RuntimeException('Failed to listen on unix domain socket "' . $path . '": ' . $errstr, $errno);
+            // PHP does not seem to report errno/errstr for Unix domain sockets (UDS) right now.
+            // This only applies to UDS server sockets, see also https://3v4l.org/NAhpr.
+            // Parse PHP warning message containing unknown error, HHVM reports proper info at least.
+            if ($errno === 0 && $errstr === '') {
+                $error = error_get_last();
+                if (preg_match('/\(([^\)]+)\)|\[(\d+)\]: (.*)/', $error['message'], $match)) {
+                    $errstr = isset($match[3]) ? $match['3'] : $match[1];
+                    $errno = isset($match[2]) ? (int)$match[2] : 0;
+                }
+            }
+
+            throw new RuntimeException('Failed to listen on Unix domain socket "' . $path . '": ' . $errstr, $errno);
         }
         stream_set_blocking($this->master, 0);
 
