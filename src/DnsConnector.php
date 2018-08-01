@@ -104,6 +104,10 @@ final class DnsConnector implements ConnectorInterface
 
                 // (try to) cancel pending DNS lookup / connection attempt
                 if ($promise instanceof CancellablePromiseInterface) {
+                    // overwrite callback arguments for PHP7+ only, so they do not show
+                    // up in the Exception trace and do not cause a possible cyclic reference.
+                    $_ = $reject = null;
+
                     $promise->cancel();
                     $promise = null;
                 }

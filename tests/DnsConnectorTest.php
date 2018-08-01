@@ -245,6 +245,34 @@ class DnsConnectorTest extends TestCase
     /**
      * @requires PHP 7
      */
+    public function testRejectionAfterDnsLookupShouldNotCreateAnyGarbageReferencesAgain()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+
+        $tcp = new Deferred();
+        $dns->promise()->then(function () use ($tcp) {
+            $tcp->reject(new \RuntimeException('Connection failed'));
+        });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp->promise());
+
+        $promise = $this->connector->connect('example.com:80');
+        $dns->resolve('1.2.3.4');
+
+        unset($promise, $dns, $tcp);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
     public function testCancelDuringDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -289,7 +317,7 @@ class DnsConnectorTest extends TestCase
         $dns->resolve('1.2.3.4');
 
         $promise->cancel();
-        unset($promise, $dns);
+        unset($promise, $dns, $tcp);
 
         $this->assertEquals(0, gc_collect_cycles());
     }
