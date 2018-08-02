@@ -2,8 +2,9 @@
 
 namespace React\Tests\Socket;
 
-use React\Socket\DnsConnector;
 use React\Promise;
+use React\Promise\Deferred;
+use React\Socket\DnsConnector;
 
 class DnsConnectorTest extends TestCase
 {
@@ -77,14 +78,70 @@ class DnsConnectorTest extends TestCase
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
     }
 
-    public function testSkipConnectionIfDnsFails()
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection failed
+     */
+    public function testRejectsWithTcpConnectorRejectionIfGivenIp()
     {
-        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->will($this->returnValue(Promise\reject()));
-        $this->tcp->expects($this->never())->method('connect');
+        $promise = Promise\reject(new \RuntimeException('Connection failed'));
+        $this->resolver->expects($this->never())->method('resolve');
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80'))->willReturn($promise);
 
-        $this->connector->connect('example.invalid:80');
+        $promise = $this->connector->connect('1.2.3.4:80');
+        $promise->cancel();
+
+        $this->throwRejection($promise);
     }
 
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection failed
+     */
+    public function testRejectsWithTcpConnectorRejectionAfterDnsIsResolved()
+    {
+        $promise = Promise\reject(new \RuntimeException('Connection failed'));
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn(Promise\resolve('1.2.3.4'));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($promise);
+
+        $promise = $this->connector->connect('example.com:80');
+        $promise->cancel();
+
+        $this->throwRejection($promise);
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to example.invalid:80 failed during DNS lookup: DNS error
+     */
+    public function testSkipConnectionIfDnsFails()
+    {
+        $promise = Promise\reject(new \RuntimeException('DNS error'));
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->willReturn($promise);
+        $this->tcp->expects($this->never())->method('connect');
+
+        $promise = $this->connector->connect('example.invalid:80');
+
+        $this->throwRejection($promise);
+    }
+
+    public function testRejectionExceptionUsesPreviousExceptionIfDnsFails()
+    {
+        $exception = new \RuntimeException();
+
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.invalid'))->willReturn(Promise\reject($exception));
+
+        $promise = $this->connector->connect('example.invalid:80');
+
+        $promise->then(null, function ($e) {
+            throw $e->getPrevious();
+        })->then(null, $this->expectCallableOnceWith($this->identicalTo($exception)));
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to example.com:80 cancelled during DNS lookup
+     */
     public function testCancelDuringDnsCancelsDnsAndDoesNotStartTcpConnection()
     {
         $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
@@ -94,18 +151,184 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $this->throwRejection($promise);
     }
 
-    public function testCancelDuringTcpConnectionCancelsTcpConnection()
+    public function testCancelDuringTcpConnectionCancelsTcpConnectionIfGivenIp()
     {
-        $pending = new Promise\Promise(function () { }, function () { throw new \Exception(); });
-        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->will($this->returnValue(Promise\resolve('1.2.3.4')));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->will($this->returnValue($pending));
+        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
+        $this->resolver->expects($this->never())->method('resolve');
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80'))->willReturn($pending);
+
+        $promise = $this->connector->connect('1.2.3.4:80');
+        $promise->cancel();
+    }
+
+    public function testCancelDuringTcpConnectionCancelsTcpConnectionAfterDnsIsResolved()
+    {
+        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn(Promise\resolve('1.2.3.4'));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($pending);
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
+    }
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection cancelled
+     */
+    public function testCancelDuringTcpConnectionCancelsTcpConnectionWithTcpRejectionAfterDnsIsResolved()
+    {
+        $first = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($first->promise());
+        $pending = new Promise\Promise(function () { }, function () {
+            throw new \RuntimeException('Connection cancelled');
+        });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($pending);
+
+        $promise = $this->connector->connect('example.com:80');
+        $first->resolve('1.2.3.4');
+
+        $promise->cancel();
+
+        $this->throwRejection($promise);
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testRejectionDuringDnsLookupShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+        $this->tcp->expects($this->never())->method('connect');
+
+        $promise = $this->connector->connect('example.com:80');
+        $dns->reject(new \RuntimeException('DNS failed'));
+        unset($promise, $dns);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testRejectionAfterDnsLookupShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+
+        $tcp = new Deferred();
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp->promise());
+
+        $promise = $this->connector->connect('example.com:80');
+        $dns->resolve('1.2.3.4');
+        $tcp->reject(new \RuntimeException('Connection failed'));
+        unset($promise, $dns, $tcp);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testRejectionAfterDnsLookupShouldNotCreateAnyGarbageReferencesAgain()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+
+        $tcp = new Deferred();
+        $dns->promise()->then(function () use ($tcp) {
+            $tcp->reject(new \RuntimeException('Connection failed'));
+        });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp->promise());
+
+        $promise = $this->connector->connect('example.com:80');
+        $dns->resolve('1.2.3.4');
+
+        unset($promise, $dns, $tcp);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testCancelDuringDnsLookupShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred(function () {
+            throw new \RuntimeException();
+        });
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+        $this->tcp->expects($this->never())->method('connect');
+
+        $promise = $this->connector->connect('example.com:80');
+
+        $promise->cancel();
+        unset($promise, $dns);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testCancelDuringTcpConnectionShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $dns = new Deferred();
+        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
+        $tcp = new Promise\Promise(function () { }, function () {
+            throw new \RuntimeException('Connection cancelled');
+        });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp);
+
+        $promise = $this->connector->connect('example.com:80');
+        $dns->resolve('1.2.3.4');
+
+        $promise->cancel();
+        unset($promise, $dns, $tcp);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    private function throwRejection($promise)
+    {
+        $ex = null;
+        $promise->then(null, function ($e) use (&$ex) {
+            $ex = $e;
+        });
+
+        throw $ex;
     }
 }

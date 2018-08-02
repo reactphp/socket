@@ -184,7 +184,7 @@ class IntegrationTest extends TestCase
     /**
      * @requires PHP 7
      */
-    public function testWaitingForConnectionTimeoutShouldNotCreateAnyGarbageReferences()
+    public function testWaitingForConnectionTimeoutDuringDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
@@ -197,6 +197,42 @@ class IntegrationTest extends TestCase
 
         $wait = true;
         $promise = $connector->connect('google.com:80')->then(
+            null,
+            function ($e) use (&$wait) {
+                $wait = false;
+                throw $e;
+            }
+        );
+
+        // run loop for short period to ensure we detect connection timeout error
+        Block\sleep(0.01, $loop);
+        if ($wait) {
+            Block\sleep(0.2, $loop);
+            if ($wait) {
+                $this->fail('Connection attempt did not fail');
+            }
+        }
+        unset($promise);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    /**
+     * @requires PHP 7
+     */
+    public function testWaitingForConnectionTimeoutDuringTcpConnectionShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        $loop = Factory::create();
+        $connector = new Connector($loop, array('timeout' => 0.000001));
+
+        gc_collect_cycles();
+
+        $wait = true;
+        $promise = $connector->connect('8.8.8.8:53')->then(
             null,
             function ($e) use (&$wait) {
                 $wait = false;

@@ -40,71 +40,76 @@ final class DnsConnector implements ConnectorInterface
             return $connector->connect($uri);
         }
 
-        return $this
-            ->resolveHostname($host)
-            ->then(function ($ip) use ($connector, $host, $parts) {
-                $uri = '';
-
-                // prepend original scheme if known
-                if (isset($parts['scheme'])) {
-                    $uri .= $parts['scheme'] . '://';
-                }
-
-                if (strpos($ip, ':') !== false) {
-                    // enclose IPv6 addresses in square brackets before appending port
-                    $uri .= '[' . $ip . ']';
-                } else {
-                    $uri .= $ip;
-                }
-
-                // append original port if known
-                if (isset($parts['port'])) {
-                    $uri .= ':' . $parts['port'];
-                }
-
-                // append orignal path if known
-                if (isset($parts['path'])) {
-                    $uri .= $parts['path'];
-                }
-
-                // append original query if known
-                if (isset($parts['query'])) {
-                    $uri .= '?' . $parts['query'];
-                }
-
-                // append original hostname as query if resolved via DNS and if
-                // destination URI does not contain "hostname" query param already
-                $args = array();
-                parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
-                if ($host !== $ip && !isset($args['hostname'])) {
-                    $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . rawurlencode($host);
-                }
-
-                // append original fragment if known
-                if (isset($parts['fragment'])) {
-                    $uri .= '#' . $parts['fragment'];
-                }
-
-                return $connector->connect($uri);
-            });
-    }
-
-    private function resolveHostname($host)
-    {
         $promise = $this->resolver->resolve($host);
+        $resolved = null;
 
         return new Promise\Promise(
-            function ($resolve, $reject) use ($promise) {
+            function ($resolve, $reject) use (&$promise, &$resolved, $uri, $connector, $host, $parts) {
                 // resolve/reject with result of DNS lookup
-                $promise->then($resolve, $reject);
-            },
-            function ($_, $reject) use ($promise) {
-                // cancellation should reject connection attempt
-                $reject(new RuntimeException('Connection attempt cancelled during DNS lookup'));
+                $promise->then(function ($ip) use (&$promise, &$resolved, $connector, $host, $parts) {
+                    $resolved = $ip;
+                    $uri = '';
 
-                // (try to) cancel pending DNS lookup
+                    // prepend original scheme if known
+                    if (isset($parts['scheme'])) {
+                        $uri .= $parts['scheme'] . '://';
+                    }
+
+                    if (strpos($ip, ':') !== false) {
+                        // enclose IPv6 addresses in square brackets before appending port
+                        $uri .= '[' . $ip . ']';
+                    } else {
+                        $uri .= $ip;
+                    }
+
+                    // append original port if known
+                    if (isset($parts['port'])) {
+                        $uri .= ':' . $parts['port'];
+                    }
+
+                    // append orignal path if known
+                    if (isset($parts['path'])) {
+                        $uri .= $parts['path'];
+                    }
+
+                    // append original query if known
+                    if (isset($parts['query'])) {
+                        $uri .= '?' . $parts['query'];
+                    }
+
+                    // append original hostname as query if resolved via DNS and if
+                    // destination URI does not contain "hostname" query param already
+                    $args = array();
+                    parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
+                    if ($host !== $ip && !isset($args['hostname'])) {
+                        $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . rawurlencode($host);
+                    }
+
+                    // append original fragment if known
+                    if (isset($parts['fragment'])) {
+                        $uri .= '#' . $parts['fragment'];
+                    }
+
+                    return $promise = $connector->connect($uri);
+                }, function ($e) use ($uri, $reject) {
+                    $reject(new RuntimeException('Connection to ' . $uri .' failed during DNS lookup: ' . $e->getMessage(), 0, $e));
+                })->then($resolve, $reject);
+            },
+            function ($_, $reject) use (&$promise, &$resolved, $uri) {
+                // cancellation should reject connection attempt
+                // reject DNS resolution with custom reason, otherwise rely on connection cancellation below
+                if ($resolved === null) {
+                    $reject(new RuntimeException('Connection to ' . $uri . ' cancelled during DNS lookup'));
+                }
+
+                // (try to) cancel pending DNS lookup / connection attempt
                 if ($promise instanceof CancellablePromiseInterface) {
+                    // overwrite callback arguments for PHP7+ only, so they do not show
+                    // up in the Exception trace and do not cause a possible cyclic reference.
+                    $_ = $reject = null;
+
                     $promise->cancel();
+                    $promise = null;
                 }
             }
         );
