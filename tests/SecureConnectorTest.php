@@ -49,18 +49,26 @@ class SecureConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnce());
     }
 
-    public function testCancelDuringTcpConnectionCancelsTcpConnection()
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection cancelled
+     */
+    public function testCancelDuringTcpConnectionCancelsTcpConnectionAndRejectsWithTcpRejection()
     {
-        $pending = new Promise\Promise(function () { }, function () { throw new \Exception(); });
+        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->will($this->returnValue($pending));
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $this->throwRejection($promise);
     }
 
-    public function testConnectionWillBeClosedAndRejectedIfConnectioIsNoStream()
+    /**
+     * @expectedException UnexpectedValueException
+     * @expectedExceptionMessage Base connector does not use internal Connection class exposing stream resource
+     */
+    public function testConnectionWillBeClosedAndRejectedIfConnectionIsNoStream()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connection->expects($this->once())->method('close');
@@ -69,6 +77,57 @@ class SecureConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.com:80');
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $this->throwRejection($promise);
+    }
+
+    public function testStreamEncryptionWillBeEnabledAfterConnecting()
+    {
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->getMock();
+
+        $encryption = $this->getMockBuilder('React\Socket\StreamEncryption')->disableOriginalConstructor()->getMock();
+        $encryption->expects($this->once())->method('enable')->with($connection)->willReturn(new \React\Promise\Promise(function () { }));
+
+        $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
+        $ref->setAccessible(true);
+        $ref->setValue($this->connector, $encryption);
+
+        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
+
+        $promise = $this->connector->connect('example.com:80');
+    }
+
+    /**
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to example.com:80 failed during TLS handshake: TLS error
+     */
+    public function testConnectionWillBeRejectedIfStreamEncryptionFailsAndClosesConnection()
+    {
+        $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->getMock();
+        $connection->expects($this->once())->method('close');
+
+        $encryption = $this->getMockBuilder('React\Socket\StreamEncryption')->disableOriginalConstructor()->getMock();
+        $encryption->expects($this->once())->method('enable')->willReturn(Promise\reject(new \RuntimeException('TLS error')));
+
+        $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
+        $ref->setAccessible(true);
+        $ref->setValue($this->connector, $encryption);
+
+        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
+
+        $promise = $this->connector->connect('example.com:80');
+
+        $this->throwRejection($promise);
+    }
+
+    private function throwRejection($promise)
+    {
+        $ex = null;
+        $promise->then(null, function ($e) use (&$ex) {
+            $ex = $e;
+        });
+
+        throw $ex;
     }
 }

@@ -40,7 +40,7 @@ final class SecureConnector implements ConnectorInterface
         $context = $this->context;
 
         $encryption = $this->streamEncryption;
-        return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption) {
+        return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri) {
             // (unencrypted) TCP/IP connection succeeded
 
             if (!$connection instanceof Connection) {
@@ -54,10 +54,15 @@ final class SecureConnector implements ConnectorInterface
             }
 
             // try to enable encryption
-            return $encryption->enable($connection)->then(null, function ($error) use ($connection) {
+            return $encryption->enable($connection)->then(null, function ($error) use ($connection, $uri) {
                 // establishing encryption failed => close invalid connection and return error
                 $connection->close();
-                throw $error;
+
+                throw new \RuntimeException(
+                    'Connection to ' . $uri . ' failed during TLS handshake: ' . $error->getMessage(),
+                    0,
+                    $error
+                );
             });
         });
     }
