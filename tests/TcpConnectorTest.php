@@ -12,16 +12,19 @@ class TcpConnectorTest extends TestCase
 {
     const TIMEOUT = 0.1;
 
-    /** @test */
+    /**
+     * @test
+     * @expectedException RuntimeException
+     * @expectedExceptionMessage Connection to tcp://127.0.0.1:9999 failed: Connection refused
+     */
     public function connectionToEmptyPortShouldFail()
     {
         $loop = Factory::create();
 
         $connector = new TcpConnector($loop);
-        $connector->connect('127.0.0.1:9999')
-                ->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $promise = $connector->connect('127.0.0.1:9999');
 
-        $loop->run();
+        Block\await($promise, $loop, self::TIMEOUT);
     }
 
     /** @test */
@@ -254,7 +257,25 @@ class TcpConnectorTest extends TestCase
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Cancelled');
+        $this->setExpectedException('RuntimeException', 'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake');
         Block\await($promise, $loop);
+    }
+
+    public function testCancelDuringConnectionShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        gc_collect_cycles();
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = new TcpConnector($loop);
+        $promise = $connector->connect('127.0.0.1:9999');
+
+        $promise->cancel();
+        unset($promise);
+
+        $this->assertEquals(0, gc_collect_cycles());
     }
 }

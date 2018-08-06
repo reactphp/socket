@@ -71,7 +71,7 @@ final class TcpConnector implements ConnectorInterface
         // HHVM fails to parse URIs with a query but no path, so let's simplify our URI here
         $remote = 'tcp://' . $parts['host'] . ':' . $parts['port'];
 
-        $socket = @stream_socket_client(
+        $stream = @stream_socket_client(
             $remote,
             $errno,
             $errstr,
@@ -80,26 +80,17 @@ final class TcpConnector implements ConnectorInterface
             stream_context_create($context)
         );
 
-        if (false === $socket) {
+        if (false === $stream) {
             return Promise\reject(new RuntimeException(
                 sprintf("Connection to %s failed: %s", $uri, $errstr),
                 $errno
             ));
         }
 
-        stream_set_blocking($socket, 0);
-
         // wait for connection
-
-        return $this->waitForStreamOnce($socket);
-    }
-
-    private function waitForStreamOnce($stream)
-    {
         $loop = $this->loop;
-
-        return new Promise\Promise(function ($resolve, $reject) use ($loop, $stream) {
-            $loop->addWriteStream($stream, function ($stream) use ($loop, $resolve, $reject) {
+        return new Promise\Promise(function ($resolve, $reject) use ($loop, $stream, $uri) {
+            $loop->addWriteStream($stream, function ($stream) use ($loop, $resolve, $reject, $uri) {
                 $loop->removeWriteStream($stream);
 
                 // The following hack looks like the only way to
@@ -107,12 +98,12 @@ final class TcpConnector implements ConnectorInterface
                 if (false === stream_socket_get_name($stream, true)) {
                     fclose($stream);
 
-                    $reject(new RuntimeException('Connection refused'));
+                    $reject(new RuntimeException('Connection to ' . $uri . ' failed: Connection refused'));
                 } else {
                     $resolve(new Connection($stream, $loop));
                 }
             });
-        }, function () use ($loop, $stream) {
+        }, function () use ($loop, $stream, $uri) {
             $loop->removeWriteStream($stream);
             fclose($stream);
 
@@ -123,7 +114,7 @@ final class TcpConnector implements ConnectorInterface
             }
             // @codeCoverageIgnoreEnd
 
-            throw new RuntimeException('Cancelled while waiting for TCP/IP connection to be established');
+            throw new RuntimeException('Connection to ' . $uri . ' cancelled during TCP/IP handshake');
         });
     }
 }
