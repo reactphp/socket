@@ -181,9 +181,6 @@ class IntegrationTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testWaitingForConnectionTimeoutDuringDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -217,9 +214,6 @@ class IntegrationTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testWaitingForConnectionTimeoutDuringTcpConnectionShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {

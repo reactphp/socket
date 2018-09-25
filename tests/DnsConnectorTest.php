@@ -195,9 +195,6 @@ class DnsConnectorTest extends TestCase
         $this->throwRejection($promise);
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testRejectionDuringDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -217,9 +214,6 @@ class DnsConnectorTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testRejectionAfterDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -242,9 +236,6 @@ class DnsConnectorTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testRejectionAfterDnsLookupShouldNotCreateAnyGarbageReferencesAgain()
     {
         if (class_exists('React\Promise\When')) {
@@ -270,9 +261,6 @@ class DnsConnectorTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testCancelDuringDnsLookupShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -295,9 +283,6 @@ class DnsConnectorTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
-    /**
-     * @requires PHP 7
-     */
     public function testCancelDuringTcpConnectionShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
