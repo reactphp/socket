@@ -186,8 +186,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
             function ($error) use ($that, $connection) {
                 $error = new \RuntimeException(
                     'Connection from ' . $connection->getRemoteAddress() . ' failed during TLS handshake: ' . $error->getMessage(),
-                    $error->getCode(),
-                    $error
+                    $error->getCode()
                 );
 
                 $that->emit('error', array($error));

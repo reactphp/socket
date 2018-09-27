@@ -107,17 +107,13 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.com:80 failed during TLS handshake: TLS error
-     */
     public function testConnectionWillBeRejectedIfStreamEncryptionFailsAndClosesConnection()
     {
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->getMock();
         $connection->expects($this->once())->method('close');
 
         $encryption = $this->getMockBuilder('React\Socket\StreamEncryption')->disableOriginalConstructor()->getMock();
-        $encryption->expects($this->once())->method('enable')->willReturn(Promise\reject(new \RuntimeException('TLS error')));
+        $encryption->expects($this->once())->method('enable')->willReturn(Promise\reject(new \RuntimeException('TLS error', 123)));
 
         $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
         $ref->setAccessible(true);
@@ -128,7 +124,13 @@ class SecureConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.com:80');
 
-        $this->throwRejection($promise);
+        try {
+            $this->throwRejection($promise);
+        } catch (\RuntimeException $e) {
+            $this->assertEquals('Connection to example.com:80 failed during TLS handshake: TLS error', $e->getMessage());
+            $this->assertEquals(123, $e->getCode());
+            $this->assertNull($e->getPrevious());
+        }
     }
 
     /**

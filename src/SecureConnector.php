@@ -62,8 +62,7 @@ final class SecureConnector implements ConnectorInterface
 
                 throw new \RuntimeException(
                     'Connection to ' . $uri . ' failed during TLS handshake: ' . $error->getMessage(),
-                    0,
-                    $error
+                    $error->getCode()
                 );
             });
         });
