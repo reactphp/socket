@@ -280,6 +280,46 @@ class IntegrationTest extends TestCase
         $this->assertEquals(0, gc_collect_cycles());
     }
 
+    /**
+     * @requires PHP 7
+     */
+    public function testWaitingForInvalidTlsConnectionShouldNotCreateAnyGarbageReferences()
+    {
+        if (class_exists('React\Promise\When')) {
+            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        $loop = Factory::create();
+        $connector = new Connector($loop, array(
+            'tls' => array(
+                'verify_peer' => true
+            )
+        ));
+
+        gc_collect_cycles();
+
+        $wait = true;
+        $promise = $connector->connect('tls://self-signed.badssl.com:443')->then(
+            null,
+            function ($e) use (&$wait) {
+                $wait = false;
+                throw $e;
+            }
+        );
+
+        // run loop for short period to ensure we detect DNS error
+        Block\sleep(0.1, $loop);
+        if ($wait) {
+            Block\sleep(0.4, $loop);
+            if ($wait) {
+                $this->fail('Connection attempt did not fail');
+            }
+        }
+        unset($promise);
+
+        $this->assertEquals(0, gc_collect_cycles());
+    }
+
     public function testWaitingForSuccessfullyClosedConnectionShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
@@ -303,10 +343,6 @@ class IntegrationTest extends TestCase
 
     public function testConnectingFailsIfTimeoutIsTooSmall()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
-        }
-
         $loop = Factory::create();
 
         $connector = new Connector($loop, array(

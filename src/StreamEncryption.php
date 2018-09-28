@@ -136,15 +136,20 @@ class StreamEncryption
         if (true === $result) {
             $deferred->resolve();
         } else if (false === $result) {
+            // overwrite callback arguments for PHP7+ only, so they do not show
+            // up in the Exception trace and do not cause a possible cyclic reference.
+            $d = $deferred;
+            $deferred = null;
+
             if (\feof($socket) || $error === null) {
                 // EOF or failed without error => connection closed during handshake
-                $deferred->reject(new UnexpectedValueException(
+                $d->reject(new UnexpectedValueException(
                     'Connection lost during TLS handshake',
                     \defined('SOCKET_ECONNRESET') ? \SOCKET_ECONNRESET : 0
                 ));
             } else {
                 // handshake failed with error message
-                $deferred->reject(new UnexpectedValueException(
+                $d->reject(new UnexpectedValueException(
                     'Unable to complete TLS handshake: ' . $error
                 ));
             }
