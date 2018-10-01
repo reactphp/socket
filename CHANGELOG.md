@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.1.0 (2018-10-01)
+
+*   Feature: Improve error reporting for failed connection attempts and improve
+    cancellation forwarding during DNS lookup, TCP/IP connection or TLS handshake.
+    (#168, #169, #170, #171, #176 and #177 by @clue)
+
+    All error messages now always contain a reference to the remote URI to give
+    more details which connection actually failed and the reason for this error.
+    Accordingly, failures during DNS lookup will now mention both the remote URI
+    as well as the DNS error reason. TCP/IP connection issues and errors during
+    a secure TLS handshake will both mention the remote URI as well as the
+    underlying socket error. Similarly, lost/dropped connections during a TLS
+    handshake will now report a lost connection instead of an empty error reason.
+
+    For most common use cases this means that simply reporting the `Exception`
+    message should give the most relevant details for any connection issues:
+
+    ```php
+    $promise = $connector->connect('tls://example.com:443');
+    $promise->then(function (ConnectionInterface $conn) use ($loop) {
+        // …
+    }, function (Exception $e) {
+        echo $e->getMessage();
+    });
+    ```
+
 ## 1.0.0 (2018-07-11)
 
 *   First stable LTS release, now following [SemVer](https://semver.org/).
