@@ -60,7 +60,7 @@ Here is a server that closes the connection if you send it anything:
 $loop = React\EventLoop\Factory::create();
 $socket = new React\Socket\Server('127.0.0.1:8080', $loop);
 
-$socket->on('connection', function (ConnectionInterface $conn) {
+$socket->on('connection', function (\React\Socket\ConnectionInterface $conn) {
     $conn->write("Hello " . $conn->getRemoteAddress() . "!\n");
     $conn->write("Welcome to this amazing server!\n");
     $conn->write("Here's a tip: don't say anything.\n");
@@ -82,7 +82,7 @@ send it a string:
 $loop = React\EventLoop\Factory::create();
 $connector = new React\Socket\Connector($loop);
 
-$connector->connect('127.0.0.1:8080')->then(function (ConnectionInterface $conn) use ($loop) {
+$connector->connect('127.0.0.1:8080')->then(function (\React\Socket\ConnectionInterface $conn) use ($loop) {
     $conn->pipe(new React\Stream\WritableResourceStream(STDOUT, $loop));
     $conn->write("Hello World!\n");
 });
