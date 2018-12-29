@@ -421,7 +421,7 @@ class FunctionalSecureServerTest extends TestCase
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshak
-        $this->assertTrue($error instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $error);
         $this->assertStringStartsWith('Connection from tcp://', $error->getMessage());
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake', $error->getMessage());
         $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 0, $error->getCode());
@@ -449,7 +449,7 @@ class FunctionalSecureServerTest extends TestCase
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshak
-        $this->assertTrue($error instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $error);
         $this->assertStringStartsWith('Connection from tcp://', $error->getMessage());
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake', $error->getMessage());
         $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 0, $error->getCode());
@@ -494,7 +494,7 @@ class FunctionalSecureServerTest extends TestCase
 
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
-        $this->assertTrue($error instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $error);
 
         // OpenSSL error messages are version/platform specific
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:SSL3_GET_RECORD:http request
@@ -523,7 +523,7 @@ class FunctionalSecureServerTest extends TestCase
 
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
-        $this->assertTrue($error instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $error);
 
         // OpenSSL error messages are version/platform specific
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:SSL3_GET_RECORD:unknown protocol
