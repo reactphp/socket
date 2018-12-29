@@ -10,9 +10,9 @@ namespace React\Socket;
  * instead of connecting to a default address assumed by an higher-level API:
  *
  * ```php
- * $connector = new FixedUriConnector(
+ * $connector = new React\Socket\FixedUriConnector(
  *     'unix:///var/run/docker.sock',
- *     new UnixConnector($loop)
+ *     new React\Socket\UnixConnector($loop)
  * );
  *
  * // destination will be ignored, actually connects to Unix domain socket

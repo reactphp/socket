@@ -21,8 +21,8 @@ use OverflowException;
  * open connections.
  *
  * ```php
- * $server = new LimitingServer($server, 100);
- * $server->on('connection', function (ConnectionInterface $connection) {
+ * $server = new React\Socket\LimitingServer($server, 100);
+ * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
  *     $connection->write('hello there!' . PHP_EOL);
  *     …
  * });
@@ -52,8 +52,8 @@ class LimitingServer extends EventEmitter implements ServerInterface
      * this and no `connection` event will be emitted.
      *
      * ```php
-     * $server = new LimitingServer($server, 100);
-     * $server->on('connection', function (ConnectionInterface $connection) {
+     * $server = new React\Socket\LimitingServer($server, 100);
+     * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
      *     $connection->write('hello there!' . PHP_EOL);
      *     …
      * });
@@ -81,8 +81,8 @@ class LimitingServer extends EventEmitter implements ServerInterface
      * an interactive chat).
      *
      * ```php
-     * $server = new LimitingServer($server, 100, true);
-     * $server->on('connection', function (ConnectionInterface $connection) {
+     * $server = new React\Socket\LimitingServer($server, 100, true);
+     * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
      *     $connection->write('hello there!' . PHP_EOL);
      *     …
      * });

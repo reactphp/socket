@@ -43,10 +43,10 @@ $server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
     )
 ));
 
-$server->on('connection', function (ConnectionInterface $conn) {
-    $conn->once('data', function () use ($conn) {
+$server->on('connection', function (ConnectionInterface $connection) {
+    $connection->once('data', function () use ($connection) {
         $body = "<html><h1>Hello world!</h1></html>\r\n";
-        $conn->end("HTTP/1.1 200 OK\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n" . $body);
+        $connection->end("HTTP/1.1 200 OK\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n" . $body);
     });
 });
 

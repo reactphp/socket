@@ -36,18 +36,18 @@ $server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
     )
 ));
 
-$server->on('connection', function (ConnectionInterface $conn) use ($loop) {
+$server->on('connection', function (ConnectionInterface $connection) use ($loop) {
     echo '[connected]' . PHP_EOL;
 
     // count the number of bytes received from this connection
     $bytes = 0;
-    $conn->on('data', function ($chunk) use (&$bytes) {
+    $connection->on('data', function ($chunk) use (&$bytes) {
         $bytes += strlen($chunk);
     });
 
     // report average throughput once client disconnects
     $t = microtime(true);
-    $conn->on('close', function () use ($conn, $t, &$bytes) {
+    $connection->on('close', function () use ($connection, $t, &$bytes) {
         $t = microtime(true) - $t;
         echo '[disconnected after receiving ' . $bytes . ' bytes in ' . round($t, 3) . 's => ' . round($bytes / $t / 1024 / 1024, 1) . ' MiB/s]' . PHP_EOL;
     });

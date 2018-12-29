@@ -30,9 +30,9 @@ $server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
     )
 ));
 
-$server->on('connection', function (ConnectionInterface $conn) {
-    echo '[' . $conn->getRemoteAddress() . ' connected]' . PHP_EOL;
-    $conn->pipe($conn);
+$server->on('connection', function (ConnectionInterface $connection) {
+    echo '[' . $connection->getRemoteAddress() . ' connected]' . PHP_EOL;
+    $connection->pipe($connection);
 });
 
 $server->on('error', 'printf');

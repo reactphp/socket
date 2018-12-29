@@ -30,7 +30,7 @@ interface ConnectorInterface
      *
      * ```php
      * $connector->connect('google.com:443')->then(
-     *     function (ConnectionInterface $connection) {
+     *     function (React\Socket\ConnectionInterface $connection) {
      *         // connection successfully established
      *     },
      *     function (Exception $error) {
