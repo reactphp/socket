@@ -23,20 +23,20 @@ final class SecureConnector implements ConnectorInterface
 
     public function connect($uri)
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            return Promise\reject(new BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)')); // @codeCoverageIgnore
+        if (!\function_exists('stream_socket_enable_crypto')) {
+            return Promise\reject(new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)')); // @codeCoverageIgnore
         }
 
-        if (strpos($uri, '://') === false) {
+        if (\strpos($uri, '://') === false) {
             $uri = 'tls://' . $uri;
         }
 
-        $parts = parse_url($uri);
+        $parts = \parse_url($uri);
         if (!$parts || !isset($parts['scheme']) || $parts['scheme'] !== 'tls') {
-            return Promise\reject(new InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
-        $uri = str_replace('tls://', '', $uri);
+        $uri = \str_replace('tls://', '', $uri);
         $context = $this->context;
 
         $encryption = $this->streamEncryption;
@@ -47,12 +47,12 @@ final class SecureConnector implements ConnectorInterface
 
             if (!$connection instanceof Connection) {
                 $connection->close();
-                throw new UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
+                throw new \UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
             }
 
             // set required SSL/TLS context options
             foreach ($context as $name => $value) {
-                stream_context_set_option($connection->stream, 'ssl', $name, $value);
+                \stream_context_set_option($connection->stream, 'ssl', $name, $value);
             }
 
             // try to enable encryption

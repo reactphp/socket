@@ -21,22 +21,22 @@ final class DnsConnector implements ConnectorInterface
 
     public function connect($uri)
     {
-        if (strpos($uri, '://') === false) {
-            $parts = parse_url('tcp://' . $uri);
+        if (\strpos($uri, '://') === false) {
+            $parts = \parse_url('tcp://' . $uri);
             unset($parts['scheme']);
         } else {
-            $parts = parse_url($uri);
+            $parts = \parse_url($uri);
         }
 
         if (!$parts || !isset($parts['host'])) {
-            return Promise\reject(new InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
-        $host = trim($parts['host'], '[]');
+        $host = \trim($parts['host'], '[]');
         $connector = $this->connector;
 
         // skip DNS lookup / URI manipulation if this URI already contains an IP
-        if (false !== filter_var($host, FILTER_VALIDATE_IP)) {
+        if (false !== \filter_var($host, \FILTER_VALIDATE_IP)) {
             return $connector->connect($uri);
         }
 
@@ -55,7 +55,7 @@ final class DnsConnector implements ConnectorInterface
                         $uri .= $parts['scheme'] . '://';
                     }
 
-                    if (strpos($ip, ':') !== false) {
+                    if (\strpos($ip, ':') !== false) {
                         // enclose IPv6 addresses in square brackets before appending port
                         $uri .= '[' . $ip . ']';
                     } else {
@@ -80,9 +80,9 @@ final class DnsConnector implements ConnectorInterface
                     // append original hostname as query if resolved via DNS and if
                     // destination URI does not contain "hostname" query param already
                     $args = array();
-                    parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
+                    \parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
                     if ($host !== $ip && !isset($args['hostname'])) {
-                        $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . rawurlencode($host);
+                        $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . \rawurlencode($host);
                     }
 
                     // append original fragment if known
@@ -92,14 +92,14 @@ final class DnsConnector implements ConnectorInterface
 
                     return $promise = $connector->connect($uri);
                 }, function ($e) use ($uri, $reject) {
-                    $reject(new RuntimeException('Connection to ' . $uri .' failed during DNS lookup: ' . $e->getMessage(), 0, $e));
+                    $reject(new \RuntimeException('Connection to ' . $uri .' failed during DNS lookup: ' . $e->getMessage(), 0, $e));
                 })->then($resolve, $reject);
             },
             function ($_, $reject) use (&$promise, &$resolved, $uri) {
                 // cancellation should reject connection attempt
                 // reject DNS resolution with custom reason, otherwise rely on connection cancellation below
                 if ($resolved === null) {
-                    $reject(new RuntimeException('Connection to ' . $uri . ' cancelled during DNS lookup'));
+                    $reject(new \RuntimeException('Connection to ' . $uri . ' cancelled during DNS lookup'));
                 }
 
                 // (try to) cancel pending DNS lookup / connection attempt

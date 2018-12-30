@@ -32,28 +32,28 @@ class StreamEncryption
         // @link http://php.net/manual/en/migration56.openssl.php#migration56.openssl.crypto-method
         // @link https://3v4l.org/plbFn
         if ($server) {
-            $this->method = STREAM_CRYPTO_METHOD_TLS_SERVER;
+            $this->method = \STREAM_CRYPTO_METHOD_TLS_SERVER;
 
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_0_SERVER')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_0_SERVER;
             }
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_1_SERVER')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_1_SERVER;
             }
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_2_SERVER')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_2_SERVER;
             }
         } else {
-            $this->method = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+            $this->method = \STREAM_CRYPTO_METHOD_TLS_CLIENT;
 
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT;
             }
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
             }
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
-                $this->method |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+            if (\defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                $this->method |= \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
             }
         }
     }
@@ -77,7 +77,7 @@ class StreamEncryption
 
         $deferred = new Deferred(function ($_, $reject) use ($toggle) {
             // cancelling this leaves this stream in an inconsistent state…
-            $reject(new RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
+            $reject(new \RuntimeException('Cancelled toggling encryption ' . $toggle ? 'on' : 'off'));
         });
 
         // get actual stream socket from stream instance
@@ -143,13 +143,13 @@ class StreamEncryption
 
             if (\feof($socket) || $error === null) {
                 // EOF or failed without error => connection closed during handshake
-                $d->reject(new UnexpectedValueException(
+                $d->reject(new \UnexpectedValueException(
                     'Connection lost during TLS handshake',
                     \defined('SOCKET_ECONNRESET') ? \SOCKET_ECONNRESET : 0
                 ));
             } else {
                 // handshake failed with error message
-                $d->reject(new UnexpectedValueException(
+                $d->reject(new \UnexpectedValueException(
                     'Unable to complete TLS handshake: ' . $error
                 ));
             }

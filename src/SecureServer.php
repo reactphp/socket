@@ -117,8 +117,8 @@ final class SecureServer extends EventEmitter implements ServerInterface
      */
     public function __construct(ServerInterface $tcp, LoopInterface $loop, array $context)
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            throw new BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
+        if (!\function_exists('stream_socket_enable_crypto')) {
+            throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
         }
 
         // default to empty passphrase to suppress blocking passphrase prompt
@@ -146,7 +146,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
             return null;
         }
 
-        return str_replace('tcp://' , 'tls://', $address);
+        return \str_replace('tcp://' , 'tls://', $address);
     }
 
     public function pause()
@@ -168,13 +168,13 @@ final class SecureServer extends EventEmitter implements ServerInterface
     public function handleConnection(ConnectionInterface $connection)
     {
         if (!$connection instanceof Connection) {
-            $this->emit('error', array(new UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
+            $this->emit('error', array(new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
             $connection->end();
             return;
         }
 
         foreach ($this->context as $name => $value) {
-            stream_context_set_option($connection->stream, 'ssl', $name, $value);
+            \stream_context_set_option($connection->stream, 'ssl', $name, $value);
         }
 
         $that = $this;
