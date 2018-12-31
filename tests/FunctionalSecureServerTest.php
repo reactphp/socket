@@ -48,6 +48,103 @@ class FunctionalSecureServerTest extends TestCase
         $server->close();
     }
 
+    public function testClientUsesTls13ByDefaultWhenSupportedByOpenSSL()
+    {
+        if (PHP_VERSION_ID < 70000 || !$this->supportsTls13()) {
+            $this->markTestSkipped('Test requires PHP 7+ for crypto meta data and OpenSSL 1.1.1+ for TLS 1.3');
+        }
+
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        /* @var ConnectionInterface $client */
+        $client = Block\await($promise, $loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\Connection', $client);
+        $this->assertTrue(isset($client->stream));
+
+        $meta = stream_get_meta_data($client->stream);
+        $this->assertTrue(isset($meta['crypto']['protocol']));
+
+        if ($meta['crypto']['protocol'] === 'UNKNOWN') {
+            // TLSv1.3 protocol will only be added via https://github.com/php/php-src/pull/3700
+            // prior to merging that PR, this info is still available in the cipher version by OpenSSL
+            $this->assertTrue(isset($meta['crypto']['cipher_version']));
+            $this->assertEquals('TLSv1.3', $meta['crypto']['cipher_version']);
+        } else {
+            $this->assertEquals('TLSv1.3', $meta['crypto']['protocol']);
+        }
+    }
+
+    public function testClientUsesTls12WhenCryptoMethodIsExplicitlyConfiguredByClient()
+    {
+        if (PHP_VERSION_ID < 70000) {
+            $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
+        }
+
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false,
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        /* @var ConnectionInterface $client */
+        $client = Block\await($promise, $loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\Connection', $client);
+        $this->assertTrue(isset($client->stream));
+
+        $meta = stream_get_meta_data($client->stream);
+        $this->assertTrue(isset($meta['crypto']['protocol']));
+        $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
+    }
+
+    public function testClientUsesTls12WhenCryptoMethodIsExplicitlyConfiguredByServer()
+    {
+        if (PHP_VERSION_ID < 70000) {
+            $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
+        }
+
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem',
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+        ));
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        /* @var ConnectionInterface $client */
+        $client = Block\await($promise, $loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\Connection', $client);
+        $this->assertTrue(isset($client->stream));
+
+        $meta = stream_get_meta_data($client->stream);
+        $this->assertTrue(isset($meta['crypto']['protocol']));
+        $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
+    }
+
     public function testServerEmitsConnectionForClientConnection()
     {
         $loop = Factory::create();
@@ -620,5 +717,22 @@ class FunctionalSecureServerTest extends TestCase
                 $resolve(call_user_func_array($fn, func_get_args()));
             });
         });
+    }
+
+    private function supportsTls13()
+    {
+        // TLS 1.3 is supported as of OpenSSL 1.1.1 (https://www.openssl.org/blog/blog/2018/09/11/release111/)
+        // The OpenSSL library version can only be obtained by parsing output from phpinfo().
+        // OPENSSL_VERSION_TEXT refers to header version which does not necessarily match actual library version
+        // see php -i | grep OpenSSL
+        // OpenSSL Library Version => OpenSSL 1.1.1  11 Sep 2018
+        ob_start();
+        phpinfo(INFO_MODULES);
+        $info = ob_get_clean();
+
+        if (preg_match('/OpenSSL Library Version => OpenSSL (\S+)/', $info, $match)) {
+            return version_compare($match[1], '1.1.1', '>=');
+        }
+        return false;
     }
 }
