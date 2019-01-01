@@ -43,15 +43,6 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     public function __construct($resource, LoopInterface $loop)
     {
-        // PHP < 5.6.8 suffers from a buffer indicator bug on secure TLS connections
-        // as a work-around we always read the complete buffer until its end.
-        // The buffer size is limited due to TCP/IP buffers anyway, so this
-        // should not affect usage otherwise.
-        // See https://bugs.php.net/bug.php?id=65137
-        // https://bugs.php.net/bug.php?id=41631
-        // https://github.com/reactphp/socket-client/issues/24
-        $clearCompleteBuffer = \PHP_VERSION_ID < 50608;
-
         // PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
         // chunks of data over TLS streams at once.
         // We try to work around this by limiting the write chunk size to 8192
@@ -62,10 +53,14 @@ class Connection extends EventEmitter implements ConnectionInterface
         // See https://github.com/reactphp/socket/issues/105
         $limitWriteChunks = (\PHP_VERSION_ID < 70018 || (\PHP_VERSION_ID >= 70100 && \PHP_VERSION_ID < 70104));
 
+        // Construct underlying stream to always consume complete receive buffer.
+        // This avoids stale data in TLS buffers and also works around possible
+        // buffering issues in legacy PHP versions. The buffer size is limited
+        // due to TCP/IP buffers anyway, so this should not affect usage otherwise.
         $this->input = new DuplexResourceStream(
             $resource,
             $loop,
-            $clearCompleteBuffer ? -1 : null,
+            -1,
             new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null)
         );
 
