@@ -24,7 +24,7 @@ class FunctionalSecureServerTest extends TestCase
         }
     }
 
-    public function testEmitsConnectionForNewConnection()
+    public function testClientCanConnectToServer()
     {
         $loop = Factory::create();
 
@@ -32,14 +32,59 @@ class FunctionalSecureServerTest extends TestCase
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
-        $server->on('connection', $this->expectCallableOnce());
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
-        Block\await($promise, $loop, self::TIMEOUT);
+        /* @var ConnectionInterface $client */
+        $client = Block\await($promise, $loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $client);
+        $this->assertEquals($server->getAddress(), $client->getRemoteAddress());
+
+        $client->close();
+        $server->close();
+    }
+
+    public function testServerEmitsConnectionForClientConnection()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', $resolve);
+            $server->on('error', $reject);
+        });
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $client = $connector->connect($server->getAddress());
+
+        // await both client and server side end of connection
+        /* @var ConnectionInterface[] $both */
+        $both = Block\awaitAll(array($peer, $client), $loop, self::TIMEOUT);
+
+        // both ends of the connection are represented by different instances of ConnectionInterface
+        $this->assertCount(2, $both);
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $both[0]);
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $both[1]);
+        $this->assertNotSame($both[0], $both[1]);
+
+        // server side end has local server address and client end has remote server address
+        $this->assertEquals($server->getAddress(), $both[0]->getLocalAddress());
+        $this->assertEquals($server->getAddress(), $both[1]->getRemoteAddress());
+
+        // clean up all connections and server again
+        $both[0]->close();
+        $both[1]->close();
+        $server->close();
     }
 
     public function testWritesDataToConnection()
@@ -275,7 +320,7 @@ class FunctionalSecureServerTest extends TestCase
         Block\await($promise, $loop, self::TIMEOUT);
     }
 
-    public function testEmitsConnectionForNewConnectionWithEncryptedCertificate()
+    public function testServerEmitsConnectionForNewConnectionWithEncryptedCertificate()
     {
         $loop = Factory::create();
 
@@ -284,17 +329,23 @@ class FunctionalSecureServerTest extends TestCase
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'swordfish'
         ));
-        $server->on('connection', $this->expectCallableOnce());
+
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', $resolve);
+            $server->on('error', $reject);
+        });
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connector->connect($server->getAddress());
 
-        Block\await($promise, $loop, self::TIMEOUT);
+        $connection = Block\await($peer, $loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
     }
 
-    public function testEmitsErrorForServerWithInvalidCertificate()
+    public function testClientRejectsWithErrorForServerWithInvalidCertificate()
     {
         $loop = Factory::create();
 
@@ -302,8 +353,6 @@ class FunctionalSecureServerTest extends TestCase
         $server = new SecureServer($server, $loop, array(
             'local_cert' => 'invalid.pem'
         ));
-        $server->on('connection', $this->expectCallableNever());
-        $server->on('error', $this->expectCallableOnce());
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
@@ -312,6 +361,31 @@ class FunctionalSecureServerTest extends TestCase
 
         $this->setExpectedException('RuntimeException', 'handshake');
         Block\await($promise, $loop, self::TIMEOUT);
+    }
+
+    public function testServerEmitsErrorForClientWithInvalidCertificate()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => 'invalid.pem'
+        ));
+
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', function () use ($reject) {
+                $reject(new \RuntimeException('Did not expect connection to succeed'));
+            });
+            $server->on('error', $reject);
+        });
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false
+        ));
+        $connector->connect($server->getAddress());
+
+        $this->setExpectedException('RuntimeException', 'handshake');
+        Block\await($peer, $loop, self::TIMEOUT);
     }
 
     public function testEmitsErrorForServerWithEncryptedCertificateMissingPassphrase()
