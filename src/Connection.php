@@ -50,7 +50,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         // See https://bugs.php.net/bug.php?id=65137
         // https://bugs.php.net/bug.php?id=41631
         // https://github.com/reactphp/socket-client/issues/24
-        $clearCompleteBuffer = PHP_VERSION_ID < 50608;
+        $clearCompleteBuffer = \PHP_VERSION_ID < 50608;
 
         // PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
         // chunks of data over TLS streams at once.
@@ -60,7 +60,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         // affected versions. Please update your PHP version.
         // This applies to all streams because TLS may be enabled later on.
         // See https://github.com/reactphp/socket/issues/105
-        $limitWriteChunks = (PHP_VERSION_ID < 70018 || (PHP_VERSION_ID >= 70100 && PHP_VERSION_ID < 70104));
+        $limitWriteChunks = (\PHP_VERSION_ID < 70018 || (\PHP_VERSION_ID >= 70100 && \PHP_VERSION_ID < 70104));
 
         $this->input = new DuplexResourceStream(
             $resource,
@@ -120,7 +120,7 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     public function handleClose()
     {
-        if (!is_resource($this->stream)) {
+        if (!\is_resource($this->stream)) {
             return;
         }
 
@@ -130,18 +130,18 @@ class Connection extends EventEmitter implements ConnectionInterface
         // continuing to close the socket resource.
         // Underlying Stream implementation will take care of closing file
         // handle, so we otherwise keep this open here.
-        @stream_socket_shutdown($this->stream, STREAM_SHUT_RDWR);
-        stream_set_blocking($this->stream, false);
+        @\stream_socket_shutdown($this->stream, \STREAM_SHUT_RDWR);
+        \stream_set_blocking($this->stream, false);
     }
 
     public function getRemoteAddress()
     {
-        return $this->parseAddress(@stream_socket_get_name($this->stream, true));
+        return $this->parseAddress(@\stream_socket_get_name($this->stream, true));
     }
 
     public function getLocalAddress()
     {
-        return $this->parseAddress(@stream_socket_get_name($this->stream, false));
+        return $this->parseAddress(@\stream_socket_get_name($this->stream, false));
     }
 
     private function parseAddress($address)
@@ -153,8 +153,8 @@ class Connection extends EventEmitter implements ConnectionInterface
         if ($this->unix) {
             // remove trailing colon from address for HHVM < 3.19: https://3v4l.org/5C1lo
             // note that technically ":" is a valid address, so keep this in place otherwise
-            if (substr($address, -1) === ':' && defined('HHVM_VERSION_ID') && HHVM_VERSION_ID < 31900) {
-                $address = (string)substr($address, 0, -1);
+            if (\substr($address, -1) === ':' && \defined('HHVM_VERSION_ID') && \HHVM_VERSION_ID < 31900) {
+                $address = (string)\substr($address, 0, -1);
             }
 
             // work around unknown addresses should return null value: https://3v4l.org/5C1lo and https://bugs.php.net/bug.php?id=74556
@@ -167,10 +167,10 @@ class Connection extends EventEmitter implements ConnectionInterface
         }
 
         // check if this is an IPv6 address which includes multiple colons but no square brackets
-        $pos = strrpos($address, ':');
-        if ($pos !== false && strpos($address, ':') < $pos && substr($address, 0, 1) !== '[') {
-            $port = substr($address, $pos + 1);
-            $address = '[' . substr($address, 0, $pos) . ']:' . $port;
+        $pos = \strrpos($address, ':');
+        if ($pos !== false && \strpos($address, ':') < $pos && \substr($address, 0, 1) !== '[') {
+            $port = \substr($address, $pos + 1);
+            $address = '[' . \substr($address, 0, $pos) . ']:' . $port;
         }
 
         return ($this->encryptionEnabled ? 'tls' : 'tcp') . '://' . $address;

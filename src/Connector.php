@@ -41,7 +41,7 @@ final class Connector implements ConnectorInterface
         );
 
         if ($options['timeout'] === true) {
-            $options['timeout'] = (float)ini_get("default_socket_timeout");
+            $options['timeout'] = (float)\ini_get("default_socket_timeout");
         }
 
         if ($options['tcp'] instanceof ConnectorInterface) {
@@ -49,7 +49,7 @@ final class Connector implements ConnectorInterface
         } else {
             $tcp = new TcpConnector(
                 $loop,
-                is_array($options['tcp']) ? $options['tcp'] : array()
+                \is_array($options['tcp']) ? $options['tcp'] : array()
             );
         }
 
@@ -62,7 +62,7 @@ final class Connector implements ConnectorInterface
                 } else {
                     // try to load nameservers from system config or default to Google's public DNS
                     $config = Config::loadSystemConfigBlocking();
-                    $server = $config->nameservers ? reset($config->nameservers) : '8.8.8.8';
+                    $server = $config->nameservers ? \reset($config->nameservers) : '8.8.8.8';
                 }
 
                 $factory = new Factory();
@@ -94,7 +94,7 @@ final class Connector implements ConnectorInterface
                 $options['tls'] = new SecureConnector(
                     $tcp,
                     $loop,
-                    is_array($options['tls']) ? $options['tls'] : array()
+                    \is_array($options['tls']) ? $options['tls'] : array()
                 );
             }
 
@@ -120,12 +120,12 @@ final class Connector implements ConnectorInterface
     public function connect($uri)
     {
         $scheme = 'tcp';
-        if (strpos($uri, '://') !== false) {
-            $scheme = (string)substr($uri, 0, strpos($uri, '://'));
+        if (\strpos($uri, '://') !== false) {
+            $scheme = (string)\substr($uri, 0, \strpos($uri, '://'));
         }
 
         if (!isset($this->connectors[$scheme])) {
-            return Promise\reject(new RuntimeException(
+            return Promise\reject(new \RuntimeException(
                 'No connector available for URI scheme "' . $scheme . '"'
             ));
         }

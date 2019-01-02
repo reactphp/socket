@@ -20,18 +20,18 @@ final class TcpConnector implements ConnectorInterface
 
     public function connect($uri)
     {
-        if (strpos($uri, '://') === false) {
+        if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;
         }
 
-        $parts = parse_url($uri);
+        $parts = \parse_url($uri);
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
-            return Promise\reject(new InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
-        $ip = trim($parts['host'], '[]');
-        if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
-            return Promise\reject(new InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
+        $ip = \trim($parts['host'], '[]');
+        if (false === \filter_var($ip, \FILTER_VALIDATE_IP)) {
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
         }
 
         // use context given in constructor
@@ -42,7 +42,7 @@ final class TcpConnector implements ConnectorInterface
         // parse arguments from query component of URI
         $args = array();
         if (isset($parts['query'])) {
-            parse_str($parts['query'], $args);
+            \parse_str($parts['query'], $args);
         }
 
         // If an original hostname has been given, use this for TLS setup.
@@ -59,7 +59,7 @@ final class TcpConnector implements ConnectorInterface
             // Legacy PHP < 5.6 ignores peer_name and requires legacy context options instead.
             // The SNI_server_name context option has to be set here during construction,
             // as legacy PHP ignores any values set later.
-            if (PHP_VERSION_ID < 50600) {
+            if (\PHP_VERSION_ID < 50600) {
                 $context['ssl'] += array(
                     'SNI_server_name' => $args['hostname'],
                     'CN_match' => $args['hostname']
@@ -71,18 +71,18 @@ final class TcpConnector implements ConnectorInterface
         // HHVM fails to parse URIs with a query but no path, so let's simplify our URI here
         $remote = 'tcp://' . $parts['host'] . ':' . $parts['port'];
 
-        $stream = @stream_socket_client(
+        $stream = @\stream_socket_client(
             $remote,
             $errno,
             $errstr,
             0,
-            STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
-            stream_context_create($context)
+            \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT,
+            \stream_context_create($context)
         );
 
         if (false === $stream) {
-            return Promise\reject(new RuntimeException(
-                sprintf("Connection to %s failed: %s", $uri, $errstr),
+            return Promise\reject(new \RuntimeException(
+                \sprintf("Connection to %s failed: %s", $uri, $errstr),
                 $errno
             ));
         }
@@ -95,26 +95,26 @@ final class TcpConnector implements ConnectorInterface
 
                 // The following hack looks like the only way to
                 // detect connection refused errors with PHP's stream sockets.
-                if (false === stream_socket_get_name($stream, true)) {
-                    fclose($stream);
+                if (false === \stream_socket_get_name($stream, true)) {
+                    \fclose($stream);
 
-                    $reject(new RuntimeException('Connection to ' . $uri . ' failed: Connection refused'));
+                    $reject(new \RuntimeException('Connection to ' . $uri . ' failed: Connection refused'));
                 } else {
                     $resolve(new Connection($stream, $loop));
                 }
             });
         }, function () use ($loop, $stream, $uri) {
             $loop->removeWriteStream($stream);
-            fclose($stream);
+            \fclose($stream);
 
             // @codeCoverageIgnoreStart
             // legacy PHP 5.3 sometimes requires a second close call (see tests)
-            if (PHP_VERSION_ID < 50400 && is_resource($stream)) {
-                fclose($stream);
+            if (\PHP_VERSION_ID < 50400 && \is_resource($stream)) {
+                \fclose($stream);
             }
             // @codeCoverageIgnoreEnd
 
-            throw new RuntimeException('Connection to ' . $uri . ' cancelled during TCP/IP handshake');
+            throw new \RuntimeException('Connection to ' . $uri . ' cancelled during TCP/IP handshake');
         });
     }
 }

@@ -25,9 +25,9 @@ final class Server extends EventEmitter implements ServerInterface
         );
 
         $scheme = 'tcp';
-        $pos = strpos($uri, '://');
+        $pos = \strpos($uri, '://');
         if ($pos !== false) {
-            $scheme = substr($uri, 0, $pos);
+            $scheme = \substr($uri, 0, $pos);
         }
 
         if ($scheme === 'unix') {

@@ -47,45 +47,45 @@ final class UnixServer extends EventEmitter implements ServerInterface
     {
         $this->loop = $loop;
 
-        if (strpos($path, '://') === false) {
+        if (\strpos($path, '://') === false) {
             $path = 'unix://' . $path;
-        } elseif (substr($path, 0, 7) !== 'unix://') {
-            throw new InvalidArgumentException('Given URI "' . $path . '" is invalid');
+        } elseif (\substr($path, 0, 7) !== 'unix://') {
+            throw new \InvalidArgumentException('Given URI "' . $path . '" is invalid');
         }
 
-        $this->master = @stream_socket_server(
+        $this->master = @\stream_socket_server(
             $path,
             $errno,
             $errstr,
-            STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
-            stream_context_create(array('socket' => $context))
+            \STREAM_SERVER_BIND | \STREAM_SERVER_LISTEN,
+            \stream_context_create(array('socket' => $context))
         );
         if (false === $this->master) {
             // PHP does not seem to report errno/errstr for Unix domain sockets (UDS) right now.
             // This only applies to UDS server sockets, see also https://3v4l.org/NAhpr.
             // Parse PHP warning message containing unknown error, HHVM reports proper info at least.
             if ($errno === 0 && $errstr === '') {
-                $error = error_get_last();
-                if (preg_match('/\(([^\)]+)\)|\[(\d+)\]: (.*)/', $error['message'], $match)) {
+                $error = \error_get_last();
+                if (\preg_match('/\(([^\)]+)\)|\[(\d+)\]: (.*)/', $error['message'], $match)) {
                     $errstr = isset($match[3]) ? $match['3'] : $match[1];
                     $errno = isset($match[2]) ? (int)$match[2] : 0;
                 }
             }
 
-            throw new RuntimeException('Failed to listen on Unix domain socket "' . $path . '": ' . $errstr, $errno);
+            throw new \RuntimeException('Failed to listen on Unix domain socket "' . $path . '": ' . $errstr, $errno);
         }
-        stream_set_blocking($this->master, 0);
+        \stream_set_blocking($this->master, 0);
 
         $this->resume();
     }
 
     public function getAddress()
     {
-        if (!is_resource($this->master)) {
+        if (!\is_resource($this->master)) {
             return null;
         }
 
-        return 'unix://' . stream_socket_get_name($this->master, false);
+        return 'unix://' . \stream_socket_get_name($this->master, false);
     }
 
     public function pause()
@@ -106,9 +106,9 @@ final class UnixServer extends EventEmitter implements ServerInterface
 
         $that = $this;
         $this->loop->addReadStream($this->master, function ($master) use ($that) {
-            $newSocket = @stream_socket_accept($master);
+            $newSocket = @\stream_socket_accept($master);
             if (false === $newSocket) {
-                $that->emit('error', array(new RuntimeException('Error accepting new connection')));
+                $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
 
                 return;
             }
@@ -119,12 +119,12 @@ final class UnixServer extends EventEmitter implements ServerInterface
 
     public function close()
     {
-        if (!is_resource($this->master)) {
+        if (!\is_resource($this->master)) {
             return;
         }
 
         $this->pause();
-        fclose($this->master);
+        \fclose($this->master);
         $this->removeAllListeners();
     }
 
