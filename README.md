@@ -1372,19 +1372,6 @@ This library does not take responsibility over these context options, so it's
 up to consumers of this library to take care of setting appropriate context
 options as described above.
 
-All versions of PHP prior to 5.6.8 suffered from a buffering issue where reading
-from a streaming TLS connection could be one `data` event behind.
-This library implements a work-around to try to flush the complete incoming
-data buffers on these legacy PHP versions, which has a penalty of around 10% of
-throughput on all connections.
-With this work-around, we have not been able to reproduce this issue anymore,
-but we have seen reports of people saying this could still affect some of the
-older PHP versions (`5.5.23`, `5.6.7`, and `5.6.8`).
-Note that this only affects *some* higher-level streaming protocols, such as
-IRC over TLS, but should not affect HTTP over TLS (HTTPS).
-Further investigation of this issue is needed.
-For more insights, this issue is also covered by our test suite.
-
 PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
 chunks of data over TLS streams at once.
 We try to work around this by limiting the write chunk size to 8192
