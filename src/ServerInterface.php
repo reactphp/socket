@@ -23,7 +23,7 @@ use Evenement\EventEmitterInterface;
  *     established, i.e. a new client connects to this server socket:
  *
  *     ```php
- *     $server->on('connection', function (ConnectionInterface $connection) {
+ *     $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
  *         echo 'new connection' . PHP_EOL;
  *     });
  *     ```

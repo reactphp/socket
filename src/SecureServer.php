@@ -15,8 +15,8 @@ use UnexpectedValueException;
  * TCP/IP connections and then performs a TLS handshake for each connection.
  *
  * ```php
- * $server = new TcpServer(8000, $loop);
- * $server = new SecureServer($server, $loop, array(
+ * $server = new React\Socket\TcpServer(8000, $loop);
+ * $server = new React\Socket\SecureServer($server, $loop, array(
  *     // tls context options here…
  * ));
  * ```
@@ -25,7 +25,7 @@ use UnexpectedValueException;
  * with a connection instance implementing [`ConnectionInterface`](#connectioninterface):
  *
  * ```php
- * $server->on('connection', function (ConnectionInterface $connection) {
+ * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
  *     echo 'Secure connection from' . $connection->getRemoteAddress() . PHP_EOL;
  *
  *     $connection->write('hello there!' . PHP_EOL);
@@ -67,8 +67,8 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * PEM encoded certificate file:
      *
      * ```php
-     * $server = new TcpServer(8000, $loop);
-     * $server = new SecureServer($server, $loop, array(
+     * $server = new React\Socket\TcpServer(8000, $loop);
+     * $server = new React\Socket\SecureServer($server, $loop, array(
      *     'local_cert' => 'server.pem'
      * ));
      * ```
@@ -82,8 +82,8 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * like this:
      *
      * ```php
-     * $server = new TcpServer(8000, $loop);
-     * $server = new SecureServer($server, $loop, array(
+     * $server = new React\Socket\TcpServer(8000, $loop);
+     * $server = new React\Socket\SecureServer($server, $loop, array(
      *     'local_cert' => 'server.pem',
      *     'passphrase' => 'secret'
      * ));
