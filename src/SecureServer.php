@@ -169,7 +169,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
     {
         if (!$connection instanceof Connection) {
             $this->emit('error', array(new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
-            $connection->end();
+            $connection->close();
             return;
         }
 
@@ -177,20 +177,22 @@ final class SecureServer extends EventEmitter implements ServerInterface
             \stream_context_set_option($connection->stream, 'ssl', $name, $value);
         }
 
+        // get remote address before starting TLS handshake in case connection closes during handshake
+        $remote = $connection->getRemoteAddress();
         $that = $this;
 
         $this->encryption->enable($connection)->then(
             function ($conn) use ($that) {
                 $that->emit('connection', array($conn));
             },
-            function ($error) use ($that, $connection) {
+            function ($error) use ($that, $connection, $remote) {
                 $error = new \RuntimeException(
-                    'Connection from ' . $connection->getRemoteAddress() . ' failed during TLS handshake: ' . $error->getMessage(),
+                    'Connection from ' . $remote . ' failed during TLS handshake: ' . $error->getMessage(),
                     $error->getCode()
                 );
 
                 $that->emit('error', array($error));
-                $connection->end();
+                $connection->close();
             }
         );
     }
