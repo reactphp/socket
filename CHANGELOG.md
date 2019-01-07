@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0 (2019-01-07)
+
+*   Feature / Fix: Improve TLS 1.3 support.
+    (#186 by @clue)
+
+    TLS 1.3 is now an official standard as of August 2018! :tada:
+    The protocol has major improvements in the areas of security, performance, and privacy.
+    TLS 1.3 is supported by default as of [OpenSSL 1.1.1](https://www.openssl.org/blog/blog/2018/09/11/release111/).
+    For example, this version ships with Ubuntu 18.10 (and newer) by default, meaning that recent installations support TLS 1.3 out of the box :shipit:
+
+*   Fix: Avoid possibility of missing remote address when TLS handshake fails.
+    (#188 by @clue)
+
+*   Improve performance by prefixing all global functions calls with `\` to skip the look up and resolve process and go straight to the global function.
+    (#183 by @WyriHaximus)
+
+*   Update documentation to use full class names with namespaces.
+    (#187 by @clue)
+
+*   Improve test suite to avoid some possible race conditions,
+    test against PHP 7.3 on Travis and
+    use dedicated `assertInstanceOf()` assertions.
+    (#185 by @clue, #178 by @WyriHaximus and #181 by @carusogabriel)
+
 ## 1.1.0 (2018-10-01)
 
 *   Feature: Improve error reporting for failed connection attempts and improve
