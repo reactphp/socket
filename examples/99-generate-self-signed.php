@@ -3,7 +3,7 @@
 // A very simple helper script used to generate self-signed certificates.
 // Accepts the CN and an optional passphrase to encrypt the private key.
 //
-// $ php 10-generate-self-signed.php localhost swordfish > secret.pem
+// $ php examples/99-generate-self-signed.php localhost my-secret-passphrase > secret.pem
 
 // certificate details (Distinguished Name)
 // (OpenSSL applies defaults to missing fields)
