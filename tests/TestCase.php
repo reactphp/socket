@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase
 {
-    protected function expectCallableExactly($amount)
+    public function expectCallableExactly($amount)
     {
         $mock = $this->createCallableMock();
         $mock
