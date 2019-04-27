@@ -16,10 +16,10 @@ use RuntimeException;
  * ```
  *
  * Whenever a client connects, it will emit a `connection` event with a connection
- * instance implementing `ConnectionInterface`:
+ * instance implementing `ExtConnectionInterface`:
  *
  * ```php
- * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
+ * $server->on('connection', function (React\Socket\ExtConnectionInterface $connection) {
  *     echo 'Plaintext connection from ' . $connection->getRemoteAddress() . PHP_EOL;
  *     $connection->write('hello there!' . PHP_EOL);
  *     …

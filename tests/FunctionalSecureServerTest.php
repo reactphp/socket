@@ -70,9 +70,8 @@ class FunctionalSecureServerTest extends TestCase
         $client = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
-        $this->assertTrue(isset($client->stream));
 
-        $meta = stream_get_meta_data($client->stream);
+        $meta = stream_get_meta_data($client->getStream());
         $this->assertTrue(isset($meta['crypto']['protocol']));
 
         if ($meta['crypto']['protocol'] === 'UNKNOWN') {
@@ -108,9 +107,8 @@ class FunctionalSecureServerTest extends TestCase
         $client = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
-        $this->assertTrue(isset($client->stream));
 
-        $meta = stream_get_meta_data($client->stream);
+        $meta = stream_get_meta_data($client->getStream());
         $this->assertTrue(isset($meta['crypto']['protocol']));
         $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
     }
@@ -138,9 +136,8 @@ class FunctionalSecureServerTest extends TestCase
         $client = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
-        $this->assertTrue(isset($client->stream));
 
-        $meta = stream_get_meta_data($client->stream);
+        $meta = stream_get_meta_data($client->getStream());
         $this->assertTrue(isset($meta['crypto']['protocol']));
         $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
     }

@@ -4,8 +4,6 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use RuntimeException;
-use UnexpectedValueException;
 
 /**
  * This class is considered internal and its API should not be relied upon
@@ -44,17 +42,17 @@ class StreamEncryption
         }
     }
 
-    public function enable(Connection $stream)
+    public function enable(ExtConnectionInterface $stream)
     {
         return $this->toggle($stream, true);
     }
 
-    public function disable(Connection $stream)
+    public function disable(ExtConnectionInterface $stream)
     {
         return $this->toggle($stream, false);
     }
 
-    public function toggle(Connection $stream, $toggle)
+    public function toggle(ExtConnectionInterface $stream, $toggle)
     {
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
@@ -67,7 +65,7 @@ class StreamEncryption
         });
 
         // get actual stream socket from stream instance
-        $socket = $stream->stream;
+        $socket = $stream->getStream();
 
         // get crypto method from context options or use global setting from constructor
         $method = $this->method;
@@ -92,7 +90,7 @@ class StreamEncryption
         return $deferred->promise()->then(function () use ($stream, $socket, $loop, $toggle) {
             $loop->removeReadStream($socket);
 
-            $stream->encryptionEnabled = $toggle;
+            $stream->setTLSEnabledFlag($toggle);
             $stream->resume();
 
             return $stream;

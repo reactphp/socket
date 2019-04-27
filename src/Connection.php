@@ -17,7 +17,7 @@ use React\Stream\WritableStreamInterface;
  * @see ConnectionInterface
  * @internal
  */
-class Connection extends EventEmitter implements ConnectionInterface
+class Connection extends EventEmitter implements ExtConnectionInterface
 {
     /**
      * Internal flag whether this is a Unix domain socket (UDS) connection
@@ -26,19 +26,8 @@ class Connection extends EventEmitter implements ConnectionInterface
      */
     public $unix = false;
 
-    /**
-     * Internal flag whether encryption has been enabled on this connection
-     *
-     * Mostly used by internal StreamEncryption so that connection returns
-     * `tls://` scheme for encrypted connections instead of `tcp://`.
-     *
-     * @internal
-     */
-    public $encryptionEnabled = false;
-
-    /** @internal */
-    public $stream;
-
+    private $encryptionEnabled = false;
+    private $stream;
     private $input;
 
     public function __construct($resource, LoopInterface $loop)
@@ -169,5 +158,15 @@ class Connection extends EventEmitter implements ConnectionInterface
         }
 
         return ($this->encryptionEnabled ? 'tls' : 'tcp') . '://' . $address;
+    }
+
+    public function getStream()
+    {
+        return $this->stream;
+    }
+
+    public function setTLSEnabledFlag($flag)
+    {
+        $this->encryptionEnabled = $flag;
     }
 }

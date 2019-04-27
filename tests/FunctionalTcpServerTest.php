@@ -2,11 +2,12 @@
 
 namespace React\Tests\Socket;
 
-use React\EventLoop\Factory;
-use React\Socket\TcpServer;
-use React\Socket\ConnectionInterface;
-use React\Socket\TcpConnector;
 use Clue\React\Block;
+use React\EventLoop\Factory;
+use React\Socket\ConnectionInterface;
+use React\Socket\ExtConnectionInterface;
+use React\Socket\TcpConnector;
+use React\Socket\TcpServer;
 
 class FunctionalTcpServerTest extends TestCase
 {
@@ -268,8 +269,8 @@ class FunctionalTcpServerTest extends TestCase
         ));
 
         $all = null;
-        $server->on('connection', function (ConnectionInterface $conn) use (&$all) {
-            $all = stream_context_get_options($conn->stream);
+        $server->on('connection', function (ExtConnectionInterface $conn) use (&$all) {
+            $all = stream_context_get_options($conn->getStream());
         });
 
         $connector = new TcpConnector($loop);

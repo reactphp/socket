@@ -3,8 +3,6 @@
 namespace React\Socket;
 
 use Evenement\EventEmitter;
-use Exception;
-use OverflowException;
 
 /**
  * The `LimitingServer` decorator wraps a given `ServerInterface` and is responsible

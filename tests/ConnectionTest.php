@@ -44,4 +44,24 @@ class ConnectionTest extends TestCase
         $this->assertTrue($onRemove);
         $this->assertFalse(is_resource($resource));
     }
+
+    public function testGetStream()
+    {
+        $stream = fopen('php://memory', 'r+');
+        $conn = new Connection($stream, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
+        $this->assertSame($stream, $conn->getStream());
+    }
+
+    public function testSetTLSEnabledFlag()
+    {
+        $stream = fopen('php://memory', 'r+');
+        $conn = new Connection($stream, $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock());
+
+        $reflection = new \ReflectionProperty($conn, 'encryptionEnabled');
+        $reflection->setAccessible(true);
+
+        $this->assertFalse($reflection->getValue($conn));
+        $conn->setTLSEnabledFlag(true);
+        $this->assertTrue($reflection->getValue($conn));
+    }
 }

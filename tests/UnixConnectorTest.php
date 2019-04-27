@@ -5,6 +5,9 @@ namespace React\Tests\Socket;
 use React\Socket\ConnectionInterface;
 use React\Socket\UnixConnector;
 
+/**
+ * @requires OSFAMILY (?!win)
+ */
 class UnixConnectorTest extends TestCase
 {
     private $loop;

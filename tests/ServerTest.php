@@ -8,6 +8,7 @@ use React\Socket\TcpConnector;
 use React\Socket\UnixConnector;
 use Clue\React\Block;
 use React\Socket\ConnectionInterface;
+use React\Socket\ExtConnectionInterface;
 
 class ServerTest extends TestCase
 {
@@ -161,8 +162,8 @@ class ServerTest extends TestCase
         ));
 
         $all = null;
-        $server->on('connection', function (ConnectionInterface $conn) use (&$all) {
-            $all = stream_context_get_options($conn->stream);
+        $server->on('connection', function (ExtConnectionInterface $conn) use (&$all) {
+            $all = stream_context_get_options($conn->getStream());
         });
 
         $client = stream_socket_client($server->getAddress());

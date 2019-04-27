@@ -4,8 +4,6 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise;
-use InvalidArgumentException;
-use RuntimeException;
 
 final class TcpConnector implements ConnectorInterface
 {

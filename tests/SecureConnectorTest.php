@@ -2,12 +2,20 @@
 
 namespace React\Tests\Socket;
 
+use Clue\React\Block;
+use React\EventLoop\Factory;
 use React\Promise;
 use React\Promise\Deferred;
 use React\Socket\SecureConnector;
+use React\Socket\SecureServer;
+use React\Socket\TcpConnector;
+use React\Socket\TcpServer;
+use React\Socket\ExtConnectionInterface;
 
 class SecureConnectorTest extends TestCase
 {
+    const TIMEOUT = 10;
+
     private $loop;
     private $tcp;
     private $connector;
@@ -15,7 +23,7 @@ class SecureConnectorTest extends TestCase
     public function setUp()
     {
         if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+            return $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
         }
 
         $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -76,7 +84,6 @@ class SecureConnectorTest extends TestCase
 
     /**
      * @expectedException UnexpectedValueException
-     * @expectedExceptionMessage Base connector does not use internal Connection class exposing stream resource
      */
     public function testConnectionWillBeClosedAndRejectedIfConnectionIsNoStream()
     {
@@ -127,7 +134,7 @@ class SecureConnectorTest extends TestCase
         try {
             $this->throwRejection($promise);
         } catch (\RuntimeException $e) {
-            $this->assertEquals('Connection to example.com:80 failed during TLS handshake: TLS error', $e->getMessage());
+            $this->assertContains('TLS error', $e->getMessage());
             $this->assertEquals(123, $e->getCode());
             $this->assertNull($e->getPrevious());
         }
@@ -163,7 +170,7 @@ class SecureConnectorTest extends TestCase
     public function testRejectionDuringConnectionShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
-            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+            return $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
         gc_collect_cycles();
@@ -181,7 +188,7 @@ class SecureConnectorTest extends TestCase
     public function testRejectionDuringTlsHandshakeShouldNotCreateAnyGarbageReferences()
     {
         if (class_exists('React\Promise\When')) {
-            $this->markTestSkipped('Not supported on legacy Promise v1 API');
+            return $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
         gc_collect_cycles();
@@ -205,6 +212,120 @@ class SecureConnectorTest extends TestCase
         unset($promise, $tcp, $tls);
 
         $this->assertEquals(0, gc_collect_cycles());
+    }
+
+    public function testEnablingTLS()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            return $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = Factory::create();
+        $tcp = new TcpServer('127.0.0.1:0', $loop);
+        $server = new SecureServer($tcp, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+        
+        $connector = new TcpConnector($loop);
+        $secureConn = new SecureConnector($connector, $loop, array(
+            'verify_peer' => false
+        ));
+
+        $client = Block\await($connector->connect($tcp->getAddress()), $loop, self::TIMEOUT);
+        Block\await($secureConn->enableTLS($client), $loop, self::TIMEOUT);
+
+        $this->assertContains('tls://', $client->getRemoteAddress());
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testEnablingTLSButCancelledAndThrowingAnException()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            return $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = Factory::create();
+        $tcp = new TcpServer('127.0.0.1:0', $loop);
+        $server = new SecureServer($tcp, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new TcpConnector($loop);
+        $secureConn = new SecureConnector($connector, $loop, array(
+            'verify_peer' => false
+        ));
+
+        $client = Block\await($connector->connect($tcp->getAddress()), $loop, self::TIMEOUT);
+        $enablingTLS = $secureConn->enableTLS($client);
+
+        $enablingTLS->cancel();
+        Block\await($enablingTLS, $loop, self::TIMEOUT);
+    }
+
+    public function testDisablingTLS()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            return $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        } elseif (true) {
+            // Conditional must be updated to check on fixed PHP versions, for now take everything
+            return $this->markTestSkipped('Disabling TLS is "broken", see tracking issue #200');
+        }
+
+        $loop = Factory::create();
+        $tcp = new TcpServer('127.0.0.1:0', $loop);
+        $server = new SecureServer($tcp, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new TcpConnector($loop);
+        $secureConn = new SecureConnector($connector, $loop, array(
+            'verify_peer' => false
+        ));
+
+        $client = Block\await($connector->connect($tcp->getAddress()), $loop, self::TIMEOUT);
+        Block\await($secureConn->enableTLS($client), $loop, self::TIMEOUT);
+
+        Block\await($secureConn->disableTLS($client), $loop, self::TIMEOUT);
+    }
+
+    /**
+     * @expectedException \Exception
+     */
+    public function testDisablingTLSButConnectionCloseDuringHandshakeThrowsException()
+    {
+        if (!function_exists('stream_socket_enable_crypto')) {
+            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        }
+
+        $loop = Factory::create();
+        $tcp = new TcpServer('127.0.0.1:0', $loop);
+        $server = new SecureServer($tcp, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new TcpConnector($loop);
+        $secureConn = new SecureConnector($connector, $loop, array(
+            'verify_peer' => false
+        ));
+
+        $conn = null;
+        $server->once('connection', function (ExtConnectionInterface $c) use (&$conn) {
+            $conn = $c;
+        });
+
+        $client = Block\await($connector->connect($tcp->getAddress()), $loop, self::TIMEOUT);
+        Block\await($secureConn->enableTLS($client), $loop, self::TIMEOUT);
+        Block\sleep(0.1, $loop);
+
+        $this->assertNotNull($conn);
+        $this->assertNotNull($client);
+
+        $disableTLS = $secureConn->disableTLS($client);
+        $conn->close(); // close connection and force a failure
+
+        Block\await($disableTLS, $loop, self::TIMEOUT);
     }
 
     private function throwRejection($promise)

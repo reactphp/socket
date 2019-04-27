@@ -4,11 +4,8 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise;
-use BadMethodCallException;
-use InvalidArgumentException;
-use UnexpectedValueException;
 
-final class SecureConnector implements ConnectorInterface
+final class SecureConnector implements SecureConnectorInterface
 {
     private $connector;
     private $streamEncryption;
@@ -39,35 +36,32 @@ final class SecureConnector implements ConnectorInterface
         $uri = \str_replace('tls://', '', $uri);
         $context = $this->context;
 
+        $that = $this;
         $encryption = $this->streamEncryption;
         $connected = false;
-        $promise = $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri, &$promise, &$connected) {
+
+        $promise = $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($that, $context, $encryption, $uri, &$promise, &$connected) {
             // (unencrypted) TCP/IP connection succeeded
             $connected = true;
 
-            if (!$connection instanceof Connection) {
+            if (!$connection instanceof ExtConnectionInterface) {
                 $connection->close();
-                throw new \UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
-            }
-
-            // set required SSL/TLS context options
-            foreach ($context as $name => $value) {
-                \stream_context_set_option($connection->stream, 'ssl', $name, $value);
+                throw new \UnexpectedValueException('Base connector does not use a connection using the extended connection interface');
             }
 
             // try to enable encryption
-            return $promise = $encryption->enable($connection)->then(null, function ($error) use ($connection, $uri) {
+            return $promise = $that->enableTLS($connection)->then(null, function ($error) use ($connection, $uri) {
                 // establishing encryption failed => close invalid connection and return error
                 $connection->close();
 
                 throw new \RuntimeException(
-                    'Connection to ' . $uri . ' failed during TLS handshake: ' . $error->getMessage(),
+                    'Connection to ' . $uri . ' failed: ' . $error->getMessage(),
                     $error->getCode()
                 );
             });
         });
 
-        return new \React\Promise\Promise(
+        return new Promise\Promise(
             function ($resolve, $reject) use ($promise) {
                 $promise->then($resolve, $reject);
             },
@@ -80,5 +74,34 @@ final class SecureConnector implements ConnectorInterface
                 $promise = null;
             }
         );
+    }
+
+    public function enableTLS(ExtConnectionInterface $connection)
+    {
+        $stream = $connection->getStream();
+        $context = $this->context;
+
+        // set required SSL/TLS context options
+        foreach ($context as $name => $value) {
+            \stream_context_set_option($stream, 'ssl', $name, $value);
+        }
+
+        // try to enable encryption
+        return $this->streamEncryption->enable($connection)->then(null, function ($error) {
+            throw new \RuntimeException(
+                'Error encountered during TLS handshake: ' . $error->getMessage(),
+                $error->getCode()
+            );
+        });
+    }
+
+    public function disableTLS(ExtConnectionInterface $connection)
+    {
+        return $this->streamEncryption->disable($connection)->then(null, function ($error) {
+            throw new \RuntimeException(
+                'Error encountered during removing TLS: ' . $error->getMessage(),
+                $error->getCode()
+            );
+        });
     }
 }

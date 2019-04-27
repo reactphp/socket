@@ -22,10 +22,10 @@ use UnexpectedValueException;
  * ```
  *
  * Whenever a client completes the TLS handshake, it will emit a `connection` event
- * with a connection instance implementing [`ConnectionInterface`](#connectioninterface):
+ * with a connection instance implementing `ExtConnectionInterface`:
  *
  * ```php
- * $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
+ * $server->on('connection', function (React\Socket\ExtConnectionInterface $connection) {
  *     echo 'Secure connection from' . $connection->getRemoteAddress() . PHP_EOL;
  *
  *     $connection->write('hello there!' . PHP_EOL);
@@ -167,14 +167,16 @@ final class SecureServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection(ConnectionInterface $connection)
     {
-        if (!$connection instanceof Connection) {
-            $this->emit('error', array(new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')));
+        if (!$connection instanceof ExtConnectionInterface) {
+            $this->emit('error', array(new \UnexpectedValueException('Base connector does not use a connection using the extended connection interface')));
             $connection->close();
             return;
         }
 
+        $stream = $connection->getStream();
+
         foreach ($this->context as $name => $value) {
-            \stream_context_set_option($connection->stream, 'ssl', $name, $value);
+            \stream_context_set_option($stream, 'ssl', $name, $value);
         }
 
         // get remote address before starting TLS handshake in case connection closes during handshake

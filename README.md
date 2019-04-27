@@ -22,6 +22,7 @@ handle multiple concurrent connections without blocking.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
+  * [ExtConnectionInterface](#extconnectioninterface)
 * [Server usage](#server-usage)
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
@@ -40,6 +41,7 @@ handle multiple concurrent connections without blocking.
 * [Client usage](#client-usage)
   * [ConnectorInterface](#connectorinterface)
     * [connect()](#connect)
+  * [SecureConnectorInterface](#secureconnectorinterface)
   * [Connector](#connector)
   * [Advanced client usage](#advanced-client-usage)
     * [TcpConnector](#tcpconnector)
@@ -194,6 +196,17 @@ actually accepted this connection (such as a public or local interface).
 If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
+
+### ExtConnectionInterface
+
+The `ExtConnectionInterface` is an extended `ConnectionInterface`, which
+enables to expose new features in a non-BC way.
+
+Currently the `ExtConnectionInterface` is only used to provide a public API
+to enable or disable TLS on a connection.
+
+The interface extends the [`ConnectionInterface`](#connectioninterface) and thus provides all other
+features as well.
 
 ## Server usage
 
@@ -674,11 +687,10 @@ you SHOULD pass a `TcpServer` instance as first parameter, unless you
 know what you're doing.
 Internally, the `SecureServer` has to set the required TLS context options on
 the underlying stream resources.
-These resources are not exposed through any of the interfaces defined in this
-package, but only through the internal `Connection` class.
+Prior to the extension these resources are not exposed through any of the interfaces
+defined in this package, but only through the internal `Connection` class.
 The `TcpServer` class is guaranteed to emit connections that implement
-the `ConnectionInterface` and uses the internal `Connection` class in order to
-expose these underlying resources.
+the [`ExtConnectionInterface`](#extconnectioninterface).
 If you use a custom `ServerInterface` and its `connection` event does not
 meet this requirement, the `SecureServer` will emit an `error` event and
 then close the underlying connection.
@@ -856,6 +868,33 @@ $promise = $connector->connect($uri);
 
 $promise->cancel();
 ```
+
+### SecureConnectorInterface
+
+The `SecureConnectorInterface` is responsible for establishing secure connections.
+It defines methods to enable and disable TLS onto a given connection.
+
+As it extends the `ConnectorInterface`, it provides all other features of a Connector as well.
+
+The interface only offers two additional methods:
+
+#### enableTLS()
+
+The `enableTLS(ExtConnectionInterface $connection): PromiseInterface<null,Exception>` enables
+TLS onto a given connection.
+
+It returns a [Promise](https://github.com/reactphp/promise) which either
+fulfills on success or rejects with an `Exception` if enabling TLS is not successful.
+
+This is most notably useful for STARTTLS.
+
+#### disableTLS()
+
+The `disableTLS(ExtConnectionInterface $connection): PromiseInterface<null,Exception>` disables
+TLS onto a given connection.
+
+It returns a [Promise](https://github.com/reactphp/promise) which either
+fulfills on success or rejects with an `Exception` if disabling TLS is not successful.
 
 ### Connector
 
@@ -1207,7 +1246,7 @@ which can be useful if you want a custom TLS peer name.
 #### SecureConnector
 
 The `SecureConnector` class implements the
-[`ConnectorInterface`](#connectorinterface) and allows you to create secure
+[`SecureConnectorInterface`](#secureconnectorinterface) and allows you to create secure
 TLS (formerly known as SSL) connections to any hostname-port-combination.
 
 It does so by decorating a given `DnsConnector` instance so that it first
