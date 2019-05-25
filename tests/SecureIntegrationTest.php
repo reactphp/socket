@@ -93,6 +93,21 @@ class SecureIntegrationTest extends TestCase
 
     public function testSendDataWithEndToServerReceivesAllData()
     {
+        // PHP can report EOF on TLS 1.3 stream before consuming all data, so
+        // we explicitly use older TLS version instead. Selecting TLS version
+        // requires PHP 5.6+, so skip legacy versions if TLS 1.3 is supported.
+        // Continue if TLS 1.3 is not supported anyway.
+        if ($this->supportsTls13()) {
+            if (!defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                $this->markTestSkipped('TLS 1.3 supported, but this legacy PHP version does not support explicit choice');
+            }
+
+            $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array(
+                'verify_peer' => false,
+                'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
+            ));
+        }
+
         $disconnected = new Deferred();
         $this->server->on('connection', function (ConnectionInterface $peer) use ($disconnected) {
             $received = '';
@@ -113,6 +128,7 @@ class SecureIntegrationTest extends TestCase
         // await server to report connection "close" event
         $received = Block\await($disconnected->promise(), $this->loop, self::TIMEOUT);
 
+        $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
     }
 
@@ -136,6 +152,7 @@ class SecureIntegrationTest extends TestCase
 
         $client->close();
 
+        $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
     }
 
