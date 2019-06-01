@@ -43,6 +43,17 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     public function __construct($resource, LoopInterface $loop)
     {
+        // PHP < 7.3.3 (and PHP < 7.2.15) suffers from a bug where feof() might
+        // block with 100% CPU usage on fragmented TLS records.
+        // We try to work around this by always consuming the complete receive
+        // buffer at once to avoid stale data in TLS buffers. This is known to
+        // work around high CPU usage for well-behaving peers, but this may
+        // cause very large data chunks for high throughput scenarios. The buggy
+        // behavior can still be triggered due to network I/O buffers or
+        // malicious peers on affected versions, upgrading is highly recommended.
+        // @link https://bugs.php.net/bug.php?id=77390
+        $clearCompleteBuffer = \PHP_VERSION_ID < 70215 || (\PHP_VERSION_ID >= 70300 && \PHP_VERSION_ID < 70303);
+
         // PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
         // chunks of data over TLS streams at once.
         // We try to work around this by limiting the write chunk size to 8192
@@ -53,14 +64,10 @@ class Connection extends EventEmitter implements ConnectionInterface
         // See https://github.com/reactphp/socket/issues/105
         $limitWriteChunks = (\PHP_VERSION_ID < 70018 || (\PHP_VERSION_ID >= 70100 && \PHP_VERSION_ID < 70104));
 
-        // Construct underlying stream to always consume complete receive buffer.
-        // This avoids stale data in TLS buffers and also works around possible
-        // buffering issues in legacy PHP versions. The buffer size is limited
-        // due to TCP/IP buffers anyway, so this should not affect usage otherwise.
         $this->input = new DuplexResourceStream(
             $resource,
             $loop,
-            -1,
+            $clearCompleteBuffer ? -1 : null,
             new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null)
         );
 

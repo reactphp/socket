@@ -1372,6 +1372,15 @@ This library does not take responsibility over these context options, so it's
 up to consumers of this library to take care of setting appropriate context
 options as described above.
 
+PHP < 7.3.3 (and PHP < 7.2.15) suffers from a bug where feof() might
+block with 100% CPU usage on fragmented TLS records.
+We try to work around this by always consuming the complete receive
+buffer at once to avoid stale data in TLS buffers. This is known to
+work around high CPU usage for well-behaving peers, but this may
+cause very large data chunks for high throughput scenarios. The buggy
+behavior can still be triggered due to network I/O buffers or
+malicious peers on affected versions, upgrading is highly recommended.
+
 PHP < 7.1.4 (and PHP < 7.0.18) suffers from a bug when writing big
 chunks of data over TLS streams at once.
 We try to work around this by limiting the write chunk size to 8192
