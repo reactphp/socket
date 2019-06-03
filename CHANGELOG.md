@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.1 (2019-06-03)
+
+*   Avoid uneeded fragmented TLS work around for PHP 7.3.3+ and 
+    work around failing test case detecting EOF on TLS 1.3 socket streams.
+    (#201 and #202 by @clue)
+
+*   Improve TLS certificate/passphrase example.
+    (#190 by @jsor)
+
 ## 1.2.0 (2019-01-07)
 
 *   Feature / Fix: Improve TLS 1.3 support.
