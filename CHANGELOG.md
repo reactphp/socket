@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 (2019-07-10)
+
+*   Feature: Forward compatibility with upcoming stable DNS component.
+    (#206 by @clue)
+
 ## 1.2.1 (2019-06-03)
 
 *   Avoid uneeded fragmented TLS work around for PHP 7.3.3+ and 

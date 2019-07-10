@@ -113,7 +113,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * @param array $context
      * @throws BadMethodCallException for legacy HHVM < 3.8 due to lack of support
      * @see TcpServer
-     * @link http://php.net/manual/en/context.ssl.php for TLS context options
+     * @link https://www.php.net/manual/en/context.ssl.php for TLS context options
      */
     public function __construct(ServerInterface $tcp, LoopInterface $loop, array $context)
     {

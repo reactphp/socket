@@ -98,7 +98,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
      * See the exception message and code for more details about the actual error
      * condition.
      *
-     * Optionally, you can specify [socket context options](http://php.net/manual/en/context.socket.php)
+     * Optionally, you can specify [socket context options](https://www.php.net/manual/en/context.socket.php)
      * for the underlying stream socket resource like this:
      *
      * ```php
@@ -109,7 +109,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
      * ));
      * ```
      *
-     * Note that available [socket context options](http://php.net/manual/en/context.socket.php),
+     * Note that available [socket context options](https://www.php.net/manual/en/context.socket.php),
      * their defaults and effects of changing these may vary depending on your system
      * and/or PHP version.
      * Passing unknown context options has no effect.
