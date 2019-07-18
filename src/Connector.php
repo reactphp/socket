@@ -2,12 +2,10 @@
 
 namespace React\Socket;
 
-use React\Dns\Config\Config;
-use React\Dns\Resolver\Factory;
-use React\Dns\Resolver\Resolver;
+use React\Dns\Config\Config as DnsConfig;
+use React\Dns\Resolver\Factory as DnsFactory;
+use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\LoopInterface;
-use React\Promise;
-use RuntimeException;
 
 /**
  * The `Connector` class is the main class in this package that implements the
@@ -54,18 +52,18 @@ final class Connector implements ConnectorInterface
         }
 
         if ($options['dns'] !== false) {
-            if ($options['dns'] instanceof Resolver) {
+            if ($options['dns'] instanceof ResolverInterface) {
                 $resolver = $options['dns'];
             } else {
                 if ($options['dns'] !== true) {
                     $server = $options['dns'];
                 } else {
                     // try to load nameservers from system config or default to Google's public DNS
-                    $config = Config::loadSystemConfigBlocking();
+                    $config = DnsConfig::loadSystemConfigBlocking();
                     $server = $config->nameservers ? \reset($config->nameservers) : '8.8.8.8';
                 }
 
-                $factory = new Factory();
+                $factory = new DnsFactory();
                 $resolver = $factory->create(
                     $server,
                     $loop
@@ -125,7 +123,7 @@ final class Connector implements ConnectorInterface
         }
 
         if (!isset($this->connectors[$scheme])) {
-            return Promise\reject(new \RuntimeException(
+            return \React\Promise\reject(new \RuntimeException(
                 'No connector available for URI scheme "' . $scheme . '"'
             ));
         }
