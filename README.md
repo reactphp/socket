@@ -958,8 +958,8 @@ $connector->connect('127.0.0.1:80')->then(function (React\Socket\ConnectionInter
 });
 ```
 
-Advanced: If you need a custom DNS `Resolver` instance, you can also set up
-your `Connector` like this:
+Advanced: If you need a custom DNS `React\Dns\Resolver\ResolverInterface` instance, you
+can also set up your `Connector` like this:
 
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
@@ -1193,8 +1193,8 @@ $promise->cancel();
 Calling `cancel()` on a pending promise will cancel the underlying DNS lookup
 and/or the underlying TCP/IP connection and reject the resulting promise.
 
-> Advanced usage: Internally, the `DnsConnector` relies on a `Resolver` to
-look up the IP address for the given hostname.
+> Advanced usage: Internally, the `DnsConnector` relies on a `React\Dns\Resolver\ResolverInterface`
+to look up the IP address for the given hostname.
 It will then replace the hostname in the destination URI with this IP and
 append a `hostname` query parameter and pass this updated URI to the underlying
 connector.

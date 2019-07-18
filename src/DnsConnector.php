@@ -2,18 +2,16 @@
 
 namespace React\Socket;
 
-use React\Dns\Resolver\Resolver;
+use React\Dns\Resolver\ResolverInterface;
 use React\Promise;
 use React\Promise\CancellablePromiseInterface;
-use InvalidArgumentException;
-use RuntimeException;
 
 final class DnsConnector implements ConnectorInterface
 {
     private $connector;
     private $resolver;
 
-    public function __construct(ConnectorInterface $connector, Resolver $resolver)
+    public function __construct(ConnectorInterface $connector, ResolverInterface $resolver)
     {
         $this->connector = $connector;
         $this->resolver = $resolver;
