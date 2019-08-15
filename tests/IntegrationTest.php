@@ -99,12 +99,12 @@ class IntegrationTest extends TestCase
         $this->assertNotRegExp('#^HTTP/1\.0#', $response);
     }
 
-    public function testConnectingFailsIfDnsUsesInvalidResolver()
+    public function testConnectingFailsIfConnectorUsesInvalidDnsResolverAddress()
     {
         $loop = Factory::create();
 
         $factory = new ResolverFactory();
-        $dns = $factory->create('demo.invalid', $loop);
+        $dns = $factory->create('255.255.255.255', $loop);
 
         $connector = new Connector($loop, array(
             'dns' => $dns
