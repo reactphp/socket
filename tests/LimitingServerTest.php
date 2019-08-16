@@ -2,13 +2,17 @@
 
 namespace React\Tests\Socket;
 
+use Clue\React\Block;
+use React\EventLoop\Factory;
+use React\Promise\Promise;
+use React\Socket\ConnectionInterface;
 use React\Socket\LimitingServer;
 use React\Socket\TcpServer;
-use React\EventLoop\Factory;
-use Clue\React\Block;
 
 class LimitingServerTest extends TestCase
 {
+    const TIMEOUT = 0.1;
+
     public function testGetAddressWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
@@ -150,7 +154,13 @@ class LimitingServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
 
-        Block\sleep(0.1, $loop);
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
+                $connection->on('close', $resolve);
+            });
+        });
+
+        Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertEquals(array(), $server->getConnections());
     }
@@ -164,10 +174,14 @@ class LimitingServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
 
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', $resolve);
+        });
+
         $first = stream_socket_client($server->getAddress());
         $second = stream_socket_client($server->getAddress());
 
-        Block\sleep(0.1, $loop);
+        Block\await($peer, $loop, self::TIMEOUT);
 
         fclose($first);
         fclose($second);
@@ -177,19 +191,26 @@ class LimitingServerTest extends TestCase
     {
         $loop = Factory::create();
 
-        $twice = $this->createCallableMock();
-        $twice->expects($this->exactly(2))->method('__invoke');
-
         $server = new TcpServer(0, $loop);
         $server = new LimitingServer($server, 1, true);
-        $server->on('connection', $twice);
         $server->on('error', $this->expectCallableNever());
+
+        $peer = new Promise(function ($resolve, $reject) use ($server) {
+            $connections = 0;
+            $server->on('connection', function (ConnectionInterface $connection) use (&$connections, $resolve) {
+                ++$connections;
+
+                if ($connections >= 2) {
+                    $resolve();
+                }
+            });
+        });
 
         $first = stream_socket_client($server->getAddress());
         fclose($first);
         $second = stream_socket_client($server->getAddress());
         fclose($second);
 
-        Block\sleep(0.1, $loop);
+        Block\await($peer, $loop, self::TIMEOUT);
     }
 }

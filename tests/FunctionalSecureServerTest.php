@@ -8,10 +8,10 @@ use React\EventLoop\Factory;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureConnector;
+use React\Socket\ServerInterface;
 use React\Socket\SecureServer;
 use React\Socket\TcpServer;
 use React\Socket\TcpConnector;
-use React\Socket\ServerInterface;
 
 class FunctionalSecureServerTest extends TestCase
 {
@@ -184,7 +184,7 @@ class FunctionalSecureServerTest extends TestCase
         $server->close();
     }
 
-    public function testWritesDataToConnection()
+    public function testClientEmitsDataEventOnceForDataWrittenFromServer()
     {
         $loop = Factory::create();
 
@@ -192,7 +192,6 @@ class FunctionalSecureServerTest extends TestCase
         $server = new SecureServer($server, $loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
-        $server->on('connection', $this->expectCallableOnce());
 
         $server->on('connection', function (ConnectionInterface $conn) {
             $conn->write('foo');
@@ -203,12 +202,15 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->connect($server->getAddress());
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
+        $promise = new Promise(function ($resolve, $reject) use ($promise) {
+            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+                $connection->on('data', $resolve);
+            }, $reject);
+        });
 
-        $local->on('data', $this->expectCallableOnceWith('foo'));
+        $data = Block\await($promise, $loop, self::TIMEOUT);
 
-        Block\sleep(self::TIMEOUT, $loop);
+        $this->assertEquals('foo', $data);
     }
 
     public function testWritesDataInMultipleChunksToConnection()
@@ -230,15 +232,20 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->connect($server->getAddress());
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
+        $promise = new Promise(function ($resolve, $reject) use ($promise) {
+            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+                $received = 0;
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received += strlen($chunk);
 
-        $received = 0;
-        $local->on('data', function ($chunk) use (&$received) {
-            $received += strlen($chunk);
+                    if ($received >= 400000) {
+                        $resolve($received);
+                    }
+                });
+            }, $reject);
         });
 
-        Block\sleep(self::TIMEOUT, $loop);
+        $received = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
     }
@@ -262,15 +269,20 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->connect($server->getAddress());
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
+        $promise = new Promise(function ($resolve, $reject) use ($promise) {
+            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+                $received = 0;
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received += strlen($chunk);
 
-        $received = 0;
-        $local->on('data', function ($chunk) use (&$received) {
-            $received += strlen($chunk);
+                    if ($received >= 2000000) {
+                        $resolve($received);
+                    }
+                });
+            }, $reject);
         });
 
-        Block\sleep(self::TIMEOUT, $loop);
+        $received = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertEquals(2000000, $received);
     }
@@ -285,22 +297,22 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableOnce());
 
-        $once = $this->expectCallableOnceWith('foo');
-        $server->on('connection', function (ConnectionInterface $conn) use ($once) {
-            $conn->on('data', $once);
+        $promise = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
+                $connection->on('data', $resolve);
+            });
         });
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connector->connect($server->getAddress())->then(function (ConnectionInterface $connection) {
+            $connection->write('foo');
+        });
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
+        $data = Block\await($promise, $loop, self::TIMEOUT);
 
-        $local->write("foo");
-
-        Block\sleep(self::TIMEOUT, $loop);
+        $this->assertEquals('foo', $data);
     }
 
     public function testEmitsDataInMultipleChunksFromConnection()
@@ -313,24 +325,27 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableOnce());
 
-        $received = 0;
-        $server->on('connection', function (ConnectionInterface $conn) use (&$received) {
-            $conn->on('data', function ($chunk) use (&$received) {
-                $received += strlen($chunk);
+        $promise = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
+                $received = 0;
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received += strlen($chunk);
+
+                    if ($received >= 400000) {
+                        $resolve($received);
+                    }
+                });
             });
         });
 
         $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connector->connect($server->getAddress())->then(function (ConnectionInterface $connection) {
+            $connection->write(str_repeat('*', 400000));
+        });
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
-
-        $local->write(str_repeat('*', 400000));
-
-        Block\sleep(self::TIMEOUT, $loop);
+        $received = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
     }
@@ -345,7 +360,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $server->on('connection', $this->expectCallableOnce());
 
-        $server->on('connection', function (ConnectionInterface $conn) use (&$received) {
+        $server->on('connection', function (ConnectionInterface $conn) {
             $conn->pipe($conn);
         });
 
@@ -354,17 +369,21 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->connect($server->getAddress());
 
-        $local = Block\await($promise, $loop, self::TIMEOUT);
-        /* @var $local ConnectionInterface */
+        $promise = new Promise(function ($resolve, $reject) use ($promise) {
+            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+                $received = 0;
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received += strlen($chunk);
 
-        $received = 0;
-        $local->on('data', function ($chunk) use (&$received) {
-            $received += strlen($chunk);
+                    if ($received >= 400000) {
+                        $resolve($received);
+                    }
+                });
+                $connection->write(str_repeat('*', 400000));
+            }, $reject);
         });
 
-        $local->write(str_repeat('*', 400000));
-
-        Block\sleep(self::TIMEOUT, $loop);
+        $received = Block\await($promise, $loop, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
     }
@@ -627,7 +646,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertNull($error->getPrevious());
     }
 
-    public function testEmitsNothingIfConnectionIsIdle()
+    public function testEmitsNothingIfPlaintextConnectionIsIdle()
     {
         $loop = Factory::create();
 
@@ -641,8 +660,8 @@ class FunctionalSecureServerTest extends TestCase
         $connector = new TcpConnector($loop);
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
-        $promise->then($this->expectCallableOnce());
-        Block\sleep(self::TIMEOUT, $loop);
+        $connection = Block\await($promise, $loop, self::TIMEOUT);
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
     }
 
     public function testEmitsErrorIfConnectionIsHttpInsteadOfSecureHandshake()
@@ -705,16 +724,9 @@ class FunctionalSecureServerTest extends TestCase
 
     private function createPromiseForServerError(ServerInterface $server)
     {
-        return $this->createPromiseForEvent($server, 'error', function ($error) {
-            return $error;
-        });
-    }
-
-    private function createPromiseForEvent(EventEmitterInterface $emitter, $event, $fn)
-    {
-        return new Promise(function ($resolve) use ($emitter, $event, $fn) {
-            $emitter->on($event, function () use ($resolve, $fn) {
-                $resolve(call_user_func_array($fn, func_get_args()));
+        return new Promise(function ($resolve) use ($server) {
+            $server->on('error', function ($arg) use ($resolve) {
+                $resolve($arg);
             });
         });
     }

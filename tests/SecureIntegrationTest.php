@@ -134,23 +134,26 @@ class SecureIntegrationTest extends TestCase
 
     public function testSendDataWithoutEndingToServerReceivesAllData()
     {
-        $received = '';
-        $this->server->on('connection', function (ConnectionInterface $peer) use (&$received) {
-            $peer->on('data', function ($chunk) use (&$received) {
-                $received .= $chunk;
+        $server = $this->server;
+        $promise = new Promise(function ($resolve, $reject) use ($server) {
+            $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
+                $received = '';
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received .= $chunk;
+
+                    if (strlen($received) >= 200000) {
+                        $resolve($received);
+                    }
+                });
             });
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client ConnectionInterface */
-
         $data = str_repeat('d', 200000);
-        $client->write($data);
+        $this->connector->connect($this->address)->then(function (ConnectionInterface $connection) use ($data) {
+            $connection->write($data);
+        });
 
-        // buffer incoming data for 0.1s (should be plenty of time)
-        Block\sleep(0.1, $this->loop);
-
-        $client->close();
+        $received = Block\await($promise, $this->loop, self::TIMEOUT);
 
         $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
@@ -195,19 +198,24 @@ class SecureIntegrationTest extends TestCase
             $peer->write($data);
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
-        /* @var $client ConnectionInterface */
+        $promise = $this->connector->connect($this->address);
 
-        // buffer incoming data for 0.1s (should be plenty of time)
-        $received = '';
-        $client->on('data', function ($chunk) use (&$received) {
-            $received .= $chunk;
+        $promise = new Promise(function ($resolve, $reject) use ($promise) {
+            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+                $received = 0;
+                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                    $received += strlen($chunk);
+
+                    if ($received >= 100000) {
+                        $resolve($received);
+                    }
+                });
+            }, $reject);
         });
-        Block\sleep(0.1, $this->loop);
 
-        $client->close();
+        $received = Block\await($promise, $this->loop, self::TIMEOUT);
 
-        $this->assertEquals($data, $received);
+        $this->assertEquals(strlen($data), $received);
     }
 
     private function createPromiseForEvent(EventEmitterInterface $emitter, $event, $fn)
