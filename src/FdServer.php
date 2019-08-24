@@ -35,6 +35,7 @@ final class FdServer extends EventEmitter implements ServerInterface
 {
     private $master;
     private $loop;
+    private $unix = false;
     private $listening = false;
 
     /**
@@ -115,6 +116,10 @@ final class FdServer extends EventEmitter implements ServerInterface
             throw new \RuntimeException('Failed to listen on FD ' . $fd . ': ' . $errstr, $errno);
         }
 
+        // Assume this is a Unix domain socket (UDS) when its listening address doesn't parse as a valid URL with a port.
+        // Looks like this work-around is the closest we can get because PHP doesn't expose SO_DOMAIN even with ext-sockets.
+        $this->unix = \parse_url($this->getAddress(), \PHP_URL_PORT) === false;
+
         \stream_set_blocking($this->master, false);
 
         $this->resume();
@@ -127,6 +132,10 @@ final class FdServer extends EventEmitter implements ServerInterface
         }
 
         $address = \stream_socket_get_name($this->master, false);
+
+        if ($this->unix === true) {
+            return 'unix://' . $address;
+        }
 
         // check if this is an IPv6 address which includes multiple colons but no square brackets
         $pos = \strrpos($address, ':');
@@ -180,8 +189,9 @@ final class FdServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection($socket)
     {
-        $this->emit('connection', array(
-            new Connection($socket, $this->loop)
-        ));
+        $connection = new Connection($socket, $this->loop);
+        $connection->unix = $this->unix;
+
+        $this->emit('connection', array($connection));
     }
 }

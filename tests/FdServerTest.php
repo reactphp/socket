@@ -120,7 +120,7 @@ class FdServerTest extends TestCase
 
         $socket = @stream_socket_server('[::1]:0');
         if ($socket === false) {
-            $this->markTestSkipped('IPv6 not supported ');
+            $this->markTestSkipped('Listening on IPv6 not supported');
         }
 
         $fd = $this->getFdFromResource($socket);
@@ -131,6 +131,26 @@ class FdServerTest extends TestCase
 
         $port = preg_replace('/.*:/', '', stream_socket_get_name($socket, false));
         $this->assertEquals('tcp://[::1]:' . $port, $server->getAddress());
+    }
+
+    public function testGetAddressReturnsSameAddressAsOriginalSocketForUnixDomainSocket()
+    {
+        if (!is_dir('/dev/fd') || defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on your platform');
+        }
+
+        $socket = @stream_socket_server($this->getRandomSocketUri());
+        if ($socket === false) {
+            $this->markTestSkipped('Listening on Unix domain socket (UDS) not supported');
+        }
+
+        $fd = $this->getFdFromResource($socket);
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $server = new FdServer($fd, $loop);
+
+        $this->assertEquals('unix://' . stream_socket_get_name($socket, false), $server->getAddress());
     }
 
     public function testGetAddressReturnsNullAfterClose()
@@ -334,5 +354,10 @@ class FdServerTest extends TestCase
         }
 
         throw new \UnderflowException('Could not locate file descriptor for this resource');
+    }
+
+    private function getRandomSocketUri()
+    {
+        return "unix://" . sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid(rand(), true) . '.sock';
     }
 }
