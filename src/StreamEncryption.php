@@ -127,7 +127,7 @@ class StreamEncryption
             $d = $deferred;
             $deferred = null;
 
-            if (\feof($socket) || $error === null) {
+            if ($error === null || (\is_resource($socket) && \feof($socket))) {
                 // EOF or failed without error => connection closed during handshake
                 $d->reject(new \UnexpectedValueException(
                     'Connection lost during TLS handshake',
