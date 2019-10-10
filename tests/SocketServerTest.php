@@ -157,7 +157,9 @@ class SocketServerTest extends TestCase
         $socket->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($socket) {
-            $socket->on('connection', $resolve);
+            $socket->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $client = stream_socket_client($socket->getAddress());
@@ -185,7 +187,9 @@ class SocketServerTest extends TestCase
         $socket->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($socket) {
-            $socket->on('connection', $resolve);
+            $socket->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $client = stream_socket_client($socket->getAddress());

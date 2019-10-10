@@ -231,9 +231,12 @@ class SecureConnectorTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($this->connector, $encryption);
 
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
+        $deferred = new Deferred();
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn($deferred->promise());
 
         $promise = $this->connector->connect('example.com:80');
+        $deferred->resolve($connection);
+
         $promise->cancel();
 
         $exception = null;

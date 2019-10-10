@@ -17,7 +17,9 @@ class FunctionalTcpServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
-            $server->on('connection', $resolve);
+            $server->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $connector = new TcpConnector();
@@ -58,7 +60,9 @@ class FunctionalTcpServerTest extends TestCase
         $server->resume();
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
-            $server->on('connection', $resolve);
+            $server->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $connector = new TcpConnector();
@@ -213,7 +217,9 @@ class FunctionalTcpServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
-            $server->on('connection', $resolve);
+            $server->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $connector = new TcpConnector();
@@ -238,7 +244,9 @@ class FunctionalTcpServerTest extends TestCase
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
-            $server->on('connection', $resolve);
+            $server->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $connector = new TcpConnector();

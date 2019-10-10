@@ -103,7 +103,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassByResolverIfGivenIp()
     {
         $this->resolver->expects($this->never())->method('resolveAll');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('127.0.0.1:80'))->will($this->returnValue(Promise\resolve()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('127.0.0.1:80'))->will($this->returnValue(Promise\resolve(null)));
 
         $this->connector->connect('127.0.0.1:80');
 
@@ -113,7 +113,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassByResolverIfGivenIpv6()
     {
         $this->resolver->expects($this->never())->method('resolveAll');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('[::1]:80');
 
@@ -123,7 +123,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassThroughResolverIfGivenHost()
     {
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
-        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('google.com:80');
 
@@ -133,7 +133,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassThroughResolverIfGivenHostWhichResolvesToIpv6()
     {
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('::1'))));
-        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('[::1]:80?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('[::1]:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('google.com:80');
 
@@ -143,7 +143,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassByResolverIfGivenCompleteUri()
     {
         $this->resolver->expects($this->never())->method('resolveAll');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment');
 
@@ -153,7 +153,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassThroughResolverIfGivenCompleteUri()
     {
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
-        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/path?query&hostname=google.com#fragment'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/path?query&hostname=google.com#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('scheme://google.com:80/path?query#fragment');
 
@@ -163,7 +163,7 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function testPassThroughResolverIfGivenExplicitHost()
     {
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
-        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.de'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.de'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('scheme://google.com:80/?hostname=google.de');
 
@@ -184,7 +184,7 @@ class HappyEyeBallsConnectorTest extends TestCase
             $this->returnValue(Promise\resolve($ipv6)),
             $this->returnValue($deferred->promise())
         );
-        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(']:80/?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(']:80/?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('scheme://google.com:80/?hostname=google.com');
 
@@ -209,7 +209,7 @@ class HappyEyeBallsConnectorTest extends TestCase
             $this->returnValue($deferred->promise()),
             $this->returnValue(Promise\resolve($ipv4))
         );
-        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(':80/?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(':80/?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
         $this->connector->connect('scheme://google.com:80/?hostname=google.com');
 

@@ -152,7 +152,9 @@ class LimitingServerTest extends TestCase
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
-                $connection->on('close', $resolve);
+                $connection->on('close', function () use ($resolve) {
+                    $resolve(null);
+                });
             });
         });
 
@@ -171,7 +173,9 @@ class LimitingServerTest extends TestCase
         $server->on('error', $this->expectCallableNever());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
-            $server->on('connection', $resolve);
+            $server->on('connection', function () use ($resolve) {
+                $resolve(null);
+            });
         });
 
         $first = stream_socket_client($server->getAddress());
@@ -197,7 +201,7 @@ class LimitingServerTest extends TestCase
                 ++$connections;
 
                 if ($connections >= 2) {
-                    $resolve();
+                    $resolve(null);
                 }
             });
         });

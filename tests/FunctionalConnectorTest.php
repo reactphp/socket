@@ -142,7 +142,7 @@ class FunctionalConnectorTest extends TestCase
         $deferred = new Deferred();
         $server->on('connection', function (ConnectionInterface $connection) use ($promise, $deferred) {
             $connection->on('close', function () use ($deferred) {
-                $deferred->resolve();
+                $deferred->resolve(null);
             });
 
             Loop::futureTick(function () use ($promise) {
