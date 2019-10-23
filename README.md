@@ -43,6 +43,7 @@ handle multiple concurrent connections without blocking.
   * [Connector](#connector)
   * [Advanced client usage](#advanced-client-usage)
     * [TcpConnector](#tcpconnector)
+    * [HappyEyeBallsConnector](#happyeyeballsconnector)
     * [DnsConnector](#dnsconnector)
     * [SecureConnector](#secureconnector)
     * [TimeoutConnector](#timeoutconnector)
@@ -1153,6 +1154,60 @@ If the destination URI contains a `hostname` query parameter, its value will
 be used to set up the TLS peer name.
 This is used by the `SecureConnector` and `DnsConnector` to verify the peer
 name and can also be used if you want a custom TLS peer name.
+
+#### HappyEyeBallsConnector
+
+The `HappyEyeBallsConnector` class implements the
+[`ConnectorInterface`](#connectorinterface) and allows you to create plaintext
+TCP/IP connections to any hostname-port-combination. Internally it implements the 
+happy eyeballs algorithm from [`RFC6555`](https://tools.ietf.org/html/rfc6555) and 
+[`RFC8305`](https://tools.ietf.org/html/rfc8305) to support IPv6 and IPv4 hostnames.
+
+It does so by decorating a given `TcpConnector` instance so that it first
+looks up the given domain name via DNS (if applicable) and then establishes the
+underlying TCP/IP connection to the resolved target IP address.
+
+Make sure to set up your DNS resolver and underlying TCP connector like this:
+
+```php
+$dnsResolverFactory = new React\Dns\Resolver\Factory();
+$dns = $dnsResolverFactory->createCached('8.8.8.8', $loop);
+
+$dnsConnector = new React\Socket\HappyEyeBallsConnector($loop, $tcpConnector, $dns);
+
+$dnsConnector->connect('www.google.com:80')->then(function (React\Socket\ConnectionInterface $connection) {
+    $connection->write('...');
+    $connection->end();
+});
+
+$loop->run();
+```
+
+See also the [examples](examples).
+
+Pending connection attempts can be cancelled by cancelling its pending promise like so:
+
+```php
+$promise = $dnsConnector->connect('www.google.com:80');
+
+$promise->cancel();
+```
+
+Calling `cancel()` on a pending promise will cancel the underlying DNS lookups
+and/or the underlying TCP/IP connection(s) and reject the resulting promise.
+
+
+> Advanced usage: Internally, the `HappyEyeBallsConnector` relies on a `Resolver` to
+look up the IP addresses for the given hostname.
+It will then replace the hostname in the destination URI with this IP's and
+append a `hostname` query parameter and pass this updated URI to the underlying
+connector. 
+The Happy Eye Balls algorithm describes looking the IPv6 and IPv4 address for 
+the given hostname so this connector sends out two DNS lookups for the A and 
+AAAA records. It then uses all IP addresses (both v6 and v4) and tries to 
+connect to all of them with a 50ms interval in between. Alterating between IPv6 
+and IPv4 addresses. When a connection is established all the other DNS lookups 
+and connection attempts are cancelled.
 
 #### DnsConnector
 
