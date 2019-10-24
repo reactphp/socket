@@ -977,7 +977,7 @@ $connector->connect('localhost:80')->then(function (React\Socket\ConnectionInter
 ```
 
 By default, the `tcp://` and `tls://` URI schemes will use timeout value that
-repects your `default_socket_timeout` ini setting (which defaults to 60s).
+respects your `default_socket_timeout` ini setting (which defaults to 60s).
 If you want a custom timeout value, you can simply pass this like this:
 
 ```php
