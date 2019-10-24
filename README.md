@@ -1061,7 +1061,7 @@ pass an instance implementing the `ConnectorInterface` like this:
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
 $resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
-$tcp = new React\Socket\DnsConnector(new React\Socket\TcpConnector($loop), $resolver);
+$tcp = new React\Socket\HappyEyeBallsConnector($loop, new React\Socket\TcpConnector($loop), $resolver);
 
 $tls = new React\Socket\SecureConnector($tcp, $loop);
 
@@ -1093,6 +1093,17 @@ $connector->connect('google.com:80')->then(function (React\Socket\ConnectionInte
   explicitly pass a `tls://` connector like above instead.
   Internally, the `tcp://` and `tls://` connectors will always be wrapped by
   `TimeoutConnector`, unless you disable timeouts like in the above example.
+
+> Internally the `HappyEyeBallsConnector` has replaced the `DnsConnector` as default 
+  resolving connector. It is still available as `Connector` has a new option, namely 
+  `happy_eyeballs`, to control which of the two will be used. By default it's `true` 
+  and will use `HappyEyeBallsConnector`, when set to `false` `DnsConnector` is used. 
+  We only recommend doing so when there are any backwards compatible issues on older 
+  systems only supporting IPv4. The `HappyEyeBallsConnector` implements most of 
+  RFC6555 and RFC8305 and will use concurrency to connect to the remote host by
+  attempting to connect over both IPv4 and IPv6 with a priority for IPv6 when 
+  available. Which ever connection attempt succeeds first will be used, the rest 
+  connection attempts will be canceled.
 
 ### Advanced client usage
 
