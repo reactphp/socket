@@ -100,7 +100,8 @@ class ConnectorTest extends TestCase
         $resolver->expects($this->once())->method('resolve')->with('google.com')->willReturn($promise);
 
         $connector = new Connector($loop, array(
-            'dns' => $resolver
+            'dns' => $resolver,
+            'happy_eyeballs' => false,
         ));
 
         $connector->connect('google.com:80');
@@ -120,7 +121,8 @@ class ConnectorTest extends TestCase
 
         $connector = new Connector($loop, array(
             'tcp' => $tcp,
-            'dns' => $resolver
+            'dns' => $resolver,
+            'happy_eyeballs' => false,
         ));
 
         $connector->connect('tcp://google.com:80');

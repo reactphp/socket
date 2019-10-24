@@ -36,6 +36,7 @@ final class Connector implements ConnectorInterface
 
             'dns' => true,
             'timeout' => true,
+            'happy_eyeballs' => \PHP_VERSION_ID < 70000 ? false : true,
         );
 
         if ($options['timeout'] === true) {
@@ -70,7 +71,11 @@ final class Connector implements ConnectorInterface
                 );
             }
 
-            $tcp = new DnsConnector($tcp, $resolver);
+            if ($options['happy_eyeballs'] === true) {
+                $tcp = new HappyEyeBallsConnector($loop, $tcp, $resolver);
+            } else {
+                $tcp = new DnsConnector($tcp, $resolver);
+            }
         }
 
         if ($options['tcp'] !== false) {
