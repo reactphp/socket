@@ -268,6 +268,7 @@ class TcpConnectorTest extends TestCase
         }
 
         gc_collect_cycles();
+        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $connector = new TcpConnector($loop);

@@ -202,6 +202,7 @@ class DnsConnectorTest extends TestCase
         }
 
         gc_collect_cycles();
+        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
 
         $dns = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());

@@ -124,6 +124,8 @@ class IntegrationTest extends TestCase
         $connector = new Connector($loop, array('timeout' => false));
 
         gc_collect_cycles();
+        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
+
         $promise = $connector->connect('8.8.8.8:80');
         $promise->cancel();
         unset($promise);
