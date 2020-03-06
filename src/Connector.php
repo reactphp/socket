@@ -36,7 +36,7 @@ final class Connector implements ConnectorInterface
 
             'dns' => true,
             'timeout' => true,
-            'happy_eyeballs' => \PHP_VERSION_ID < 70000 ? false : true,
+            'happy_eyeballs' => true,
         );
 
         if ($options['timeout'] === true) {

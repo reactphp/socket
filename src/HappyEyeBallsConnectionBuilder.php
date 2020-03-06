@@ -190,71 +190,49 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function attemptConnection($ip)
     {
-        $promise = null;
-        $that = $this;
+        $uri = '';
 
-        return new Promise\Promise(
-            function ($resolve, $reject) use (&$promise, $that, $ip) {
-                $uri = '';
+        // prepend original scheme if known
+        if (isset($this->parts['scheme'])) {
+            $uri .= $this->parts['scheme'] . '://';
+        }
 
-                // prepend original scheme if known
-                if (isset($that->parts['scheme'])) {
-                    $uri .= $that->parts['scheme'] . '://';
-                }
+        if (\strpos($ip, ':') !== false) {
+            // enclose IPv6 addresses in square brackets before appending port
+            $uri .= '[' . $ip . ']';
+        } else {
+            $uri .= $ip;
+        }
 
-                if (\strpos($ip, ':') !== false) {
-                    // enclose IPv6 addresses in square brackets before appending port
-                    $uri .= '[' . $ip . ']';
-                } else {
-                    $uri .= $ip;
-                }
+        // append original port if known
+        if (isset($this->parts['port'])) {
+            $uri .= ':' . $this->parts['port'];
+        }
 
-                // append original port if known
-                if (isset($that->parts['port'])) {
-                    $uri .= ':' . $that->parts['port'];
-                }
+        // append orignal path if known
+        if (isset($this->parts['path'])) {
+            $uri .= $this->parts['path'];
+        }
 
-                // append orignal path if known
-                if (isset($that->parts['path'])) {
-                    $uri .= $that->parts['path'];
-                }
+        // append original query if known
+        if (isset($this->parts['query'])) {
+            $uri .= '?' . $this->parts['query'];
+        }
 
-                // append original query if known
-                if (isset($that->parts['query'])) {
-                    $uri .= '?' . $that->parts['query'];
-                }
+        // append original hostname as query if resolved via DNS and if
+        // destination URI does not contain "hostname" query param already
+        $args = array();
+        \parse_str(isset($this->parts['query']) ? $this->parts['query'] : '', $args);
+        if ($this->host !== $ip && !isset($args['hostname'])) {
+            $uri .= (isset($this->parts['query']) ? '&' : '?') . 'hostname=' . \rawurlencode($this->host);
+        }
 
-                // append original hostname as query if resolved via DNS and if
-                // destination URI does not contain "hostname" query param already
-                $args = array();
-                \parse_str(isset($that->parts['query']) ? $that->parts['query'] : '', $args);
-                if ($that->host !== $ip && !isset($args['hostname'])) {
-                    $uri .= (isset($that->parts['query']) ? '&' : '?') . 'hostname=' . \rawurlencode($that->host);
-                }
+        // append original fragment if known
+        if (isset($this->parts['fragment'])) {
+            $uri .= '#' . $this->parts['fragment'];
+        }
 
-                // append original fragment if known
-                if (isset($that->parts['fragment'])) {
-                    $uri .= '#' . $that->parts['fragment'];
-                }
-
-                $promise = $that->connector->connect($uri);
-                $promise->then($resolve, $reject);
-            },
-            function ($_, $reject) use (&$promise, $that) {
-                // cancellation should reject connection attempt
-                // (try to) cancel pending connection attempt
-                $reject(new \RuntimeException('Connection to ' . $that->uri . ' cancelled during connection attempt'));
-
-                if ($promise instanceof CancellablePromiseInterface) {
-                    // overwrite callback arguments for PHP7+ only, so they do not show
-                    // up in the Exception trace and do not cause a possible cyclic reference.
-                    $_ = $reject = null;
-
-                    $promise->cancel();
-                    $promise = null;
-                }
-            }
-        );
+        return $this->connector->connect($uri);
     }
 
     /**
