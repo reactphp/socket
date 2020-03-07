@@ -57,9 +57,7 @@ class FunctionalConnectorTest extends TestCase
     public function connectionToRemoteTCP4ServerShouldResultInOurIP()
     {
         if ($this->ipv4() === false) {
-            // IPv4 not supported on this system
-            $this->assertFalse($this->ipv4());
-            return;
+            $this->markTestSkipped('IPv4 connection not supported on this system');
         }
 
         $loop = Factory::create();
@@ -79,9 +77,7 @@ class FunctionalConnectorTest extends TestCase
     public function connectionToRemoteTCP6ServerShouldResultInOurIP()
     {
         if ($this->ipv6() === false) {
-            // IPv6 not supported on this system
-            $this->assertFalse($this->ipv6());
-            return;
+            $this->markTestSkipped('IPv6 connection not supported on this system');
         }
 
         $loop = Factory::create();
@@ -89,72 +85,6 @@ class FunctionalConnectorTest extends TestCase
         $connector = new Connector($loop, array('happy_eyeballs' => true));
 
         $ip = Block\await($this->request('ipv6.tlund.se', $connector), $loop, self::TIMEOUT);
-
-        $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
-        $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
-    }
-
-    /**
-     * @test
-     * @group internet
-     *
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessageRegExp /Connection to ipv6.tlund.se:80 failed/
-     */
-    public function tryingToConnectToAnIPv6OnlyHostWithOutHappyEyeBallsShouldResultInFailure()
-    {
-        $loop = Factory::create();
-
-        $connector = new Connector($loop, array('happy_eyeballs' => false));
-
-        Block\await($this->request('ipv6.tlund.se', $connector), $loop, self::TIMEOUT);
-    }
-
-    /**
-     * @test
-     * @group internet
-     *
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessageRegExp /Connection to tcp:\/\/193.15.228.195:80 failed:/
-     */
-    public function connectingDirectlyToAnIPv4AddressShouldFailWhenIPv4IsntAvailable()
-    {
-        if ($this->ipv4() === true) {
-            // IPv4 supported on this system
-            throw new \RuntimeException('Connection to tcp://193.15.228.195:80 failed:');
-        }
-
-        $loop = Factory::create();
-
-        $connector = new Connector($loop);
-
-        $host = current(dns_get_record('ipv4.tlund.se', DNS_A));
-        $host = $host['ip'];
-        Block\await($this->request($host, $connector), $loop, self::TIMEOUT);
-    }
-
-    /**
-     * @test
-     * @group internet
-     *
-     * @expectedException \RuntimeException
-     * @expectedExceptionMessageRegExp /Connection to tcp:\/\/\[2a00:801:f::195\]:80 failed:/
-     */
-    public function connectingDirectlyToAnIPv6AddressShouldFailWhenIPv6IsntAvailable()
-    {
-        if ($this->ipv6() === true) {
-            // IPv6 supported on this system
-            throw new \RuntimeException('Connection to tcp://[2a00:801:f::195]:80 failed:');
-        }
-
-        $loop = Factory::create();
-
-        $connector = new Connector($loop);
-
-        $host = current(dns_get_record('ipv6.tlund.se', DNS_AAAA));
-        $host = $host['ipv6'];
-        $host = '[' . $host . ']';
-        $ip = Block\await($this->request($host, $connector), $loop, self::TIMEOUT);
 
         $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
         $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
