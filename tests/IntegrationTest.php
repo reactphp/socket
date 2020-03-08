@@ -203,7 +203,7 @@ class IntegrationTest extends TestCase
             }
         );
 
-        // run loop for short period to ensure we detect connection timeout error
+        // run loop for short period to ensure we detect a connection timeout error
         Block\sleep(0.01, $loop);
         if ($wait) {
             Block\sleep(0.2, $loop);
@@ -236,7 +236,7 @@ class IntegrationTest extends TestCase
             }
         );
 
-        // run loop for short period to ensure we detect connection timeout error
+        // run loop for short period to ensure we detect a connection timeout error
         Block\sleep(0.01, $loop);
         if ($wait) {
             Block\sleep(0.2, $loop);
@@ -269,12 +269,15 @@ class IntegrationTest extends TestCase
             }
         );
 
-        // run loop for short period to ensure we detect DNS error
+        // run loop for short period to ensure we detect a DNS error
         Block\sleep(0.01, $loop);
         if ($wait) {
             Block\sleep(0.2, $loop);
             if ($wait) {
-                $this->fail('Connection attempt did not fail');
+                Block\sleep(2.0, $loop);
+                if ($wait) {
+                    $this->fail('Connection attempt did not fail');
+                }
             }
         }
         unset($promise);
@@ -309,12 +312,15 @@ class IntegrationTest extends TestCase
             }
         );
 
-        // run loop for short period to ensure we detect DNS error
+        // run loop for short period to ensure we detect a TLS error
         Block\sleep(0.1, $loop);
         if ($wait) {
             Block\sleep(0.4, $loop);
             if ($wait) {
-                $this->fail('Connection attempt did not fail');
+                Block\sleep(self::TIMEOUT - 0.5, $loop);
+                if ($wait) {
+                    $this->fail('Connection attempt did not fail');
+                }
             }
         }
         unset($promise);

@@ -927,6 +927,22 @@ also shares all of their features and implementation details.
 If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ConnectorInterface`](#connectorinterface) instead.
 
+As of `v1.4.0`, the `Connector` class defaults to using the
+[happy eyeballs algorithm](https://en.wikipedia.org/wiki/Happy_Eyeballs) to
+automatically connect over IPv4 or IPv6 when a hostname is given.
+This automatically attempts to connect using both IPv4 and IPv6 at the same time
+(preferring IPv6), thus avoiding the usual problems faced by users with imperfect
+IPv6 connections or setups.
+If you want to revert to the old behavior of only doing an IPv4 lookup and
+only attempt a single IPv4 connection, you can set up the `Connector` like this:
+
+```php
+$connector = new React\Socket\Connector($loop, array(
+    'happy_eyeballs' => false
+));
+```
+
+Similarly, you can also affect the default DNS behavior as follows.
 The `Connector` class will try to detect your system DNS settings (and uses
 Google's public DNS server `8.8.8.8` as a fallback if unable to determine your
 system settings) to resolve all public hostnames into underlying IP addresses by
@@ -977,7 +993,7 @@ $connector->connect('localhost:80')->then(function (React\Socket\ConnectionInter
 ```
 
 By default, the `tcp://` and `tls://` URI schemes will use timeout value that
-repects your `default_socket_timeout` ini setting (which defaults to 60s).
+respects your `default_socket_timeout` ini setting (which defaults to 60s).
 If you want a custom timeout value, you can simply pass this like this:
 
 ```php
@@ -1061,7 +1077,7 @@ pass an instance implementing the `ConnectorInterface` like this:
 ```php
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
 $resolver = $dnsResolverFactory->createCached('127.0.1.1', $loop);
-$tcp = new React\Socket\DnsConnector(new React\Socket\TcpConnector($loop), $resolver);
+$tcp = new React\Socket\HappyEyeBallsConnector($loop, new React\Socket\TcpConnector($loop), $resolver);
 
 $tls = new React\Socket\SecureConnector($tcp, $loop);
 
