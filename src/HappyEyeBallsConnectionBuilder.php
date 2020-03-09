@@ -48,8 +48,9 @@ final class HappyEyeBallsConnectionBuilder
 
     public function connect()
     {
+        $timer = null;
         $that = $this;
-        return new Promise\Promise(function ($resolve, $reject) use ($that) {
+        return new Promise\Promise(function ($resolve, $reject) use ($that, &$timer) {
             $lookupResolve = function ($type) use ($that, $resolve, $reject) {
                 return function (array $ips) use ($that, $type, $resolve, $reject) {
                     unset($that->resolverPromises[$type]);
@@ -66,7 +67,6 @@ final class HappyEyeBallsConnectionBuilder
             };
 
             $ipv4Deferred = null;
-            $timer = null;
             $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA))->then(function () use (&$ipv4Deferred) {
                 if ($ipv4Deferred instanceof Promise\Deferred) {
                     $ipv4Deferred->resolve();
@@ -99,15 +99,13 @@ final class HappyEyeBallsConnectionBuilder
                 return $deferred->promise();
             })->then($lookupResolve(Message::TYPE_A));
         }, function ($_, $reject) use ($that, &$timer) {
-            $that->cleanUp();
+            $reject(new \RuntimeException('Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : '')));
+            $_ = $reject = null;
 
+            $that->cleanUp();
             if ($timer instanceof TimerInterface) {
                 $that->loop->cancelTimer($timer);
             }
-
-            $reject(new \RuntimeException('Connection to ' . $that->uri . ' cancelled during DNS lookup'));
-
-            $_ = $reject = null;
         });
     }
 
