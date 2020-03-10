@@ -14,8 +14,21 @@ use React\Promise\CancellablePromiseInterface;
  */
 final class HappyEyeBallsConnectionBuilder
 {
-    const CONNECT_INTERVAL = 0.1;
-    const RESOLVE_WAIT = 0.5;
+    /**
+     * As long as we haven't connected yet keep popping an IP address of the connect queue until one of them
+     * succeeds or they all fail. We will wait 100ms between connection attempts as per RFC.
+     *
+     * @link https://tools.ietf.org/html/rfc8305#section-5
+     */
+    const CONNECTION_ATTEMPT_DELAY = 0.1;
+
+    /**
+     * Delay `A` lookup by 50ms sending out connection to IPv4 addresses when IPv6 records haven't
+     * resolved yet as per RFC.
+     *
+     * @link https://tools.ietf.org/html/rfc8305#section-3
+     */
+    const RESOLUTION_DELAY = 0.05;
 
     public $loop;
     public $connector;
@@ -29,7 +42,7 @@ final class HappyEyeBallsConnectionBuilder
     public $resolverPromises = array();
     public $connectionPromises = array();
     public $connectQueue = array();
-    public $timer;
+    public $nextAttemptTimer;
     public $parts;
     public $ipsCount = 0;
     public $failureCount = 0;
@@ -58,7 +71,7 @@ final class HappyEyeBallsConnectionBuilder
 
                     $that->mixIpsIntoConnectQueue($ips);
 
-                    if ($that->timer instanceof TimerInterface) {
+                    if ($that->nextAttemptTimer instanceof TimerInterface) {
                         return;
                     }
 
@@ -66,32 +79,20 @@ final class HappyEyeBallsConnectionBuilder
                 };
             };
 
-            $ipv4Deferred = null;
-            $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA))->then(function () use (&$ipv4Deferred) {
-                if ($ipv4Deferred instanceof Promise\Deferred) {
-                    $ipv4Deferred->resolve();
-                }
-            });
-            $that->resolverPromises[Message::TYPE_A] = $that->resolve(Message::TYPE_A, $reject)->then(function ($ips) use ($that, &$ipv4Deferred, &$timer) {
+            $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA));
+            $that->resolverPromises[Message::TYPE_A] = $that->resolve(Message::TYPE_A, $reject)->then(function ($ips) use ($that, &$timer) {
+                // happy path: IPv6 has resolved already, continue with IPv4 addresses
                 if ($that->resolved[Message::TYPE_AAAA] === true) {
-                    return Promise\resolve($ips);
+                    return $ips;
                 }
 
-                /**
-                 * Delay A lookup by 50ms sending out connection to IPv4 addresses when IPv6 records haven't
-                 * resolved yet as per RFC.
-                 *
-                 * @link https://tools.ietf.org/html/rfc8305#section-3
-                 */
-                $ipv4Deferred = new Promise\Deferred();
+                // Otherwise delay processing IPv4 lookup until short timer passes or IPv6 resolves in the meantime
                 $deferred = new Promise\Deferred();
-
-                $timer = $that->loop->addTimer($that::RESOLVE_WAIT, function () use ($deferred, $ips) {
-                    $ipv4Deferred = null;
+                $timer = $that->loop->addTimer($that::RESOLUTION_DELAY, function () use ($deferred, $ips) {
                     $deferred->resolve($ips);
                 });
 
-                $ipv4Deferred->promise()->then(function () use ($that, &$timer, $deferred, $ips) {
+                $that->resolverPromises[Message::TYPE_AAAA]->then(function () use ($that, $timer, $deferred, $ips) {
                     $that->loop->cancelTimer($timer);
                     $deferred->resolve($ips);
                 });
@@ -124,7 +125,6 @@ final class HappyEyeBallsConnectionBuilder
             }
 
             if ($that->ipsCount === 0) {
-                $that->resolved = null;
                 $that->resolverPromises = null;
                 $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed during DNS lookup: DNS error'));
             }
@@ -136,9 +136,9 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function check($resolve, $reject)
     {
-        if (\count($this->connectQueue) === 0 && $this->resolved[Message::TYPE_A] === true && $this->resolved[Message::TYPE_AAAA] === true && $this->timer instanceof TimerInterface) {
-            $this->loop->cancelTimer($this->timer);
-            $this->timer = null;
+        if (\count($this->connectQueue) === 0 && $this->resolved[Message::TYPE_A] === true && $this->resolved[Message::TYPE_AAAA] === true && $this->nextAttemptTimer instanceof TimerInterface) {
+            $this->loop->cancelTimer($this->nextAttemptTimer);
+            $this->nextAttemptTimer = null;
         }
 
         if (\count($this->connectQueue) === 0) {
@@ -154,7 +154,7 @@ final class HappyEyeBallsConnectionBuilder
             $that->cleanUp();
 
             $resolve($connection);
-        }, function () use ($that, $ip, $resolve, $reject) {
+        }, function () use ($that, $ip, $reject) {
             unset($that->connectionPromises[$ip]);
 
             $that->failureCount++;
@@ -176,8 +176,8 @@ final class HappyEyeBallsConnectionBuilder
          *
          * @link https://tools.ietf.org/html/rfc8305#section-5
          */
-        if ((\count($this->connectQueue) > 0 || ($this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false)) && $this->timer === null) {
-            $this->timer = $this->loop->addPeriodicTimer(self::CONNECT_INTERVAL, function () use ($that, $resolve, $reject) {
+        if ((\count($this->connectQueue) > 0 || ($this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false)) && $this->nextAttemptTimer === null) {
+            $this->nextAttemptTimer = $this->loop->addPeriodicTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($that, $resolve, $reject) {
                 $that->check($resolve, $reject);
             });
         }
@@ -238,23 +238,21 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function cleanUp()
     {
-        /** @var CancellablePromiseInterface $promise */
-        foreach ($this->connectionPromises as $index => $connectionPromise) {
+        foreach ($this->connectionPromises as $connectionPromise) {
             if ($connectionPromise instanceof CancellablePromiseInterface) {
                 $connectionPromise->cancel();
             }
         }
 
-        /** @var CancellablePromiseInterface $promise */
-        foreach ($this->resolverPromises as $index => $resolverPromise) {
+        foreach ($this->resolverPromises as $resolverPromise) {
             if ($resolverPromise instanceof CancellablePromiseInterface) {
                 $resolverPromise->cancel();
             }
         }
 
-        if ($this->timer instanceof TimerInterface) {
-            $this->loop->cancelTimer($this->timer);
-            $this->timer = null;
+        if ($this->nextAttemptTimer instanceof TimerInterface) {
+            $this->loop->cancelTimer($this->nextAttemptTimer);
+            $this->nextAttemptTimer = null;
         }
     }
 

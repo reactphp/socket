@@ -56,15 +56,16 @@ class FunctionalConnectorTest extends TestCase
      */
     public function connectionToRemoteTCP4ServerShouldResultInOurIP()
     {
-        if ($this->ipv4() === false) {
-            $this->markTestSkipped('IPv4 connection not supported on this system');
-        }
-
         $loop = Factory::create();
 
         $connector = new Connector($loop, array('happy_eyeballs' => true));
 
-        $ip = Block\await($this->request('ipv4.tlund.se', $connector), $loop, self::TIMEOUT);
+        try {
+            $ip = Block\await($this->request('ipv4.tlund.se', $connector), $loop, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $this->checkIpv4();
+            throw $e;
+        }
 
         $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
         $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
@@ -76,15 +77,16 @@ class FunctionalConnectorTest extends TestCase
      */
     public function connectionToRemoteTCP6ServerShouldResultInOurIP()
     {
-        if ($this->ipv6() === false) {
-            $this->markTestSkipped('IPv6 connection not supported on this system');
-        }
-
         $loop = Factory::create();
 
         $connector = new Connector($loop, array('happy_eyeballs' => true));
 
-        $ip = Block\await($this->request('ipv6.tlund.se', $connector), $loop, self::TIMEOUT);
+        try {
+            $ip = Block\await($this->request('ipv6.tlund.se', $connector), $loop, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $this->checkIpv6();
+            throw $e;
+        }
 
         $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
         $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
@@ -105,7 +107,7 @@ class FunctionalConnectorTest extends TestCase
     {
         $that = $this;
         return $connector->connect($host . ':80')->then(function (ConnectionInterface $connection) use ($host) {
-            $connection->write("GET / HTTP/1.1\r\nHost: " . $host . "\r\n\r\n");
+            $connection->write("GET / HTTP/1.1\r\nHost: " . $host . "\r\nConnection: close\r\n\r\n");
 
             return \React\Promise\Stream\buffer($connection);
         })->then(function ($response) use ($that) {
@@ -113,25 +115,25 @@ class FunctionalConnectorTest extends TestCase
         });
     }
 
-    private function ipv4()
+    private function checkIpv4()
     {
-        if ($this->ipv4 !== null) {
-            return $this->ipv4;
+        if ($this->ipv4 === null) {
+            $this->ipv4 = !!@file_get_contents('http://ipv4.tlund.se/');
         }
 
-        $this->ipv4 = !!@file_get_contents('http://ipv4.tlund.se/');
-
-        return $this->ipv4;
+        if (!$this->ipv4) {
+            $this->markTestSkipped('IPv4 connection not supported on this system');
+        }
     }
 
-    private function ipv6()
+    private function checkIpv6()
     {
-        if ($this->ipv6 !== null) {
-            return $this->ipv6;
+        if ($this->ipv6 === null) {
+            $this->ipv6 = !!@file_get_contents('http://ipv6.tlund.se/');
         }
 
-        $this->ipv6 = !!@file_get_contents('http://ipv6.tlund.se/');
-
-        return $this->ipv6;
+        if (!$this->ipv6) {
+            $this->markTestSkipped('IPv6 connection not supported on this system');
+        }
     }
 }

@@ -118,10 +118,8 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
     public function testCancelConnectWillRejectPromiseAndCancelBothDnsLookups()
     {
-        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->never())->method('addTimer');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->never())->method('connect');
