@@ -36,6 +36,42 @@ class FunctionalConnectorTest extends TestCase
     }
 
     /**
+     * @group internet
+     */
+    public function testConnectTwiceWithoutHappyEyeBallsOnlySendsSingleDnsQueryDueToLocalDnsCache()
+    {
+        $loop = Factory::create();
+
+        $socket = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
+
+        $connector = new Connector($loop, array(
+            'dns' => 'udp://' . stream_socket_get_name($socket, false),
+            'happy_eyeballs' => false
+        ));
+
+        // minimal DNS proxy stub which forwards DNS messages to actual DNS server
+        $received = 0;
+        $loop->addReadStream($socket, function ($socket) use (&$received) {
+            $request = stream_socket_recvfrom($socket, 65536, 0, $peer);
+
+            $client = stream_socket_client('udp://8.8.8.8:53');
+            fwrite($client, $request);
+            $response = fread($client, 65536);
+
+            stream_socket_sendto($socket, $response, 0, $peer);
+            ++$received;
+        });
+
+        $connection = Block\await($connector->connect('example.com:80'), $loop);
+        $connection->close();
+        $this->assertEquals(1, $received);
+
+        $connection = Block\await($connector->connect('example.com:80'), $loop);
+        $connection->close();
+        $this->assertEquals(1, $received);
+    }
+
+    /**
      * @test
      * @group internet
      */

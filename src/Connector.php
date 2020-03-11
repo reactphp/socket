@@ -65,7 +65,7 @@ final class Connector implements ConnectorInterface
                 }
 
                 $factory = new DnsFactory();
-                $resolver = $factory->create(
+                $resolver = $factory->createCached(
                     $server,
                     $loop
                 );
