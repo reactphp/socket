@@ -417,54 +417,6 @@ class HappyEyeBallsConnectorTest extends TestCase
     /**
      * @dataProvider provideIpvAddresses
      */
-    public function testCancelDuringTcpConnectionCancelsTcpConnectionAfterDnsIsResolved(array $ipv6, array $ipv4)
-    {
-        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with($this->equalTo('example.com'), $this->anything())->willReturn(Promise\resolve($ipv6));
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with($this->equalTo('example.com'), $this->anything())->willReturn(Promise\resolve($ipv4));
-        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(':80?hostname=example.com'))->willReturn($pending);
-
-        $promise = $this->connector->connect('example.com:80');
-        $this->loop->addTimer(0.06 * (count($ipv4) + count($ipv6)), function () use ($promise) {
-            $promise->cancel();
-        });
-
-        $this->loop->run();
-    }
-
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage All attempts to connect to "example.com" have failed
-     * @dataProvider provideIpvAddresses
-     */
-    public function testCancelDuringTcpConnectionCancelsTcpConnectionWithTcpRejectionAfterDnsIsResolved(array $ipv6, array $ipv4)
-    {
-        $first = new Deferred();
-        $second = new Deferred();
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with($this->equalTo('example.com'), Message::TYPE_AAAA)->willReturn($first->promise());
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with($this->equalTo('example.com'), Message::TYPE_A)->willReturn($second->promise());
-        $pending = new Promise\Promise(function () { }, function () {
-            throw new \RuntimeException('Connection cancelled');
-        });
-        $this->tcp->expects($this->exactly(count($ipv6) + count($ipv4)))->method('connect')->with($this->stringContains(':80?hostname=example.com'))->willReturn($pending);
-
-        $promise = $this->connector->connect('example.com:80');
-        $first->resolve($ipv6);
-        $second->resolve($ipv4);
-
-        $that = $this;
-        $this->loop->addTimer(0.8, function () use ($promise, $that) {
-            $promise->cancel();
-
-            $that->throwRejection($promise);
-        });
-
-        $this->loop->run();
-    }
-
-    /**
-     * @dataProvider provideIpvAddresses
-     */
     public function testShouldConnectOverIpv4WhenIpv6LookupFails(array $ipv6, array $ipv4)
     {
         $this->resolver->expects($this->at(0))->method('resolveAll')->with($this->equalTo('example.com'), Message::TYPE_AAAA)->willReturn(Promise\reject(new \Exception('failure')));
