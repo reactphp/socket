@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.4.0 (2020-03-12)
+
+A major new feature lease, see [**release announcement**](https://clue.engineering/2020/introducing-ipv6-for-reactphp).
+
+*   Feature: Add IPv6 support to `Connector` (implement "Happy Eyeballs" algorithm to support IPv6 probing).
+    IPv6 support is turned on by default, use new `happy_eyeballs` option in `Connector` to toggle behavior.
+    (#196, #224 and #225 by @WyriHaximus and @clue)
+
+*   Feature: Default to using DNS cache (with max 256 entries) for `Connector`.
+    (#226 by @clue)
+
+*   Add `.gitattributes` to exclude dev files from exports and some minor code style fixes.
+    (#219 by @reedy and #218 by @mmoreram)
+
+*   Improve test suite to fix failing test cases when using new DNS component,
+    significantly improve test performance by awaiting events instead of sleeping,
+    exclude TLS 1.3 test on PHP 7.3, run tests on PHP 7.4 and simplify test matrix.
+    (#208, #209, #210, #217 and #223 by @clue)
+
 ## 1.3.0 (2019-07-10)
 
 *   Feature: Forward compatibility with upcoming stable DNS component.
