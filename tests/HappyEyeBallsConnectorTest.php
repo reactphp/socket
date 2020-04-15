@@ -338,13 +338,13 @@ class HappyEyeBallsConnectorTest extends TestCase
 
     /**
      * @expectedException RuntimeException
-     * @expectedExceptionMessage All attempts to connect to "example.com" have failed
+     * @expectedExceptionMessage Connection to example.com:80 failed: Connection refused
      * @dataProvider provideIpvAddresses
      */
     public function testRejectsWithTcpConnectorRejectionAfterDnsIsResolved(array $ipv6, array $ipv4)
     {
         $that = $this;
-        $promise = Promise\reject(new \RuntimeException('Connection failed'));
+        $promise = Promise\reject(new \RuntimeException('Connection refused'));
         $this->resolver->expects($this->at(0))->method('resolveAll')->with($this->equalTo('example.com'), $this->anything())->willReturn(Promise\resolve($ipv6));
         $this->resolver->expects($this->at(1))->method('resolveAll')->with($this->equalTo('example.com'), $this->anything())->willReturn(Promise\resolve($ipv4));
         $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(':80?hostname=example.com'))->willReturn($promise);

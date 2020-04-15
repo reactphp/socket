@@ -293,6 +293,44 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $deferred->resolve(array('::1'));
     }
 
+    public function testConnectWillRejectWhenOnlyTcpConnectionRejectsAndCancelNextAttemptTimerImmediately()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://[::1]:80?hostname=reactphp.org')->willReturn($deferred->promise());
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1')),
+            \React\Promise\reject(new \RuntimeException('ignored'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('Connection refused'));
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Connection refused', $exception->getMessage());
+    }
+
     public function testCancelConnectWillRejectPromiseAndCancelBothDnsLookups()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();

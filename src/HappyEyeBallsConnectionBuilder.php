@@ -152,7 +152,7 @@ final class HappyEyeBallsConnectionBuilder
             $that->cleanUp();
 
             $resolve($connection);
-        }, function () use ($that, $ip, $reject) {
+        }, function (\Exception $e) use ($that, $ip, $reject) {
             unset($that->connectionPromises[$ip]);
 
             $that->failureCount++;
@@ -164,7 +164,7 @@ final class HappyEyeBallsConnectionBuilder
             if ($that->ipsCount === $that->failureCount) {
                 $that->cleanUp();
 
-                $reject(new \RuntimeException('All attempts to connect to "' . $that->host . '" have failed'));
+                $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed: ' . $e->getMessage()));
             }
         });
 
