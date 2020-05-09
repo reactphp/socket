@@ -148,6 +148,44 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
     }
 
+    public function testClientUsesTls10WhenCryptoMethodIsExplicitlyConfiguredByClient()
+    {
+        if (PHP_VERSION_ID < 70000) {
+            $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
+        }
+
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $server = new SecureServer($server, $loop, array(
+            'local_cert' => __DIR__ . '/../examples/localhost.pem'
+        ));
+
+        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+            'verify_peer' => false,
+            'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
+        ));
+        $promise = $connector->connect($server->getAddress());
+
+        /* @var ConnectionInterface $client */
+        try {
+            $client = Block\await($promise, $loop, self::TIMEOUT);
+        } catch (\RuntimeException $e) {
+            if (strpos($e->getMessage(), 'no protocols available') !== false) {
+                $this->markTestSkipped('TLS v1.0 not available on this system');
+            }
+
+            throw $e;
+        }
+
+        $this->assertInstanceOf('React\Socket\Connection', $client);
+        $this->assertTrue(isset($client->stream));
+
+        $meta = stream_get_meta_data($client->stream);
+        $this->assertTrue(isset($meta['crypto']['protocol']));
+        $this->assertEquals('TLSv1', $meta['crypto']['protocol']);
+    }
+
     public function testServerEmitsConnectionForClientConnection()
     {
         $loop = Factory::create();
@@ -393,6 +431,7 @@ class FunctionalSecureServerTest extends TestCase
 
     /**
      * @requires PHP 5.6
+     * @depends testClientUsesTls10WhenCryptoMethodIsExplicitlyConfiguredByClient
      */
     public function testEmitsConnectionForNewTlsv11Connection()
     {
@@ -416,6 +455,7 @@ class FunctionalSecureServerTest extends TestCase
 
     /**
      * @requires PHP 5.6
+     * @depends testClientUsesTls10WhenCryptoMethodIsExplicitlyConfiguredByClient
      */
     public function testEmitsErrorForClientWithTlsVersionMismatch()
     {
