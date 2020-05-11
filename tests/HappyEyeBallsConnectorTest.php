@@ -176,7 +176,7 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->connector->connect('scheme://google.com:80/?hostname=google.com');
 
         $this->loop->addTimer(0.07, function () use ($deferred) {
-            $deferred->reject();
+            $deferred->reject(new \RuntimeException());
         });
 
         $this->loop->run();
@@ -196,7 +196,7 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->connector->connect('scheme://google.com:80/?hostname=google.com');
 
         $this->loop->addTimer(0.07, function () use ($deferred) {
-            $deferred->reject();
+            $deferred->reject(new \RuntimeException());
         });
 
         $this->loop->run();

@@ -80,7 +80,7 @@ final class HappyEyeBallsConnectionBuilder
             };
 
             $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA));
-            $that->resolverPromises[Message::TYPE_A] = $that->resolve(Message::TYPE_A, $reject)->then(function ($ips) use ($that, &$timer) {
+            $that->resolverPromises[Message::TYPE_A] = $that->resolve(Message::TYPE_A, $reject)->then(function (array $ips) use ($that, &$timer) {
                 // happy path: IPv6 has resolved already, continue with IPv4 addresses
                 if ($that->resolved[Message::TYPE_AAAA] === true) {
                     return $ips;
@@ -112,22 +112,24 @@ final class HappyEyeBallsConnectionBuilder
 
     /**
      * @internal
+     * @param int      $type   DNS query type
+     * @param callable $reject
+     * @return \React\Promise\PromiseInterface<string[],\Exception> Returns a promise
+     *     that resolves list of IP addresses on success or rejects with an \Exception on error.
      */
     public function resolve($type, $reject)
     {
         $that = $this;
-        return $that->resolver->resolveAll($that->host, $type)->then(null, function () use ($type, $reject, $that) {
+        return $that->resolver->resolveAll($that->host, $type)->then(null, function (\Exception $e) use ($type, $reject, $that) {
             unset($that->resolverPromises[$type]);
             $that->resolved[$type] = true;
 
-            if ($that->hasBeenResolved() === false) {
-                return;
+            if ($that->hasBeenResolved() && $that->ipsCount === 0) {
+                $that->resolverPromises = null;
+                $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed during DNS lookup: ' . $e->getMessage()));
             }
 
-            if ($that->ipsCount === 0) {
-                $that->resolverPromises = null;
-                $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed during DNS lookup: DNS error'));
-            }
+            throw $e;
         });
     }
 

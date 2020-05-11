@@ -32,6 +32,39 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder->connect();
     }
 
+    public function testConnectWillRejectWhenBothDnsLookupsReject()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->never())->method('connect');
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturn(new Promise(function () {
+            throw new \RuntimeException('DNS lookup error');
+        }));
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup: DNS lookup error', $exception->getMessage());
+    }
+
     public function testConnectWillStartTimerWhenIpv4ResolvesAndIpv6IsPending()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
