@@ -71,11 +71,10 @@ final class HappyEyeBallsConnectionBuilder
 
                     $that->mixIpsIntoConnectQueue($ips);
 
-                    if ($that->nextAttemptTimer instanceof TimerInterface) {
-                        return;
+                    // start next connection attempt if not already awaiting next
+                    if ($that->nextAttemptTimer === null && $that->connectQueue) {
+                        $that->check($resolve, $reject);
                     }
-
-                    $that->check($resolve, $reject);
                 };
             };
 
@@ -124,6 +123,12 @@ final class HappyEyeBallsConnectionBuilder
             unset($that->resolverPromises[$type]);
             $that->resolved[$type] = true;
 
+            // cancel next attempt timer when there are no more IPs to connect to anymore
+            if ($that->nextAttemptTimer !== null && !$that->connectQueue) {
+                $that->loop->cancelTimer($that->nextAttemptTimer);
+                $that->nextAttemptTimer = null;
+            }
+
             if ($that->hasBeenResolved() && $that->ipsCount === 0) {
                 $that->resolverPromises = null;
                 $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed during DNS lookup: ' . $e->getMessage()));
@@ -138,15 +143,6 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function check($resolve, $reject)
     {
-        if (\count($this->connectQueue) === 0 && $this->resolved[Message::TYPE_A] === true && $this->resolved[Message::TYPE_AAAA] === true && $this->nextAttemptTimer instanceof TimerInterface) {
-            $this->loop->cancelTimer($this->nextAttemptTimer);
-            $this->nextAttemptTimer = null;
-        }
-
-        if (\count($this->connectQueue) === 0) {
-            return;
-        }
-
         $ip = \array_shift($this->connectQueue);
 
         $that = $this;
@@ -156,7 +152,7 @@ final class HappyEyeBallsConnectionBuilder
             $that->cleanUp();
 
             $resolve($connection);
-        }, function () use ($that, $ip, $reject) {
+        }, function (\Exception $e) use ($that, $ip, $reject) {
             unset($that->connectionPromises[$ip]);
 
             $that->failureCount++;
@@ -168,19 +164,19 @@ final class HappyEyeBallsConnectionBuilder
             if ($that->ipsCount === $that->failureCount) {
                 $that->cleanUp();
 
-                $reject(new \RuntimeException('All attempts to connect to "' . $that->host . '" have failed'));
+                $reject(new \RuntimeException('Connection to ' . $that->uri . ' failed: ' . $e->getMessage()));
             }
         });
 
-        /**
-         * As long as we haven't connected yet keep popping an IP address of the connect queue until one of them
-         * succeeds or they all fail. We will wait 100ms between connection attempts as per RFC.
-         *
-         * @link https://tools.ietf.org/html/rfc8305#section-5
-         */
-        if ((\count($this->connectQueue) > 0 || ($this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false)) && $this->nextAttemptTimer === null) {
-            $this->nextAttemptTimer = $this->loop->addPeriodicTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($that, $resolve, $reject) {
-                $that->check($resolve, $reject);
+        // Allow next connection attempt in 100ms: https://tools.ietf.org/html/rfc8305#section-5
+        // Only start timer when more IPs are queued or when DNS query is still pending (might add more IPs)
+        if (\count($this->connectQueue) > 0 || $this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false) {
+            $this->nextAttemptTimer = $this->loop->addTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($that, $resolve, $reject) {
+                $that->nextAttemptTimer = null;
+
+                if ($that->connectQueue) {
+                    $that->check($resolve, $reject);
+                }
             });
         }
     }
