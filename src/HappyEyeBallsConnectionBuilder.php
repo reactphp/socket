@@ -145,16 +145,20 @@ final class HappyEyeBallsConnectionBuilder
     {
         $ip = \array_shift($this->connectQueue);
 
+        // start connection attempt and remember array position to later unset again
+        $this->connectionPromises[] = $this->attemptConnection($ip);
+        \end($this->connectionPromises);
+        $index = \key($this->connectionPromises);
+
         $that = $this;
-        $that->connectionPromises[$ip] = $this->attemptConnection($ip);
-        $that->connectionPromises[$ip]->then(function ($connection) use ($that, $ip, $resolve) {
-            unset($that->connectionPromises[$ip]);
+        $that->connectionPromises[$index]->then(function ($connection) use ($that, $index, $resolve) {
+            unset($that->connectionPromises[$index]);
 
             $that->cleanUp();
 
             $resolve($connection);
-        }, function (\Exception $e) use ($that, $ip, $resolve, $reject) {
-            unset($that->connectionPromises[$ip]);
+        }, function (\Exception $e) use ($that, $index, $resolve, $reject) {
+            unset($that->connectionPromises[$index]);
 
             $that->failureCount++;
 
