@@ -621,4 +621,31 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder->cleanUp();
     }
+
+    public function testCleanUpCancelsAllPendingConnectionAttemptsWithoutStartingNewAttemptsDueToCancellationRejection()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://[::1]:80/path?test=yes&hostname=reactphp.org#start')->willReturn(new Promise(function () { }, function () {
+            throw new \RuntimeException();
+        }));
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->never())->method('resolveAll');
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $ref = new \ReflectionProperty($builder, 'connectQueue');
+        $ref->setAccessible(true);
+        $ref->setValue($builder, array('::1', '::1'));
+
+        $builder->check($this->expectCallableNever(), function () { });
+
+        $builder->cleanUp();
+    }
 }

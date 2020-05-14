@@ -251,6 +251,9 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function cleanUp()
     {
+        // clear list of outstanding IPs to avoid creating new connections
+        $this->connectQueue = array();
+
         foreach ($this->connectionPromises as $connectionPromise) {
             if ($connectionPromise instanceof CancellablePromiseInterface) {
                 $connectionPromise->cancel();

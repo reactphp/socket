@@ -141,30 +141,6 @@ class HappyEyeBallsConnectorTest extends TestCase
     /**
      * @dataProvider provideIpvAddresses
      */
-    public function testIpv4ResolvesFirstSoButIPv6IsTheFirstToConnect(array $ipv6, array $ipv4)
-    {
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with('google.com', Message::TYPE_AAAA)->will($this->returnValue(Promise\Timer\resolve(0.001, $this->loop)->then(function () use ($ipv6) {
-            return Promise\resolve($ipv6);
-        })));
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with('google.com', Message::TYPE_A)->will($this->returnValue(Promise\resolve($ipv4)));
-        $i = 0;
-        while (count($ipv6) > 0 || count($ipv4) > 0) {
-            if (count($ipv6) > 0) {
-                $this->tcp->expects($this->at($i++))->method('connect')->with($this->equalTo('scheme://[' . array_shift($ipv6) . ']:80/?hostname=google.com'))->will($this->returnValue(Promise\resolve()));
-            }
-            if (count($ipv4) > 0) {
-                $this->tcp->expects($this->at($i++))->method('connect')->with($this->equalTo('scheme://' . array_shift($ipv4) . ':80/?hostname=google.com'))->will($this->returnValue(Promise\resolve()));
-            }
-        }
-
-        $this->connector->connect('scheme://google.com:80/?hostname=google.com');
-
-        $this->loop->run();
-    }
-
-    /**
-     * @dataProvider provideIpvAddresses
-     */
     public function testIpv6ResolvesFirstSoIsTheFirstToConnect(array $ipv6, array $ipv4)
     {
         $deferred = new Deferred();
@@ -198,29 +174,6 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->loop->addTimer(0.07, function () use ($deferred) {
             $deferred->reject(new \RuntimeException());
         });
-
-        $this->loop->run();
-    }
-
-    /**
-     * @dataProvider provideIpvAddresses
-     */
-    public function testAttemptsToConnectBothIpv6AndIpv4Addresses(array $ipv6, array $ipv4)
-    {
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with('google.com', Message::TYPE_AAAA)->will($this->returnValue(Promise\resolve($ipv6)));
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with('google.com', Message::TYPE_A)->will($this->returnValue(Promise\resolve($ipv4)));
-
-        $i = 0;
-        while (count($ipv6) > 0 || count($ipv4) > 0) {
-            if (count($ipv6) > 0) {
-                $this->tcp->expects($this->at($i++))->method('connect')->with($this->equalTo('scheme://[' . array_shift($ipv6) . ']:80/?hostname=google.com'))->will($this->returnValue(Promise\resolve()));
-            }
-            if (count($ipv4) > 0) {
-                $this->tcp->expects($this->at($i++))->method('connect')->with($this->equalTo('scheme://' . array_shift($ipv4) . ':80/?hostname=google.com'))->will($this->returnValue(Promise\resolve()));
-            }
-        }
-
-        $this->connector->connect('scheme://google.com:80/?hostname=google.com');
 
         $this->loop->run();
     }
