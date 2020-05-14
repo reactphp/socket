@@ -152,10 +152,20 @@ final class HappyEyeBallsConnectionBuilder
             $that->cleanUp();
 
             $resolve($connection);
-        }, function (\Exception $e) use ($that, $ip, $reject) {
+        }, function (\Exception $e) use ($that, $ip, $resolve, $reject) {
             unset($that->connectionPromises[$ip]);
 
             $that->failureCount++;
+
+            // start next connection attempt immediately on error
+            if ($that->connectQueue) {
+                if ($that->nextAttemptTimer !== null) {
+                    $that->loop->cancelTimer($that->nextAttemptTimer);
+                    $that->nextAttemptTimer = null;
+                }
+
+                $that->check($resolve, $reject);
+            }
 
             if ($that->hasBeenResolved() === false) {
                 return;
