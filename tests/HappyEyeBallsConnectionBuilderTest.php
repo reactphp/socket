@@ -261,13 +261,12 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
         $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
-        $deferred = new Deferred();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->exactly(2))->method('connect')->withConsecutive(
             array('tcp://[::1]:80?hostname=reactphp.org'),
             array('tcp://[::2]:80?hostname=reactphp.org')
         )->willReturnOnConsecutiveCalls(
-            $deferred->promise(),
+            \React\Promise\reject(new \RuntimeException()),
             new Promise(function () { })
         );
 
@@ -287,8 +286,6 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $builder->connect();
-
-        $deferred->reject(new \RuntimeException());
     }
 
     public function testConnectWillStartConnectingAndWillStartNextConnectionWithoutNewAttemptTimerWhenNextAttemptTimerFiresAfterIpv4Rejected()
@@ -565,5 +562,34 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $builder->attemptConnection('::1');
+    }
+
+    public function testCheckCallsRejectFunctionImmediateWithoutLeavingDanglingPromiseWhenConnectorRejectsImmediately()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://[::1]:80/path?test=yes&hostname=reactphp.org#start')->willReturn(\React\Promise\reject(new \RuntimeException()));
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->never())->method('resolveAll');
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $ref = new \ReflectionProperty($builder, 'connectQueue');
+        $ref->setAccessible(true);
+        $ref->setValue($builder, array('::1'));
+
+        $builder->check($this->expectCallableNever(), function () { });
+
+        $ref = new \ReflectionProperty($builder, 'connectionPromises');
+        $ref->setAccessible(true);
+        $promises = $ref->getValue($builder);
+
+        $this->assertEquals(array(), $promises);
     }
 }
