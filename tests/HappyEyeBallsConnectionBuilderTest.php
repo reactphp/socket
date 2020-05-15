@@ -217,6 +217,77 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $deferred->reject(new \RuntimeException());
     }
 
+    public function testConnectWillStartConnectingWithAttemptTimerWhenIpv6AndIpv4ResolvesAndWillStartNextConnectionAttemptWithoutAttemptTimerImmediatelyWhenFirstConnectionAttemptFails()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(2))->method('connect')->withConsecutive(
+            array('tcp://[::1]:80?hostname=reactphp.org'),
+            array('tcp://127.0.0.1:80?hostname=reactphp.org')
+        )->willReturnOnConsecutiveCalls(
+            $deferred->promise(),
+            new Promise(function () { })
+        );
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1')),
+            \React\Promise\resolve(array('127.0.0.1'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $builder->connect();
+
+        $deferred->reject(new \RuntimeException());
+    }
+
+    public function testConnectWillStartConnectingWithAttemptTimerWhenOnlyIpv6ResolvesAndWillStartNextConnectionAttemptWithoutAttemptTimerImmediatelyWhenFirstConnectionAttemptFails()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(2))->method('connect')->withConsecutive(
+            array('tcp://[::1]:80?hostname=reactphp.org'),
+            array('tcp://[::2]:80?hostname=reactphp.org')
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\reject(new \RuntimeException()),
+            new Promise(function () { })
+        );
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1', '::2')),
+            \React\Promise\reject(new \RuntimeException())
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $builder->connect();
+    }
+
     public function testConnectWillStartConnectingAndWillStartNextConnectionWithoutNewAttemptTimerWhenNextAttemptTimerFiresAfterIpv4Rejected()
     {
         $timer = null;
@@ -491,5 +562,90 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $builder->attemptConnection('::1');
+    }
+
+    public function testCheckCallsRejectFunctionImmediateWithoutLeavingDanglingPromiseWhenConnectorRejectsImmediately()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://[::1]:80/path?test=yes&hostname=reactphp.org#start')->willReturn(\React\Promise\reject(new \RuntimeException()));
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->never())->method('resolveAll');
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $ref = new \ReflectionProperty($builder, 'connectQueue');
+        $ref->setAccessible(true);
+        $ref->setValue($builder, array('::1'));
+
+        $builder->check($this->expectCallableNever(), function () { });
+
+        $ref = new \ReflectionProperty($builder, 'connectionPromises');
+        $ref->setAccessible(true);
+        $promises = $ref->getValue($builder);
+
+        $this->assertEquals(array(), $promises);
+    }
+
+    public function testCleanUpCancelsAllPendingConnectionAttempts()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(2))->method('connect')->with('tcp://[::1]:80/path?test=yes&hostname=reactphp.org#start')->willReturnOnConsecutiveCalls(
+            new Promise(function () { }, $this->expectCallableOnce()),
+            new Promise(function () { }, $this->expectCallableOnce())
+        );
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->never())->method('resolveAll');
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $ref = new \ReflectionProperty($builder, 'connectQueue');
+        $ref->setAccessible(true);
+        $ref->setValue($builder, array('::1', '::1'));
+
+        $builder->check($this->expectCallableNever(), function () { });
+        $builder->check($this->expectCallableNever(), function () { });
+
+        $builder->cleanUp();
+    }
+
+    public function testCleanUpCancelsAllPendingConnectionAttemptsWithoutStartingNewAttemptsDueToCancellationRejection()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://[::1]:80/path?test=yes&hostname=reactphp.org#start')->willReturn(new Promise(function () { }, function () {
+            throw new \RuntimeException();
+        }));
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->never())->method('resolveAll');
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $ref = new \ReflectionProperty($builder, 'connectQueue');
+        $ref->setAccessible(true);
+        $ref->setValue($builder, array('::1', '::1'));
+
+        $builder->check($this->expectCallableNever(), function () { });
+
+        $builder->cleanUp();
     }
 }

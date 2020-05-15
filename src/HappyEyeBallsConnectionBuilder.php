@@ -145,17 +145,32 @@ final class HappyEyeBallsConnectionBuilder
     {
         $ip = \array_shift($this->connectQueue);
 
+        // start connection attempt and remember array position to later unset again
+        $this->connectionPromises[] = $this->attemptConnection($ip);
+        \end($this->connectionPromises);
+        $index = \key($this->connectionPromises);
+
         $that = $this;
-        $that->connectionPromises[$ip] = $this->attemptConnection($ip)->then(function ($connection) use ($that, $ip, $resolve) {
-            unset($that->connectionPromises[$ip]);
+        $that->connectionPromises[$index]->then(function ($connection) use ($that, $index, $resolve) {
+            unset($that->connectionPromises[$index]);
 
             $that->cleanUp();
 
             $resolve($connection);
-        }, function (\Exception $e) use ($that, $ip, $reject) {
-            unset($that->connectionPromises[$ip]);
+        }, function (\Exception $e) use ($that, $index, $resolve, $reject) {
+            unset($that->connectionPromises[$index]);
 
             $that->failureCount++;
+
+            // start next connection attempt immediately on error
+            if ($that->connectQueue) {
+                if ($that->nextAttemptTimer !== null) {
+                    $that->loop->cancelTimer($that->nextAttemptTimer);
+                    $that->nextAttemptTimer = null;
+                }
+
+                $that->check($resolve, $reject);
+            }
 
             if ($that->hasBeenResolved() === false) {
                 return;
@@ -170,7 +185,7 @@ final class HappyEyeBallsConnectionBuilder
 
         // Allow next connection attempt in 100ms: https://tools.ietf.org/html/rfc8305#section-5
         // Only start timer when more IPs are queued or when DNS query is still pending (might add more IPs)
-        if (\count($this->connectQueue) > 0 || $this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false) {
+        if ($this->nextAttemptTimer === null && (\count($this->connectQueue) > 0 || $this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false)) {
             $this->nextAttemptTimer = $this->loop->addTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($that, $resolve, $reject) {
                 $that->nextAttemptTimer = null;
 
@@ -236,6 +251,9 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function cleanUp()
     {
+        // clear list of outstanding IPs to avoid creating new connections
+        $this->connectQueue = array();
+
         foreach ($this->connectionPromises as $connectionPromise) {
             if ($connectionPromise instanceof CancellablePromiseInterface) {
                 $connectionPromise->cancel();
