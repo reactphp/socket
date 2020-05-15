@@ -65,6 +65,40 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup: DNS lookup error', $exception->getMessage());
     }
 
+    public function testConnectWillRejectWhenBothDnsLookupsRejectWithDifferentMessages()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->never())->method('connect');
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\reject(new \RuntimeException('DNS6 error')),
+            \React\Promise\reject(new \RuntimeException('DNS4 error'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Last error for IPv4: DNS4 error', $exception->getMessage());
+    }
+
     public function testConnectWillStartDelayTimerWhenIpv4ResolvesAndIpv6IsPending()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -364,7 +398,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $deferred->resolve(array('::1'));
     }
 
-    public function testConnectWillRejectWhenOnlyTcpConnectionRejectsAndCancelNextAttemptTimerImmediately()
+    public function testConnectWillRejectWhenOnlyTcp6ConnectionRejectsAndCancelNextAttemptTimerImmediately()
     {
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -381,7 +415,81 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
             \React\Promise\resolve(array('::1')),
-            \React\Promise\reject(new \RuntimeException('ignored'))
+            \React\Promise\reject(new \RuntimeException('DNS failed'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('Connection refused'));
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Last error for IPv4: DNS failed', $exception->getMessage());
+    }
+
+    public function testConnectWillRejectWhenOnlyTcp4ConnectionRejectsAndWillNeverStartNextAttemptTimer()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('tcp://127.0.0.1:80?hostname=reactphp.org')->willReturn($deferred->promise());
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\reject(new \RuntimeException('DNS failed')),
+            \React\Promise\resolve(array('127.0.0.1'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('Connection refused'));
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: DNS failed. Last error for IPv4: Connection refused', $exception->getMessage());
+    }
+
+    public function testConnectWillRejectWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(2))->method('connect')->willReturn($deferred->promise());
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1')),
+            \React\Promise\resolve(array('127.0.0.1'))
         );
 
         $uri = 'tcp://reactphp.org:80';
