@@ -73,12 +73,13 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->never())->method('connect');
 
+        $deferred = new Deferred();
         $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
         $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
             array('reactphp.org', Message::TYPE_AAAA),
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
-            \React\Promise\reject(new \RuntimeException('DNS6 error')),
+            $deferred->promise(),
             \React\Promise\reject(new \RuntimeException('DNS4 error'))
         );
 
@@ -89,6 +90,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('DNS6 error'));
 
         $exception = null;
         $promise->then(null, function ($e) use (&$exception) {
@@ -96,7 +98,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Last error for IPv4: DNS4 error', $exception->getMessage());
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Previous error for IPv4: DNS4 error', $exception->getMessage());
     }
 
     public function testConnectWillStartDelayTimerWhenIpv4ResolvesAndIpv6IsPending()
@@ -433,7 +435,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Last error for IPv4: DNS failed', $exception->getMessage());
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Previous error for IPv4: DNS failed', $exception->getMessage());
     }
 
     public function testConnectWillRejectWhenOnlyTcp4ConnectionRejectsAndWillNeverStartNextAttemptTimer()
@@ -469,7 +471,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: DNS failed. Last error for IPv4: Connection refused', $exception->getMessage());
+        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv4: Connection refused. Previous error for IPv6: DNS failed', $exception->getMessage());
     }
 
     public function testConnectWillRejectWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()

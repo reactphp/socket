@@ -49,6 +49,7 @@ final class HappyEyeBallsConnectionBuilder
     public $resolve;
     public $reject;
 
+    public $lastErrorFamily;
     public $lastError6;
     public $lastError4;
 
@@ -128,8 +129,10 @@ final class HappyEyeBallsConnectionBuilder
 
             if ($type === Message::TYPE_A) {
                 $that->lastError4 = $e->getMessage();
+                $that->lastErrorFamily = 4;
             } else {
                 $that->lastError6 = $e->getMessage();
+                $that->lastErrorFamily = 6;
             }
 
             // cancel next attempt timer when there are no more IPs to connect to anymore
@@ -139,7 +142,7 @@ final class HappyEyeBallsConnectionBuilder
             }
 
             if ($that->hasBeenResolved() && $that->ipsCount === 0) {
-                $reject($that->error());
+                $reject(new \RuntimeException($that->error()));
             }
 
             throw $e;
@@ -172,8 +175,10 @@ final class HappyEyeBallsConnectionBuilder
 
             if (\strpos($ip, ':') === false) {
                 $that->lastError4 = $e->getMessage();
+                $that->lastErrorFamily = 4;
             } else {
                 $that->lastError6 = $e->getMessage();
+                $that->lastErrorFamily = 6;
             }
 
             // start next connection attempt immediately on error
@@ -193,7 +198,7 @@ final class HappyEyeBallsConnectionBuilder
             if ($that->ipsCount === $that->failureCount) {
                 $that->cleanUp();
 
-                $reject($that->error());
+                $reject(new \RuntimeException($that->error()));
             }
         });
 
@@ -326,14 +331,16 @@ final class HappyEyeBallsConnectionBuilder
 
     /**
      * @internal
-     * @return \RuntimeException
+     * @return string
      */
     public function error()
     {
         if ($this->lastError4 === $this->lastError6) {
             $message = $this->lastError6;
+        } elseif ($this->lastErrorFamily === 6) {
+            $message = 'Last error for IPv6: ' . $this->lastError6 . '. Previous error for IPv4: ' . $this->lastError4;
         } else {
-            $message = 'Last error for IPv6: ' . $this->lastError6 . '. Last error for IPv4: ' . $this->lastError4;
+            $message = 'Last error for IPv4: ' . $this->lastError4 . '. Previous error for IPv6: ' . $this->lastError6;
         }
 
         if ($this->hasBeenResolved() && $this->ipsCount === 0) {
@@ -346,6 +353,6 @@ final class HappyEyeBallsConnectionBuilder
             $message = ': ' . $message;
         }
 
-        return new \RuntimeException('Connection to ' . $this->uri . ' failed'  . $message);
+        return 'Connection to ' . $this->uri . ' failed'  . $message;
     }
 }
