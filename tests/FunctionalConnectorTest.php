@@ -22,17 +22,16 @@ class FunctionalConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(9998, $loop);
-        $server->on('connection', $this->expectCallableOnce());
-        $server->on('connection', array($server, 'close'));
 
         $connector = new Connector($loop);
 
         $connection = Block\await($connector->connect('localhost:9998'), $loop, self::TIMEOUT);
 
+        $server->close();
+
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         $connection->close();
-        $server->close();
     }
 
     /**
