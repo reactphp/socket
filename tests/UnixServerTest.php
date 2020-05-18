@@ -216,6 +216,26 @@ class UnixServerTest extends TestCase
         $server = new UnixServer($this->getRandomSocketUri(), $loop);
     }
 
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testCtorThrowsForInvalidAddressScheme()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $server = new UnixServer('tcp://localhost:0', $loop);
+    }
+
+    /**
+     * @expectedException RuntimeException
+     */
+    public function testCtorThrowsWhenPathIsNotWritable()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $server = new UnixServer('/dev/null', $loop);
+    }
+
     public function testResumeWithoutPauseIsNoOp()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -251,6 +271,23 @@ class UnixServerTest extends TestCase
 
         $server = new UnixServer($this->getRandomSocketUri(), $loop);
         $server->close();
+    }
+
+    public function testEmitsErrorWhenAcceptListenerFails()
+    {
+        $listener = null;
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addReadStream')->with($this->anything(), $this->callback(function ($cb) use (&$listener) {
+            $listener = $cb;
+            return true;
+        }));
+
+        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+
+        $server->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
+
+        $this->assertNotNull($listener);
+        $listener(false);
     }
 
     /**

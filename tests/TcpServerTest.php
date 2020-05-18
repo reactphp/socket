@@ -256,6 +256,23 @@ class TcpServerTest extends TestCase
         $server->close();
     }
 
+    public function testEmitsErrorWhenAcceptListenerFails()
+    {
+        $listener = null;
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addReadStream')->with($this->anything(), $this->callback(function ($cb) use (&$listener) {
+            $listener = $cb;
+            return true;
+        }));
+
+        $server = new TcpServer(0, $loop);
+
+        $server->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
+
+        $this->assertNotNull($listener);
+        $listener(false);
+    }
+
     /**
      * @expectedException RuntimeException
      */

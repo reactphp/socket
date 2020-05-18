@@ -59,12 +59,14 @@ final class TcpConnector implements ConnectorInterface
             // Legacy PHP < 5.6 ignores peer_name and requires legacy context options instead.
             // The SNI_server_name context option has to be set here during construction,
             // as legacy PHP ignores any values set later.
+            // @codeCoverageIgnoreStart
             if (\PHP_VERSION_ID < 50600) {
                 $context['ssl'] += array(
                     'SNI_server_name' => $args['hostname'],
                     'CN_match' => $args['hostname']
                 );
             }
+            // @codeCoverageIgnoreEnd
         }
 
         // latest versions of PHP no longer accept any other URI components and

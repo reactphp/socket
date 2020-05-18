@@ -179,8 +179,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
         // check if this is an IPv6 address which includes multiple colons but no square brackets
         $pos = \strrpos($address, ':');
         if ($pos !== false && \strpos($address, ':') < $pos && \substr($address, 0, 1) !== '[') {
-            $port = \substr($address, $pos + 1);
-            $address = '[' . \substr($address, 0, $pos) . ']:' . $port;
+            $address = '[' . \substr($address, 0, $pos) . ']:' . \substr($address, $pos + 1); // @codeCoverageIgnore
         }
 
         return 'tcp://' . $address;
