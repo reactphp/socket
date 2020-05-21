@@ -91,6 +91,23 @@ class ServerTest extends TestCase
         }
     }
 
+    public function testEmitsErrorWhenUnderlyingTcpServerEmitsError()
+    {
+        $loop = Factory::create();
+
+        $server = new Server(0, $loop);
+
+        $ref = new \ReflectionProperty($server, 'server');
+        $ref->setAccessible(true);
+        $tcp = $ref->getvalue($server);
+
+        $error = new \RuntimeException();
+        $server->on('error', $this->expectCallableOnceWith($error));
+        $tcp->emit('error', array($error));
+
+        $server->close();
+    }
+
     public function testEmitsConnectionForNewConnection()
     {
         $loop = Factory::create();

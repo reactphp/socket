@@ -7,6 +7,7 @@ use React\EventLoop\Factory;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpConnector;
 use React\Socket\TcpServer;
+use React\Promise\Promise;
 
 class TcpConnectorTest extends TestCase
 {
@@ -61,6 +62,37 @@ class TcpConnectorTest extends TestCase
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         $connection->close();
+    }
+
+    /**
+     * @test
+     * @expectedException RuntimeException
+     */
+    public function connectionToTcpServerShouldFailIfFileDescriptorsAreExceeded()
+    {
+        $loop = Factory::create();
+
+        $connector = new TcpConnector($loop);
+
+        $ulimit = exec('ulimit -n 2>&1');
+        if ($ulimit < 1) {
+            $this->markTestSkipped('Unable to determine limit of open files (ulimit not available?)');
+        }
+
+        // dummy rejected promise to make sure autoloader has initialized all classes
+        $foo = new Promise(function () { throw new \RuntimeException('dummy'); });
+
+        // keep creating dummy file handles until all file descriptors are exhausted
+        $fds = array();
+        for ($i = 0; $i < $ulimit; ++$i) {
+            $fd = @fopen('/dev/null', 'r');
+            if ($fd === false) {
+                break;
+            }
+            $fds[] = $fd;
+        }
+
+        Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
     }
 
     /** @test */
