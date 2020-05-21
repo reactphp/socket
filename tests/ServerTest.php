@@ -51,6 +51,9 @@ class ServerTest extends TestCase
 
     public function testConstructorCreatesExpectedUnixServer()
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
+        }
         if (!in_array('unix', stream_get_transports())) {
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
@@ -199,8 +202,8 @@ class ServerTest extends TestCase
 
     public function testDoesNotEmitSecureConnectionForNewPlaintextConnectionThatIsIdle()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
         $loop = Factory::create();

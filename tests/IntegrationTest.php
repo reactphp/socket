@@ -36,8 +36,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingEncryptedStuffFromGoogleShouldWork()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
         $loop = Factory::create();
@@ -55,8 +55,8 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingEncryptedStuffFromGoogleShouldWorkIfHostIsResolvedFirst()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
         $loop = Factory::create();
@@ -363,8 +363,8 @@ class IntegrationTest extends TestCase
 
     public function testSelfSignedRejectsIfVerificationIsEnabled()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
         $loop = Factory::create();
@@ -381,8 +381,8 @@ class IntegrationTest extends TestCase
 
     public function testSelfSignedResolvesIfVerificationIsDisabled()
     {
-        if (!function_exists('stream_socket_enable_crypto')) {
-            $this->markTestSkipped('Not supported on your platform (outdated HHVM?)');
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
         $loop = Factory::create();

@@ -17,11 +17,12 @@ matrix:
     - php: 7.4
     - php: hhvm-3.18
       install: composer require phpunit/phpunit:^5 --dev --no-interaction # requires legacy phpunit
-    - os: osx
+    - name: Mac OS X
+      os: osx
       language: generic
-      php: 7.0 # just to look right on travis
-      env:
-        - PACKAGE: php70
+      before_install:
+        - curl -s http://getcomposer.org/installer | php
+        - mv composer.phar /usr/local/bin/composer
   allow_failures:
     - php: hhvm-3.18
     - os: osx
@@ -29,18 +30,6 @@ matrix:
 sudo: false
 
 install:
-  # OSX install inspired by https://github.com/kiler129/TravisCI-OSX-PHP
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then 
-      brew tap homebrew/homebrew-php 
-      echo "Installing PHP ..."
-      brew install "${PACKAGE}"
-      brew install "${PACKAGE}"-xdebug
-      brew link "${PACKAGE}"
-      echo "Installing composer ..."
-      curl -s http://getcomposer.org/installer | php
-      mv composer.phar /usr/local/bin/composer
-    fi
   - composer install --no-interaction
 
 script:

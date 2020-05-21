@@ -52,8 +52,6 @@ class TcpConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
-        $server->on('connection', $this->expectCallableOnce());
-        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
@@ -62,6 +60,7 @@ class TcpConnectorTest extends TestCase
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         $connection->close();
+        $server->close();
     }
 
     /**
@@ -101,7 +100,6 @@ class TcpConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
-        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
@@ -111,6 +109,7 @@ class TcpConnectorTest extends TestCase
         $this->assertEquals('tcp://127.0.0.1:9999', $connection->getRemoteAddress());
 
         $connection->close();
+        $server->close();
     }
 
     /** @test */
@@ -119,7 +118,6 @@ class TcpConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
-        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
@@ -130,6 +128,7 @@ class TcpConnectorTest extends TestCase
         $this->assertNotEquals('tcp://127.0.0.1:9999', $connection->getLocalAddress());
 
         $connection->close();
+        $server->close();
     }
 
     /** @test */
@@ -138,13 +137,13 @@ class TcpConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(9999, $loop);
-        $server->on('connection', array($server, 'close'));
 
         $connector = new TcpConnector($loop);
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
 
+        $server->close();
         $connection->close();
 
         $this->assertNull($connection->getRemoteAddress());
@@ -197,9 +196,6 @@ class TcpConnectorTest extends TestCase
             $this->markTestSkipped('Unable to start IPv6 server socket (IPv6 not supported on this system?)');
         }
 
-        $server->on('connection', $this->expectCallableOnce());
-        $server->on('connection', array($server, 'close'));
-
         $connector = new TcpConnector($loop);
 
         $connection = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
@@ -211,6 +207,7 @@ class TcpConnectorTest extends TestCase
         $this->assertNotEquals('tcp://[::1]:9999', $connection->getLocalAddress());
 
         $connection->close();
+        $server->close();
     }
 
     /** @test */
