@@ -178,52 +178,6 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->loop->run();
     }
 
-    public function testThatTheIpv4ConnectionWillWait100MilisecondsWhenIpv6AndIpv4ResolveSimultaniously()
-    {
-        $timings = array();
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with('google.com', Message::TYPE_AAAA)->will($this->returnValue(Promise\resolve(array('1:2:3:4'))));
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with('google.com', Message::TYPE_A)->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
-        $this->tcp->expects($this->at(0))->method('connect')->with($this->equalTo('scheme://[1:2:3:4]:80/?hostname=google.com'))->will($this->returnCallback(function () use (&$timings) {
-            $timings[Message::TYPE_AAAA] = microtime(true);
-
-            return new Promise\Promise(function () {});
-        }));
-        $this->tcp->expects($this->at(1))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.com'))->will($this->returnCallback(function () use (&$timings) {
-            $timings[Message::TYPE_A] = microtime(true);
-
-            return new Promise\Promise(function () {});
-        }));
-
-        $this->connector->connect('scheme://google.com:80/?hostname=google.com');
-
-        $this->loop->run();
-
-        self::assertGreaterThan(0.01, $timings[Message::TYPE_A] - $timings[Message::TYPE_AAAA]);
-    }
-
-    /**
-     * @dataProvider provideIpvAddresses
-     */
-    public function testAssert100MilisecondsBetweenConnectionAttempts(array $ipv6, array $ipv4)
-    {
-        $timings = array();
-        $this->resolver->expects($this->at(0))->method('resolveAll')->with('google.com', Message::TYPE_AAAA)->will($this->returnValue(Promise\resolve($ipv6)));
-        $this->resolver->expects($this->at(1))->method('resolveAll')->with('google.com', Message::TYPE_A)->will($this->returnValue(Promise\resolve($ipv4)));
-        $this->tcp->expects($this->any())->method('connect')->with($this->stringContains(':80/?hostname=google.com'))->will($this->returnCallback(function () use (&$timings) {
-            $timings[] = microtime(true);
-
-            return new Promise\Promise(function () {});
-        }));
-
-        $this->connector->connect('scheme://google.com:80/?hostname=google.com');
-
-        $this->loop->run();
-
-        for ($i = 0; $i < (count($timings) - 1); $i++) {
-            self::assertGreaterThan(0.01, $timings[$i + 1] - $timings[$i]);
-        }
-    }
-
     /**
      * @dataProvider provideIpvAddresses
      */

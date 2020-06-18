@@ -10,8 +10,8 @@ use React\Socket\ConnectionInterface;
 use React\Socket\SecureConnector;
 use React\Socket\ServerInterface;
 use React\Socket\SecureServer;
-use React\Socket\TcpServer;
 use React\Socket\TcpConnector;
+use React\Socket\TcpServer;
 
 class FunctionalSecureServerTest extends TestCase
 {
@@ -549,6 +549,10 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorForServerWithEncryptedCertificateMissingPassphrase()
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
         $loop = Factory::create();
 
         $server = new TcpServer(0, $loop);
@@ -569,6 +573,10 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorForServerWithEncryptedCertificateWithInvalidPassphrase()
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
         $loop = Factory::create();
 
         $server = new TcpServer(0, $loop);

@@ -116,6 +116,10 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithLocalIpDespiteListeningOnAll()
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Skipping on Windows due to default firewall rules');
+        }
+
         $loop = Factory::create();
 
         $server = new TcpServer('0.0.0.0:0', $loop);

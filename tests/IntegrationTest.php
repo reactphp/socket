@@ -175,7 +175,10 @@ class IntegrationTest extends TestCase
         if ($wait) {
             Block\sleep(0.2, $loop);
             if ($wait) {
-                $this->fail('Connection attempt did not fail');
+                Block\sleep(2.0, $loop);
+                if ($wait) {
+                    $this->fail('Connection attempt did not fail');
+                }
             }
         }
         unset($promise);

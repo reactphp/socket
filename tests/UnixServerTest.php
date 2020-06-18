@@ -287,7 +287,9 @@ class UnixServerTest extends TestCase
         $server->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
 
         $this->assertNotNull($listener);
-        $listener(false);
+        $socket = stream_socket_server('tcp://127.0.0.1:0');
+        fclose($socket);
+        $listener($socket);
     }
 
     /**

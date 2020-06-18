@@ -16,16 +16,27 @@ matrix:
     - php: 7.3
     - php: 7.4
     - php: hhvm-3.18
-      install: composer require phpunit/phpunit:^5 --dev --no-interaction # requires legacy phpunit
     - name: Mac OS X
       os: osx
       language: generic
       before_install:
         - curl -s http://getcomposer.org/installer | php
         - mv composer.phar /usr/local/bin/composer
+    - name: Windows
+      os: windows
+      language: bash
+      before_install:
+        - choco install php
+        - choco install composer
+        - export PATH="$(powershell -Command '("Process", "Machine" | % { [Environment]::GetEnvironmentVariable("PATH", $_) -Split ";" -Replace "\\$", "" } | Select -Unique | % { cygpath $_ }) -Join ":"')"
+        - php -r "file_put_contents(php_ini_loaded_file(),'extension_dir=ext'.PHP_EOL,FILE_APPEND);"
+        - php -r "file_put_contents(php_ini_loaded_file(),'extension=sockets'.PHP_EOL,FILE_APPEND);"
+      install:
+        - composer install
   allow_failures:
     - php: hhvm-3.18
     - os: osx
+    - os: windows
 
 sudo: false
 

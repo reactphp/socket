@@ -11,7 +11,7 @@ use React\Promise\Promise;
 
 class TcpConnectorTest extends TestCase
 {
-    const TIMEOUT = 0.1;
+    const TIMEOUT = 5.0;
 
     /**
      * @test

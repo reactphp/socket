@@ -6,9 +6,12 @@ use Clue\React\Block;
 use React\EventLoop\Factory;
 use React\Socket\TcpServer;
 use React\Stream\DuplexResourceStream;
+use React\Promise\Promise;
 
 class TcpServerTest extends TestCase
 {
+    const TIMEOUT = 5.0;
+
     private $loop;
     private $server;
     private $port;
@@ -33,13 +36,18 @@ class TcpServerTest extends TestCase
     /**
      * @covers React\Socket\TcpServer::handleConnection
      */
-    public function testConnection()
+    public function testServerEmitsConnectionEventForNewConnection()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
 
-        $this->server->on('connection', $this->expectCallableOnce());
+        $server = $this->server;
+        $promise = new Promise(function ($resolve) use ($server) {
+            $server->on('connection', $resolve);
+        });
 
-        $this->tick();
+        $connection = Block\await($promise, $this->loop, self::TIMEOUT);
+
+        $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
     }
 
     /**
@@ -270,7 +278,9 @@ class TcpServerTest extends TestCase
         $server->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
 
         $this->assertNotNull($listener);
-        $listener(false);
+        $socket = stream_socket_server('tcp://127.0.0.1:0');
+        fclose($socket);
+        $listener($socket);
     }
 
     /**
@@ -295,8 +305,21 @@ class TcpServerTest extends TestCase
         }
     }
 
+    /**
+     * This methods runs the loop for "one tick"
+     *
+     * This is prone to race conditions and as such somewhat unreliable across
+     * different operating systems. Running the loop until the expected events
+     * fire is the preferred alternative.
+     *
+     * @deprecated
+     */
     private function tick()
     {
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $this->markTestSkipped('Not supported on Windows');
+        }
+
         Block\sleep(0, $this->loop);
     }
 }
