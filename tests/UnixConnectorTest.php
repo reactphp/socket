@@ -30,6 +30,10 @@ class UnixConnectorTest extends TestCase
 
     public function testValid()
     {
+        if (!in_array('unix', stream_get_transports())) {
+            $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
+        }
+
         // random unix domain socket path
         $path = sys_get_temp_dir() . '/test' . uniqid() . '.sock';
 
