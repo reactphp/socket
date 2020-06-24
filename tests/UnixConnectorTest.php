@@ -10,7 +10,10 @@ class UnixConnectorTest extends TestCase
     private $loop;
     private $connector;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpConnector()
     {
         $this->loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $this->connector = new UnixConnector($this->loop);

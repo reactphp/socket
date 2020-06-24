@@ -23,14 +23,14 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
 
-        $this->assertContains(':80', $conn->getRemoteAddress());
+        $this->assertContainsString(':80', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:80', $conn->getRemoteAddress());
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
-        $this->assertRegExp('#^HTTP/1\.0#', $response);
+        $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
 
     /** @test */
@@ -49,7 +49,7 @@ class IntegrationTest extends TestCase
 
         $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
-        $this->assertRegExp('#^HTTP/1\.0#', $response);
+        $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
 
     /** @test */
@@ -78,7 +78,7 @@ class IntegrationTest extends TestCase
 
         $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
-        $this->assertRegExp('#^HTTP/1\.0#', $response);
+        $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
 
     /** @test */
@@ -89,14 +89,14 @@ class IntegrationTest extends TestCase
 
         $conn = Block\await($connector->connect('google.com:443'), $loop);
 
-        $this->assertContains(':443', $conn->getRemoteAddress());
+        $this->assertContainsString(':443', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:443', $conn->getRemoteAddress());
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, $loop, self::TIMEOUT);
 
-        $this->assertNotRegExp('#^HTTP/1\.0#', $response);
+        $this->assertDoesNotMatchRegExp('#^HTTP/1\.0#', $response);
     }
 
     public function testConnectingFailsIfConnectorUsesInvalidDnsResolverAddress()
