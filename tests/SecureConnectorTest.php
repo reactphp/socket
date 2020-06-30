@@ -12,7 +12,10 @@ class SecureConnectorTest extends TestCase
     private $tcp;
     private $connector;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpConnector()
     {
         if (defined('HHVM_VERSION')) {
             $this->markTestSkipped('Not supported on legacy HHVM');
@@ -59,10 +62,6 @@ class SecureConnectorTest extends TestCase
         $promise->cancel();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection cancelled
-     */
     public function testCancelDuringTcpConnectionCancelsTcpConnectionAndRejectsWithTcpRejection()
     {
         $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
@@ -71,13 +70,10 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection cancelled');
         $this->throwRejection($promise);
     }
 
-    /**
-     * @expectedException UnexpectedValueException
-     * @expectedExceptionMessage Base connector does not use internal Connection class exposing stream resource
-     */
     public function testConnectionWillBeClosedAndRejectedIfConnectionIsNoStream()
     {
         $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
@@ -87,6 +83,7 @@ class SecureConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.com:80');
 
+        $this->setExpectedException('UnexpectedValueException', 'Base connector does not use internal Connection class exposing stream resource');
         $this->throwRejection($promise);
     }
 
@@ -133,10 +130,6 @@ class SecureConnectorTest extends TestCase
         }
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.com:80 cancelled during TLS handshake
-     */
     public function testCancelDuringStreamEncryptionCancelsEncryptionAndClosesConnection()
     {
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->getMock();
@@ -157,6 +150,7 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during TLS handshake');
         $this->throwRejection($promise);
     }
 

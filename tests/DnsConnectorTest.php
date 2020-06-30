@@ -12,7 +12,10 @@ class DnsConnectorTest extends TestCase
     private $resolver;
     private $connector;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpMocks()
     {
         $this->tcp = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $this->resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
@@ -78,10 +81,6 @@ class DnsConnectorTest extends TestCase
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection failed
-     */
     public function testRejectsWithTcpConnectorRejectionIfGivenIp()
     {
         $promise = Promise\reject(new \RuntimeException('Connection failed'));
@@ -91,13 +90,10 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('1.2.3.4:80');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection failed');
         $this->throwRejection($promise);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection failed
-     */
     public function testRejectsWithTcpConnectorRejectionAfterDnsIsResolved()
     {
         $promise = Promise\reject(new \RuntimeException('Connection failed'));
@@ -107,13 +103,10 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection failed');
         $this->throwRejection($promise);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.invalid:80 failed during DNS lookup: DNS error
-     */
     public function testSkipConnectionIfDnsFails()
     {
         $promise = Promise\reject(new \RuntimeException('DNS error'));
@@ -122,6 +115,7 @@ class DnsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.invalid:80');
 
+        $this->setExpectedException('RuntimeException', 'Connection to example.invalid:80 failed during DNS lookup: DNS error');
         $this->throwRejection($promise);
     }
 
@@ -138,10 +132,6 @@ class DnsConnectorTest extends TestCase
         })->then(null, $this->expectCallableOnceWith($this->identicalTo($exception)));
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.com:80 cancelled during DNS lookup
-     */
     public function testCancelDuringDnsCancelsDnsAndDoesNotStartTcpConnection()
     {
         $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
@@ -151,6 +141,7 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during DNS lookup');
         $this->throwRejection($promise);
     }
 
@@ -174,10 +165,6 @@ class DnsConnectorTest extends TestCase
         $promise->cancel();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection cancelled
-     */
     public function testCancelDuringTcpConnectionCancelsTcpConnectionWithTcpRejectionAfterDnsIsResolved()
     {
         $first = new Deferred();
@@ -192,6 +179,7 @@ class DnsConnectorTest extends TestCase
 
         $promise->cancel();
 
+        $this->setExpectedException('RuntimeException', 'Connection cancelled');
         $this->throwRejection($promise);
     }
 

@@ -22,10 +22,11 @@ class TcpServerTest extends TestCase
     }
 
     /**
+     * @before
      * @covers React\Socket\TcpServer::__construct
      * @covers React\Socket\TcpServer::getAddress
      */
-    public function setUp()
+    public function setUpServer()
     {
         $this->loop = $this->createLoop();
         $this->server = new TcpServer(0, $this->loop);
@@ -283,22 +284,21 @@ class TcpServerTest extends TestCase
         $listener($socket);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testListenOnBusyPortThrows()
     {
         if (DIRECTORY_SEPARATOR === '\\') {
             $this->markTestSkipped('Windows supports listening on same port multiple times');
         }
 
+        $this->setExpectedException('RuntimeException');
         $another = new TcpServer($this->port, $this->loop);
     }
 
     /**
+     * @after
      * @covers React\Socket\TcpServer::close
      */
-    public function tearDown()
+    public function tearDownServer()
     {
         if ($this->server) {
             $this->server->close();

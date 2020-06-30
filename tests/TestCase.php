@@ -115,4 +115,38 @@ class TestCase extends BaseTestCase
         }
         return false;
     }
+
+    public function assertContainsString($needle, $haystack)
+    {
+        if (method_exists($this, 'assertStringContainsString')) {
+            // PHPUnit 7.5+
+            $this->assertStringContainsString($needle, $haystack);
+        } else {
+            // legacy PHPUnit 4- PHPUnit 7.5
+            $this->assertContains($needle, $haystack);
+        }
+    }
+
+    public function assertMatchesRegExp($pattern, $string)
+    {
+        if (method_exists($this, 'assertMatchesRegularExpression')) {
+            // PHPUnit 10
+            $this->assertMatchesRegularExpression($pattern, $string);
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 9.2
+            $this->assertRegExp($pattern, $string);
+        }
+    }
+
+    public function assertDoesNotMatchRegExp($pattern, $string)
+    {
+        if (method_exists($this, 'assertDoesNotMatchRegularExpression')) {
+            // PHPUnit 10
+            $this->assertDoesNotMatchRegularExpression($pattern, $string);
+        } else {
+            // legacy PHPUnit 4 - PHPUnit 9.2
+            $this->assertNotRegExp($pattern, $string);
+        }
+    }
+
 }

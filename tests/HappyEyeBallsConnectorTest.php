@@ -17,7 +17,10 @@ class HappyEyeBallsConnectorTest extends TestCase
     private $connector;
     private $connection;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpMocks()
     {
         $this->loop = new TimerSpeedUpEventLoop(new StreamSelectLoop());
         $this->tcp = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -222,10 +225,6 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->loop->run();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection failed
-     */
     public function testRejectsWithTcpConnectorRejectionIfGivenIp()
     {
         $that = $this;
@@ -240,13 +239,10 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
+        $this->setExpectedException('RuntimeException', 'Connection failed');
         $this->loop->run();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.invalid:80 failed during DNS lookup: DNS error
-     */
     public function testSkipConnectionIfDnsFails()
     {
         $that = $this;
@@ -259,13 +255,10 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
+        $this->setExpectedException('RuntimeException', 'Connection to example.invalid:80 failed during DNS lookup: DNS error');
         $this->loop->run();
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to example.com:80 cancelled during DNS lookup
-     */
     public function testCancelDuringDnsCancelsDnsAndDoesNotStartTcpConnection()
     {
         $that = $this;
@@ -281,6 +274,7 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
+        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during DNS lookup');
         $this->loop->run();
     }
 

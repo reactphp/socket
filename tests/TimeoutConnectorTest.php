@@ -10,10 +10,6 @@ use React\Promise\Deferred;
 
 class TimeoutConnectorTest extends TestCase
 {
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to google.com:80 timed out after 0.01 seconds
-     */
     public function testRejectsWithTimeoutReasonOnTimeout()
     {
         $promise = new Promise\Promise(function () { });
@@ -25,13 +21,10 @@ class TimeoutConnectorTest extends TestCase
 
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
+        $this->setExpectedException('RuntimeException', 'Connection to google.com:80 timed out after 0.01 seconds');
         Block\await($timeout->connect('google.com:80'), $loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Failed
-     */
     public function testRejectsWithOriginalReasonWhenConnectorRejects()
     {
         $promise = Promise\reject(new \RuntimeException('Failed'));
@@ -43,6 +36,7 @@ class TimeoutConnectorTest extends TestCase
 
         $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
+        $this->setExpectedException('RuntimeException', 'Failed');
         Block\await($timeout->connect('google.com:80'), $loop);
     }
 

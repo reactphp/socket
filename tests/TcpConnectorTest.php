@@ -13,11 +13,7 @@ class TcpConnectorTest extends TestCase
 {
     const TIMEOUT = 5.0;
 
-    /**
-     * @test
-     * @expectedException RuntimeException
-     * @expectedExceptionMessage Connection to tcp://127.0.0.1:9999 failed: Connection refused
-     */
+    /** @test */
     public function connectionToEmptyPortShouldFail()
     {
         $loop = Factory::create();
@@ -25,6 +21,7 @@ class TcpConnectorTest extends TestCase
         $connector = new TcpConnector($loop);
         $promise = $connector->connect('127.0.0.1:9999');
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://127.0.0.1:9999 failed: Connection refused');
         Block\await($promise, $loop, self::TIMEOUT);
     }
 
@@ -63,10 +60,7 @@ class TcpConnectorTest extends TestCase
         $server->close();
     }
 
-    /**
-     * @test
-     * @expectedException RuntimeException
-     */
+    /** @test */
     public function connectionToTcpServerShouldFailIfFileDescriptorsAreExceeded()
     {
         $loop = Factory::create();
@@ -91,6 +85,7 @@ class TcpConnectorTest extends TestCase
             $fds[] = $fd;
         }
 
+        $this->setExpectedException('RuntimeException');
         Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
     }
 
@@ -124,7 +119,7 @@ class TcpConnectorTest extends TestCase
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
 
-        $this->assertContains('tcp://127.0.0.1:', $connection->getLocalAddress());
+        $this->assertContainsString('tcp://127.0.0.1:', $connection->getLocalAddress());
         $this->assertNotEquals('tcp://127.0.0.1:9999', $connection->getLocalAddress());
 
         $connection->close();
@@ -203,7 +198,7 @@ class TcpConnectorTest extends TestCase
 
         $this->assertEquals('tcp://[::1]:9999', $connection->getRemoteAddress());
 
-        $this->assertContains('tcp://[::1]:', $connection->getLocalAddress());
+        $this->assertContainsString('tcp://[::1]:', $connection->getLocalAddress());
         $this->assertNotEquals('tcp://[::1]:9999', $connection->getLocalAddress());
 
         $connection->close();
@@ -271,7 +266,6 @@ class TcpConnectorTest extends TestCase
         $this->assertTrue($valid);
 
         // ensure that this resource should now be closed after the cancel() call
-        $this->assertInternalType('resource', $resource);
         $this->assertFalse(is_resource($resource));
     }
 

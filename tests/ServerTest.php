@@ -23,13 +23,11 @@ class ServerTest extends TestCase
         $server->close();
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testConstructorThrowsForInvalidUri()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $this->setExpectedException('InvalidArgumentException');
         $server = new Server('invalid URI', $loop);
     }
 

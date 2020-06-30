@@ -22,7 +22,10 @@ class SecureIntegrationTest extends TestCase
     private $connector;
     private $address;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpConnector()
     {
         if (defined('HHVM_VERSION')) {
             $this->markTestSkipped('Not supported on legacy HHVM');
@@ -37,7 +40,10 @@ class SecureIntegrationTest extends TestCase
         $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));
     }
 
-    public function tearDown()
+    /**
+     * @after
+     */
+    public function tearDownServer()
     {
         if ($this->server !== null) {
             $this->server->close();

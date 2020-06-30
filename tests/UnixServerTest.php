@@ -14,10 +14,11 @@ class UnixServerTest extends TestCase
     private $uds;
 
     /**
+     * @before
      * @covers React\Socket\UnixServer::__construct
      * @covers React\Socket\UnixServer::getAddress
      */
-    public function setUp()
+    public function setUpServer()
     {
         if (!in_array('unix', stream_get_transports())) {
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
@@ -216,23 +217,19 @@ class UnixServerTest extends TestCase
         $server = new UnixServer($this->getRandomSocketUri(), $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testCtorThrowsForInvalidAddressScheme()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $this->setExpectedException('InvalidArgumentException');
         $server = new UnixServer('tcp://localhost:0', $loop);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testCtorThrowsWhenPathIsNotWritable()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $this->setExpectedException('RuntimeException');
         $server = new UnixServer('/dev/null', $loop);
     }
 
@@ -292,22 +289,21 @@ class UnixServerTest extends TestCase
         $listener($socket);
     }
 
-    /**
-     * @expectedException RuntimeException
-     */
     public function testListenOnBusyPortThrows()
     {
         if (DIRECTORY_SEPARATOR === '\\') {
             $this->markTestSkipped('Windows supports listening on same port multiple times');
         }
 
+        $this->setExpectedException('RuntimeException');
         $another = new UnixServer($this->uds, $this->loop);
     }
 
     /**
+     * @after
      * @covers React\Socket\UnixServer::close
      */
-    public function tearDown()
+    public function tearDownServer()
     {
         if ($this->server) {
             $this->server->close();

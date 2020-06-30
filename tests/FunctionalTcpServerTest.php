@@ -87,7 +87,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('127.0.0.1:', $peer);
+        $this->assertContainsString('127.0.0.1:', $peer);
     }
 
     public function testEmitsConnectionWithLocalIp()
@@ -110,7 +110,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $local = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('127.0.0.1:', $local);
+        $this->assertContainsString('127.0.0.1:', $local);
         $this->assertEquals($server->getAddress(), $local);
     }
 
@@ -136,7 +136,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $local = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('127.0.0.1:', $local);
+        $this->assertContainsString('127.0.0.1:', $local);
     }
 
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
@@ -159,7 +159,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('127.0.0.1:', $peer);
+        $this->assertContainsString('127.0.0.1:', $peer);
     }
 
     public function testEmitsConnectionWithRemoteNullAddressAfterConnectionIsClosedByServer()
@@ -255,7 +255,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('[::1]:', $peer);
+        $this->assertContainsString('[::1]:', $peer);
     }
 
     public function testEmitsConnectionWithLocalIpv6()
@@ -281,7 +281,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $local = Block\await($peer, $loop, self::TIMEOUT);
 
-        $this->assertContains('[::1]:', $local);
+        $this->assertContainsString('[::1]:', $local);
         $this->assertEquals($server->getAddress(), $local);
     }
 
@@ -314,43 +314,35 @@ class FunctionalTcpServerTest extends TestCase
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testFailsToListenOnInvalidUri()
     {
         $loop = Factory::create();
 
+        $this->setExpectedException('InvalidArgumentException');
         new TcpServer('///', $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testFailsToListenOnUriWithoutPort()
     {
         $loop = Factory::create();
 
+        $this->setExpectedException('InvalidArgumentException');
         new TcpServer('127.0.0.1', $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testFailsToListenOnUriWithWrongScheme()
     {
         $loop = Factory::create();
 
+        $this->setExpectedException('InvalidArgumentException');
         new TcpServer('udp://127.0.0.1:0', $loop);
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testFailsToListenOnUriWIthHostname()
     {
         $loop = Factory::create();
 
+        $this->setExpectedException('InvalidArgumentException');
         new TcpServer('localhost:8080', $loop);
     }
 }

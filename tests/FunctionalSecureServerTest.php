@@ -17,7 +17,10 @@ class FunctionalSecureServerTest extends TestCase
 {
     const TIMEOUT = 0.5;
 
-    public function setUp()
+    /**
+     * @before
+     */
+    public function setUpSkipTest()
     {
         if (defined('HHVM_VERSION')) {
             $this->markTestSkipped('Not supported on legacy HHVM');
