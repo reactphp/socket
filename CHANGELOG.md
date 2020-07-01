@@ -1,8 +1,25 @@
 # Changelog
 
+## 1.5.0 (2020-07-01)
+
+*   Feature / Fix: Improve error handling and reporting for happy eyeballs and
+    immediately try next connection when one connection attempt fails.
+    (#230, #231, #232 and #233 by @clue)
+
+    Error messages for failed connection attempts now include more details to
+    ease debugging. Additionally, the happy eyeballs algorithm has been improved
+    to avoid having to wait for some timers to expire which significantly
+    improves connection setup times (in particular when IPv6 isn't available).
+
+*   Improve test suite, minor code cleanup and improve code coverage to 100%.
+    Update to PHPUnit 9 and skip legacy TLS 1.0 / TLS 1.1 tests if disabled by
+    system. Run tests on Windows and simplify Travis CI test matrix for Mac OS X
+    setup and skip all TLS tests on legacy HHVM.
+    (#229, #235, #236 and #238 by @clue and #239 by @SimonFrings)
+
 ## 1.4.0 (2020-03-12)
 
-A major new feature lease, see [**release announcement**](https://clue.engineering/2020/introducing-ipv6-for-reactphp).
+A major new feature release, see [**release announcement**](https://clue.engineering/2020/introducing-ipv6-for-reactphp).
 
 *   Feature: Add IPv6 support to `Connector` (implement "Happy Eyeballs" algorithm to support IPv6 probing).
     IPv6 support is turned on by default, use new `happy_eyeballs` option in `Connector` to toggle behavior.
