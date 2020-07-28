@@ -57,7 +57,9 @@ class StreamEncryption
         // TODO: add write() event to make sure we're not sending any excessive data
 
         // cancelling this leaves this stream in an inconsistent state…
-        $deferred = new Deferred();
+        $deferred = new Deferred(function () {
+            throw new \RuntimeException();
+        });
 
         // get actual stream socket from stream instance
         $socket = $stream->stream;

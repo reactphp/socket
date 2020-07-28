@@ -4,6 +4,7 @@ namespace React\Tests\Socket;
 
 use Clue\React\Block;
 use React\EventLoop\Factory;
+use React\Promise\Deferred;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use React\Socket\ConnectorInterface;
@@ -125,6 +126,43 @@ class FunctionalConnectorTest extends TestCase
 
         $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
         $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
+    }
+
+    public function testCancelPendingTlsConnectionDuringTlsHandshakeShouldCloseTcpConnectionToServer()
+    {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on legacy HHVM');
+        }
+
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+        $uri = str_replace('tcp://', '', $server->getAddress());
+
+        $connector = new Connector($loop);
+        $promise = $connector->connect('tls://' . $uri);
+
+        $deferred = new Deferred();
+        $server->on('connection', function (ConnectionInterface $connection) use ($promise, $deferred, $loop) {
+            $connection->on('close', function () use ($deferred) {
+                $deferred->resolve();
+            });
+
+            $loop->futureTick(function () use ($promise) {
+                $promise->cancel();
+            });
+        });
+
+        Block\await($deferred->promise(), $loop, self::TIMEOUT);
+        $server->close();
+
+        try {
+            Block\await($promise, $loop, self::TIMEOUT);
+            $this->fail();
+        } catch (\Exception $e) {
+            $this->assertInstanceOf('RuntimeException', $e);
+            $this->assertEquals('Connection to ' . $uri . ' cancelled during TLS handshake', $e->getMessage());
+        }
     }
 
     /**
