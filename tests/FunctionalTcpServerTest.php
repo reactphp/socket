@@ -285,6 +285,38 @@ class FunctionalTcpServerTest extends TestCase
         $this->assertEquals($server->getAddress(), $local);
     }
 
+    public function testServerPassesContextOptionsToSocket()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop, array(
+            'backlog' => 4
+        ));
+
+        $ref = new \ReflectionProperty($server, 'master');
+        $ref->setAccessible(true);
+        $socket = $ref->getValue($server);
+
+        $context = stream_context_get_options($socket);
+
+        $this->assertEquals(array('socket' => array('backlog' => 4)), $context);
+    }
+
+    public function testServerPassesDefaultBacklogSizeViaContextOptionsToSocket()
+    {
+        $loop = Factory::create();
+
+        $server = new TcpServer(0, $loop);
+
+        $ref = new \ReflectionProperty($server, 'master');
+        $ref->setAccessible(true);
+        $socket = $ref->getValue($server);
+
+        $context = stream_context_get_options($socket);
+
+        $this->assertEquals(array('socket' => array('backlog' => 511)), $context);
+    }
+
     public function testEmitsConnectionWithInheritedContextOptions()
     {
         if (defined('HHVM_VERSION') && version_compare(HHVM_VERSION, '3.13', '<')) {

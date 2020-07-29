@@ -113,6 +113,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
      * their defaults and effects of changing these may vary depending on your system
      * and/or PHP version.
      * Passing unknown context options has no effect.
+     * The `backlog` context option defaults to `511` unless given explicitly.
      *
      * @param string|int    $uri
      * @param LoopInterface $loop
@@ -158,7 +159,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             $errno,
             $errstr,
             \STREAM_SERVER_BIND | \STREAM_SERVER_LISTEN,
-            \stream_context_create(array('socket' => $context))
+            \stream_context_create(array('socket' => $context + array('backlog' => 511)))
         );
         if (false === $this->master) {
             throw new \RuntimeException('Failed to listen on "' . $uri . '": ' . $errstr, $errno);
