@@ -425,6 +425,7 @@ $server = new React\Socket\Server('[::1]:8080', $loop, array(
   their defaults and effects of changing these may vary depending on your system
   and/or PHP version.
   Passing unknown context options has no effect.
+  The `backlog` context option defaults to `511` unless given explicitly.
   For BC reasons, you can also pass the TCP socket context options as a simple
   array without wrapping this in another array under the `tcp` key.
 
@@ -577,6 +578,7 @@ $server = new React\Socket\TcpServer('[::1]:8080', $loop, array(
 their defaults and effects of changing these may vary depending on your system
 and/or PHP version.
 Passing unknown context options has no effect.
+The `backlog` context option defaults to `511` unless given explicitly.
 
 Whenever a client connects, it will emit a `connection` event with a connection
 instance implementing [`ConnectionInterface`](#connectioninterface):
