@@ -271,50 +271,6 @@ class HappyEyeBallsConnectorTest extends TestCase
     }
 
     /**
-     * @dataProvider provideIpvAddresses
-     */
-    public function testShouldConnectOverIpv4WhenIpv6LookupFails(array $ipv6, array $ipv4)
-    {
-        $this->resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
-            array($this->equalTo('example.com'), Message::TYPE_AAAA),
-            array($this->equalTo('example.com'), Message::TYPE_A)
-        )->willReturnOnConsecutiveCalls(
-            Promise\reject(new \Exception('failure')),
-            Promise\resolve($ipv4)
-        );
-        $this->tcp->expects($this->exactly(1))->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn(Promise\resolve($this->connection));
-
-        $promise = $this->connector->connect('example.com:80');;
-        $resolvedConnection = Block\await($promise, $this->loop);
-
-        self::assertSame($this->connection, $resolvedConnection);
-    }
-
-    /**
-     * @dataProvider provideIpvAddresses
-     */
-    public function testShouldConnectOverIpv6WhenIpv4LookupFails(array $ipv6, array $ipv4)
-    {
-        if (count($ipv6) === 0) {
-            $ipv6[] = '1:2:3:4';
-        }
-
-        $this->resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
-            array($this->equalTo('example.com'), Message::TYPE_AAAA),
-            array($this->equalTo('example.com'), Message::TYPE_A)
-        )->willReturnOnConsecutiveCalls(
-            Promise\resolve($ipv6),
-            Promise\reject(new \Exception('failure'))
-        );
-        $this->tcp->expects($this->exactly(1))->method('connect')->with($this->equalTo('[1:2:3:4]:80?hostname=example.com'))->willReturn(Promise\resolve($this->connection));
-
-        $promise = $this->connector->connect('example.com:80');;
-        $resolvedConnection = Block\await($promise, $this->loop);
-
-        self::assertSame($this->connection, $resolvedConnection);
-    }
-
-    /**
      * @internal
      */
     public function throwRejection($promise)

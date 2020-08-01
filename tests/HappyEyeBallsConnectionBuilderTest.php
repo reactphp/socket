@@ -302,8 +302,8 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $connector->expects($this->exactly(4))->method('connect')->withConsecutive(
             array('tcp://[::1]:80?hostname=reactphp.org'),
             array('tcp://127.0.0.1:80?hostname=reactphp.org'),
-            array('tcp://[::2]:80?hostname=reactphp.org'),
-            array('tcp://127.0.0.2:80?hostname=reactphp.org')
+            array('tcp://[::1]:80?hostname=reactphp.org'),
+            array('tcp://127.0.0.1:80?hostname=reactphp.org')
         )->willReturnOnConsecutiveCalls(
             $deferred->promise(),
             $deferred->promise(),
@@ -316,8 +316,8 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             array('reactphp.org', Message::TYPE_AAAA),
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
-            \React\Promise\resolve(array('::1', '::2')),
-            \React\Promise\resolve(array('127.0.0.1', '127.0.0.2'))
+            \React\Promise\resolve(array('::1', '::1')),
+            \React\Promise\resolve(array('127.0.0.1', '127.0.0.1'))
         );
 
         $uri = 'tcp://reactphp.org:80';
@@ -341,7 +341,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->exactly(2))->method('connect')->withConsecutive(
             array('tcp://[::1]:80?hostname=reactphp.org'),
-            array('tcp://[::2]:80?hostname=reactphp.org')
+            array('tcp://[::1]:80?hostname=reactphp.org')
         )->willReturnOnConsecutiveCalls(
             \React\Promise\reject(new \RuntimeException()),
             new Promise(function () { })
@@ -352,7 +352,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             array('reactphp.org', Message::TYPE_AAAA),
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
-            \React\Promise\resolve(array('::1', '::2')),
+            \React\Promise\resolve(array('::1', '::1')),
             \React\Promise\reject(new \RuntimeException())
         );
 
@@ -798,5 +798,57 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder->check($this->expectCallableNever(), function () { });
 
         $builder->cleanUp();
+    }
+
+    public function testMixIpsIntoConnectQueueSometimesAssignsInOriginalOrder()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        for ($i = 0; $i < 100; ++$i) {
+            $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+            $builder->mixIpsIntoConnectQueue(array('::1', '::2'));
+
+            $ref = new \ReflectionProperty($builder, 'connectQueue');
+            $ref->setAccessible(true);
+            $value = $ref->getValue($builder);
+
+            if ($value === array('::1', '::2')) {
+                break;
+            }
+        }
+
+        $this->assertEquals(array('::1', '::2'), $value);
+    }
+
+    public function testMixIpsIntoConnectQueueSometimesAssignsInReverseOrder()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+
+        $uri = 'tcp://reactphp.org:80/path?test=yes#start';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        for ($i = 0; $i < 100; ++$i) {
+            $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+            $builder->mixIpsIntoConnectQueue(array('::1', '::2'));
+
+            $ref = new \ReflectionProperty($builder, 'connectQueue');
+            $ref->setAccessible(true);
+            $value = $ref->getValue($builder);
+
+            if ($value === array('::2', '::1')) {
+                break;
+            }
+        }
+
+        $this->assertEquals(array('::2', '::1'), $value);
     }
 }
