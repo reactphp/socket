@@ -106,7 +106,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
 
         $that = $this;
         $this->loop->addReadStream($this->master, function ($master) use ($that) {
-            $newSocket = @\stream_socket_accept($master);
+            $newSocket = @\stream_socket_accept($master, 0);
             if (false === $newSocket) {
                 $that->emit('error', array(new \RuntimeException('Error accepting new connection')));
 
