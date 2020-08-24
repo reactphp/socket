@@ -3,7 +3,7 @@ language: php
 # lock distro so new future defaults will not break the build
 dist: trusty
 
-matrix:
+jobs:
   include:
     - php: 5.3
       dist: precise
@@ -38,10 +38,9 @@ matrix:
     - os: osx
     - os: windows
 
-sudo: false
-
 install:
-  - composer install --no-interaction
+  - composer install
 
 script:
-  - vendor/bin/phpunit --coverage-text
+  - if [[ "$TRAVIS_PHP_VERSION" > "7.2" ]]; then vendor/bin/phpunit --coverage-text; fi
+  - if [[ "$TRAVIS_PHP_VERSION" < "7.3" ]]; then vendor/bin/phpunit --coverage-text -c phpunit.xml.legacy; fi

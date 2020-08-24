@@ -290,6 +290,47 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $deferred->reject(new \RuntimeException());
     }
 
+    public function testConnectWillStartConnectingWithAlternatingIPv6AndIPv4WhenResolverReturnsMultipleIPAdresses()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(4))->method('connect')->withConsecutive(
+            array('tcp://[::1]:80?hostname=reactphp.org'),
+            array('tcp://127.0.0.1:80?hostname=reactphp.org'),
+            array('tcp://[::2]:80?hostname=reactphp.org'),
+            array('tcp://127.0.0.2:80?hostname=reactphp.org')
+        )->willReturnOnConsecutiveCalls(
+            $deferred->promise(),
+            $deferred->promise(),
+            $deferred->promise(),
+            new Promise(function () { })
+        );
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('reactphp.org', Message::TYPE_AAAA),
+            array('reactphp.org', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1', '::2')),
+            \React\Promise\resolve(array('127.0.0.1', '127.0.0.2'))
+        );
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $builder->connect();
+
+        $deferred->reject(new \RuntimeException());
+    }
+
     public function testConnectWillStartConnectingWithAttemptTimerWhenOnlyIpv6ResolvesAndWillStartNextConnectionAttemptWithoutAttemptTimerImmediatelyWhenFirstConnectionAttemptFails()
     {
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
