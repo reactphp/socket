@@ -280,8 +280,12 @@ class TcpServerTest extends TestCase
 
         $this->assertNotNull($listener);
         $socket = stream_socket_server('tcp://127.0.0.1:0');
-        fclose($socket);
+
+        $time = microtime(true);
         $listener($socket);
+        $time = microtime(true) - $time;
+
+        $this->assertLessThan(1, $time);
     }
 
     public function testListenOnBusyPortThrows()
