@@ -3,6 +3,28 @@
     "description": "Async, streaming plaintext TCP/IP and secure TLS socket server and client connections for ReactPHP",
     "keywords": ["async", "socket", "stream", "connection", "ReactPHP"],
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Christian Lück",
+            "homepage": "https://clue.engineering/",
+            "email": "christian@clue.engineering"
+        },
+        {
+            "name": "Cees-Jan Kiewiet",
+            "homepage": "https://wyrihaximus.net/",
+            "email": "reactphp@ceesjankiewiet.nl"
+        },
+        {
+            "name": "Jan Sorgalla",
+            "homepage": "https://sorgalla.com/",
+            "email": "jsorgalla@gmail.com"
+        },
+        {
+            "name": "Chris Boden",
+            "homepage": "https://cboden.dev/",
+            "email": "cboden@gmail.com"
+        }
+    ],
     "require": {
         "php": ">=5.3.0",
         "evenement/evenement": "^3.0 || ^2.0 || ^1.0",
