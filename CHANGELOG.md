@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.0 (2020-08-28)
+
+*   Feature: Support upcoming PHP 8 release.
+    (#246 by @clue)
+
+*   Feature: Change default socket backlog size to 511.
+    (#242 by @clue)
+
+*   Fix: Fix closing connection when cancelling during TLS handshake.
+    (#241 by @clue)
+
+*   Fix: Fix blocking during possible `accept()` race condition
+    when multiple socket servers listen on same socket address.
+    (#244 by @clue)
+
+*   Improve test suite, update PHPUnit config and add full core team to the license.
+    (#243 by @SimonFrings and #245 by @WyriHaximus)
+
 ## 1.5.0 (2020-07-01)
 
 *   Feature / Fix: Improve error handling and reporting for happy eyeballs and
