@@ -316,6 +316,7 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function mixIpsIntoConnectQueue(array $ips)
     {
+        \shuffle($ips);
         $this->ipsCount += \count($ips);
         $connectQueueStash = $this->connectQueue;
         $this->connectQueue = array();
