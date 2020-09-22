@@ -75,6 +75,10 @@ final class HappyEyeBallsConnectionBuilder
 
                     $that->mixIpsIntoConnectQueue($ips);
 
+                    if ($that->hasBeenResolved() && $that->ipsCount === 0) {
+                        $reject(new \RuntimeException($that->error()));
+                    }
+
                     // start next connection attempt if not already awaiting next
                     if ($that->nextAttemptTimer === null && $that->connectQueue) {
                         $that->check($resolve, $reject);
@@ -123,7 +127,19 @@ final class HappyEyeBallsConnectionBuilder
     public function resolve($type, $reject)
     {
         $that = $this;
-        return $that->resolver->resolveAll($that->host, $type)->then(null, function (\Exception $e) use ($type, $reject, $that) {
+        return $that->resolver->resolveAll($that->host, $type)->then(function ($ips) use ($that, $type) {
+            if (\count($ips) === 0) {
+                if ($type === Message::TYPE_A) {
+                    $that->lastError4 = 'no records found';
+                    $that->lastErrorFamily = 4;
+                } else {
+                    $that->lastError6 = 'no records found';
+                    $that->lastErrorFamily = 6;
+                }
+            }
+
+            return $ips;
+        }, function (\Exception $e) use ($type, $reject, $that) {
             unset($that->resolverPromises[$type]);
             $that->resolved[$type] = true;
 

@@ -270,6 +270,21 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->loop->run();
     }
 
+    public function testConnectionFailsWhenNoAAAOrARecordsAreResolved()
+    {
+        $this->resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('google.com', Message::TYPE_AAAA),
+            array('google.com', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            $this->returnValue(Promise\resolve(array())),
+            $this->returnValue(Promise\resolve(array()))
+        );
+        $this->tcp->expects($this->never())->method('connect');
+
+        $this->setExpectedException('RuntimeException', 'Connection to scheme://google.com:80/?hostname=google.com failed during DNS lookup: no records found');
+        Block\await($this->connector->connect('scheme://google.com:80/?hostname=google.com'), $this->loop, 3);
+    }
+
     /**
      * @internal
      */
