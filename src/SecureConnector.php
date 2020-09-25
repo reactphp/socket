@@ -56,7 +56,13 @@ final class SecureConnector implements ConnectorInterface
             }
 
             // try to enable encryption
-            return $promise = $encryption->enable($connection)->then(null, function ($error) use ($connection, $uri) {
+            return $promise = $encryption->enable($connection)->then(function () use ($connection) {
+                $connection->setTlsPeer(
+                    TlsPeer::fromContextOptions(\stream_context_get_options($connection->stream))
+                );
+
+                return $connection;
+            }, function ($error) use ($connection, $uri) {
                 // establishing encryption failed => close invalid connection and return error
                 $connection->close();
 

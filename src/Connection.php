@@ -41,6 +41,9 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     private $input;
 
+    /** @var TlsPeer|null */
+    private $tlsPeer;
+
     public function __construct($resource, LoopInterface $loop)
     {
         // PHP < 7.3.3 (and PHP < 7.2.15) suffers from a bug where feof() might
@@ -152,6 +155,31 @@ class Connection extends EventEmitter implements ConnectionInterface
         }
 
         return $this->parseAddress(\stream_socket_get_name($this->stream, false));
+    }
+
+    /**
+     * @param TlsPeer $peer
+     * @internal
+     */
+    public function setTlsPeer(TlsPeer $peer = null)
+    {
+        $this->tlsPeer = $peer;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasTlsPeer()
+    {
+        return $this->tlsPeer !== null;
+    }
+
+    /**
+     * @return TlsPeer|null
+     */
+    public function getTlsPeer()
+    {
+        return $this->tlsPeer;
     }
 
     private function parseAddress($address)
