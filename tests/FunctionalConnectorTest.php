@@ -40,6 +40,10 @@ class FunctionalConnectorTest extends TestCase
      */
     public function testConnectTwiceWithoutHappyEyeBallsOnlySendsSingleDnsQueryDueToLocalDnsCache()
     {
+        if ((DIRECTORY_SEPARATOR === '\\' && PHP_VERSION_ID < 70000) || defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on Windows for PHP versions < 7.0 and legacy HHVM');
+        }
+
         $loop = Factory::create();
 
         $socket = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);

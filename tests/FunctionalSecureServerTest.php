@@ -15,7 +15,7 @@ use React\Socket\TcpServer;
 
 class FunctionalSecureServerTest extends TestCase
 {
-    const TIMEOUT = 0.5;
+    const TIMEOUT = 2;
 
     /**
      * @before
@@ -174,7 +174,7 @@ class FunctionalSecureServerTest extends TestCase
         try {
             $client = Block\await($promise, $loop, self::TIMEOUT);
         } catch (\RuntimeException $e) {
-            if (strpos($e->getMessage(), 'no protocols available') !== false) {
+            if (strpos($e->getMessage(), 'no protocols available') !== false || strpos($e->getMessage(), 'routines:state_machine:internal error') !== false) {
                 $this->markTestSkipped('TLS v1.0 not available on this system');
             }
 
