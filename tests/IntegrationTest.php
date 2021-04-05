@@ -101,6 +101,10 @@ class IntegrationTest extends TestCase
 
     public function testConnectingFailsIfConnectorUsesInvalidDnsResolverAddress()
     {
+        if (PHP_OS === 'Darwin') {
+            $this->markTestSkipped('Skipped on macOS due to a bug in reactphp/dns (solved in reactphp/dns#171)');
+        }
+
         $loop = Factory::create();
 
         $factory = new ResolverFactory();

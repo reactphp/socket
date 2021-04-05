@@ -15,7 +15,7 @@ use React\Socket\ConnectionInterface;
 
 class SecureIntegrationTest extends TestCase
 {
-    const TIMEOUT = 0.5;
+    const TIMEOUT = 2;
 
     private $loop;
     private $server;
