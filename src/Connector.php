@@ -62,7 +62,7 @@ final class Connector implements ConnectorInterface
                     // try to load nameservers from system config or default to Google's public DNS
                     $config = DnsConfig::loadSystemConfigBlocking();
                     if (!$config->nameservers) {
-                        $config->nameservers[] = '8.8.8.8';
+                        $config->nameservers[] = '8.8.8.8'; // @codeCoverageIgnore
                     }
                 }
 
