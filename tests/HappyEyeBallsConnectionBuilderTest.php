@@ -677,6 +677,27 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled', $exception->getMessage());
     }
 
+    public function testResolveWillReturnResolvedPromiseWithEmptyListWhenDnsResolverFails()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->once())->method('resolveAll')->with('reactphp.org', Message::TYPE_A)->willReturn(\React\Promise\reject(new \RuntimeException()));
+
+        $uri = 'tcp://reactphp.org:80';
+        $host = 'reactphp.org';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->resolve(Message::TYPE_A, $this->expectCallableNever());
+
+        $this->assertInstanceof('React\Promise\PromiseInterface', $promise);
+        $promise->then($this->expectCallableOnceWith(array()), $this->expectCallableNever());
+    }
+
     public function testAttemptConnectionWillConnectViaConnectorToGivenIpWithPortAndHostnameFromUriParts()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
