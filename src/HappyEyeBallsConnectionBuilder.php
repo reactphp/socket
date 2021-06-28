@@ -82,7 +82,11 @@ final class HappyEyeBallsConnectionBuilder
                 };
             };
 
-            $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA));
+            $lookupResolveError = function ($type) {
+                return function ($error) { };
+            };
+
+            $that->resolverPromises[Message::TYPE_AAAA] = $that->resolve(Message::TYPE_AAAA, $reject)->then($lookupResolve(Message::TYPE_AAAA), $lookupResolveError(Message::TYPE_AAAA));
             $that->resolverPromises[Message::TYPE_A] = $that->resolve(Message::TYPE_A, $reject)->then(function (array $ips) use ($that, &$timer) {
                 // happy path: IPv6 has resolved already (or could not resolve), continue with IPv4 addresses
                 if ($that->resolved[Message::TYPE_AAAA] === true || !$ips) {
@@ -101,7 +105,7 @@ final class HappyEyeBallsConnectionBuilder
                 });
 
                 return $deferred->promise();
-            })->then($lookupResolve(Message::TYPE_A));
+            })->then($lookupResolve(Message::TYPE_A), $lookupResolveError(Message::TYPE_A));
         }, function ($_, $reject) use ($that, &$timer) {
             $reject(new \RuntimeException('Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : '')));
             $_ = $reject = null;
@@ -276,13 +280,13 @@ final class HappyEyeBallsConnectionBuilder
         $this->connectQueue = array();
 
         foreach ($this->connectionPromises as $connectionPromise) {
-            if ($connectionPromise instanceof CancellablePromiseInterface) {
+            if ($connectionPromise instanceof CancellablePromiseInterface || (!\interface_exists('React\Promise\CancellablePromiseInterface') && \method_exists($connectionPromise, 'cancel'))) {
                 $connectionPromise->cancel();
             }
         }
 
         foreach ($this->resolverPromises as $resolverPromise) {
-            if ($resolverPromise instanceof CancellablePromiseInterface) {
+            if ($resolverPromise instanceof CancellablePromiseInterface || (!\interface_exists('React\Promise\CancellablePromiseInterface') && \method_exists($resolverPromise, 'cancel'))) {
                 $resolverPromise->cancel();
             }
         }

@@ -150,7 +150,7 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during TLS handshake');
+        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 failed during TLS handshake: Ignored');
         $this->throwRejection($promise);
     }
 
@@ -166,7 +166,7 @@ class SecureConnectorTest extends TestCase
         $tcp = new Deferred();
         $this->tcp->expects($this->once())->method('connect')->willReturn($tcp->promise());
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(function () { }, function () { });
         $tcp->reject(new \RuntimeException());
         unset($promise, $tcp);
 
@@ -194,7 +194,7 @@ class SecureConnectorTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($this->connector, $encryption);
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(function () { }, function () { });
         $tcp->resolve($connection);
         $tls->reject(new \RuntimeException());
         unset($promise, $tcp, $tls);

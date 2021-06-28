@@ -130,7 +130,7 @@ class IntegrationTest extends TestCase
         gc_collect_cycles();
         gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
 
-        $promise = $connector->connect('8.8.8.8:80');
+        $promise = $connector->connect('8.8.8.8:80')->then(function () { }, function () { });
         $promise->cancel();
         unset($promise);
 
@@ -147,7 +147,7 @@ class IntegrationTest extends TestCase
         $connector = new Connector($loop);
 
         gc_collect_cycles();
-        $promise = $connector->connect('8.8.8.8:80');
+        $promise = $connector->connect('8.8.8.8:80')->then(function () { }, function () { });
         $promise->cancel();
         unset($promise);
 
@@ -172,7 +172,7 @@ class IntegrationTest extends TestCase
                 $wait = false;
                 throw $e;
             }
-        );
+        )->then(function () { }, function () { });
 
         // run loop for short period to ensure we detect connection refused error
         Block\sleep(0.01, $loop);
@@ -208,7 +208,7 @@ class IntegrationTest extends TestCase
                 $wait = false;
                 throw $e;
             }
-        );
+        )->then(function () { }, function () { });
 
         // run loop for short period to ensure we detect a connection timeout error
         Block\sleep(0.01, $loop);
@@ -241,7 +241,7 @@ class IntegrationTest extends TestCase
                 $wait = false;
                 throw $e;
             }
-        );
+        )->then(function () { }, function () { });
 
         // run loop for short period to ensure we detect a connection timeout error
         Block\sleep(0.01, $loop);
@@ -274,7 +274,7 @@ class IntegrationTest extends TestCase
                 $wait = false;
                 throw $e;
             }
-        );
+        )->then(function () { }, function () { });
 
         // run loop for short period to ensure we detect a DNS error
         Block\sleep(0.01, $loop);
@@ -317,7 +317,7 @@ class IntegrationTest extends TestCase
                 $wait = false;
                 throw $e;
             }
-        );
+        )->then(function () { }, function () { });
 
         // run loop for short period to ensure we detect a TLS error
         Block\sleep(0.1, $loop);

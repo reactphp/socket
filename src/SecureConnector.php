@@ -40,11 +40,7 @@ final class SecureConnector implements ConnectorInterface
         $context = $this->context;
 
         $encryption = $this->streamEncryption;
-        $connected = false;
-        $promise = $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri, &$promise, &$connected) {
-            // (unencrypted) TCP/IP connection succeeded
-            $connected = true;
-
+        return $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri) {
             if (!$connection instanceof Connection) {
                 $connection->close();
                 throw new \UnexpectedValueException('Base connector does not use internal Connection class exposing stream resource');
@@ -56,7 +52,7 @@ final class SecureConnector implements ConnectorInterface
             }
 
             // try to enable encryption
-            return $promise = $encryption->enable($connection)->then(null, function ($error) use ($connection, $uri) {
+            return $encryption->enable($connection)->then(null, function ($error) use ($connection, $uri) {
                 // establishing encryption failed => close invalid connection and return error
                 $connection->close();
 
@@ -66,19 +62,5 @@ final class SecureConnector implements ConnectorInterface
                 );
             });
         });
-
-        return new \React\Promise\Promise(
-            function ($resolve, $reject) use ($promise) {
-                $promise->then($resolve, $reject);
-            },
-            function ($_, $reject) use (&$promise, $uri, &$connected) {
-                if ($connected) {
-                    $reject(new \RuntimeException('Connection to ' . $uri . ' cancelled during TLS handshake'));
-                }
-
-                $promise->cancel();
-                $promise = null;
-            }
-        );
     }
 }

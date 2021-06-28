@@ -53,16 +53,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $parts = parse_url($uri);
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
-
         $promise = $builder->connect();
 
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup: DNS lookup error', $exception->getMessage());
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 failed during DNS lookup: DNS lookup error');
     }
 
     public function testConnectWillRejectWhenBothDnsLookupsRejectWithDifferentMessages()
@@ -89,16 +82,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Previous error for IPv4: DNS4 error');
+
         $promise = $builder->connect();
         $deferred->reject(new \RuntimeException('DNS6 error'));
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Previous error for IPv4: DNS4 error', $exception->getMessage());
     }
 
     public function testConnectWillStartDelayTimerWhenIpv4ResolvesAndIpv6IsPending()
@@ -249,8 +236,8 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
-        $builder->connect();
-        $deferred->reject(new \RuntimeException());
+        $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('reject'));
     }
 
     public function testConnectWillStartConnectingWithAttemptTimerWhenIpv6AndIpv4ResolvesAndWillStartNextConnectionAttemptWithoutAttemptTimerImmediatelyWhenFirstConnectionAttemptFails()
@@ -294,8 +281,8 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
     {
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->exactly(3))->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->exactly(3))->method('cancelTimer')->with($timer);
 
         $deferred = new Deferred();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -326,17 +313,17 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
-        $builder->connect();
+        $promise = $builder->connect();
 
-        $deferred->reject(new \RuntimeException());
+        $deferred->reject(new \RuntimeException('reject'));
     }
 
     public function testConnectWillStartConnectingWithAttemptTimerWhenOnlyIpv6ResolvesAndWillStartNextConnectionAttemptWithoutAttemptTimerImmediatelyWhenFirstConnectionAttemptFails()
     {
         $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
-        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
-        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+        $loop->expects($this->exactly(2))->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->exactly(2))->method('cancelTimer')->with($timer);
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->exactly(2))->method('connect')->withConsecutive(
@@ -353,7 +340,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
             \React\Promise\resolve(array('::1', '::1')),
-            \React\Promise\reject(new \RuntimeException())
+            \React\Promise\reject(new \RuntimeException('reject'))
         );
 
         $uri = 'tcp://reactphp.org:80';
@@ -362,7 +349,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
-        $builder->connect();
+        $builder->connect()->then();
     }
 
     public function testConnectWillStartConnectingAndWillStartNextConnectionWithoutNewAttemptTimerWhenNextAttemptTimerFiresAfterIpv4Rejected()
@@ -376,7 +363,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $loop->expects($this->never())->method('cancelTimer');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->exactly(2))->method('connect')->willReturn(new Promise(function () { }));
+        $connector->expects($this->once())->method('connect')->willReturn(new Promise(function () { }));
 
         $deferred = new Deferred();
         $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
@@ -395,7 +382,7 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $builder->connect();
-        $deferred->reject(new \RuntimeException());
+        $deferred->reject(new \RuntimeException('reject'));
 
         $this->assertNotNull($timer);
         $timer();
@@ -467,16 +454,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Previous error for IPv4: DNS failed');
+
         $promise = $builder->connect();
         $deferred->reject(new \RuntimeException('Connection refused'));
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Previous error for IPv4: DNS failed', $exception->getMessage());
     }
 
     public function testConnectWillRejectWhenOnlyTcp4ConnectionRejectsAndWillNeverStartNextAttemptTimer()
@@ -503,16 +484,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 failed: Last error for IPv4: Connection refused. Previous error for IPv6: DNS failed');
+
         $promise = $builder->connect();
         $deferred->reject(new \RuntimeException('Connection refused'));
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv4: Connection refused. Previous error for IPv6: DNS failed', $exception->getMessage());
     }
 
     public function testConnectWillRejectWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()
@@ -541,16 +516,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 failed: Connection refused');
+
         $promise = $builder->connect();
         $deferred->reject(new \RuntimeException('Connection refused'));
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Connection refused', $exception->getMessage());
     }
 
     public function testCancelConnectWillRejectPromiseAndCancelBothDnsLookups()
@@ -583,18 +552,12 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
-        $promise = $builder->connect();
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 cancelled during DNS lookup');
+
+        $promise = $builder->connect()->then();
         $promise->cancel();
 
         $this->assertEquals(2, $cancelled);
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled during DNS lookup', $exception->getMessage());
     }
 
     public function testCancelConnectWillRejectPromiseAndCancelPendingIpv6LookupAndCancelDelayTimer()
@@ -622,16 +585,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 cancelled during DNS lookup');
+
         $promise = $builder->connect();
+        $promise->then(function () { });
         $promise->cancel();
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled during DNS lookup', $exception->getMessage());
     }
 
     public function testCancelConnectWillRejectPromiseAndCancelPendingIpv6ConnectionAttemptAndPendingIpv4LookupAndCancelAttemptTimer()
@@ -663,18 +621,13 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
 
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
+//        $this->setExpectedException('RuntimeException', 'Connection to tcp://reactphp.org:80 cancelled');
+
         $promise = $builder->connect();
+        $promise->then();
         $promise->cancel();
 
         $this->assertEquals(1, $cancelled);
-
-        $exception = null;
-        $promise->then(null, function ($e) use (&$exception) {
-            $exception = $e;
-        });
-
-        $this->assertInstanceOf('RuntimeException', $exception);
-        $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled', $exception->getMessage());
     }
 
     public function testResolveWillReturnResolvedPromiseWithEmptyListWhenDnsResolverFails()

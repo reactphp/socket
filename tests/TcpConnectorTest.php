@@ -251,7 +251,7 @@ class TcpConnectorTest extends TestCase
         $server->on('connection', $this->expectCallableNever());
 
         $loop->expects($this->once())->method('addWriteStream');
-        $promise = $connector->connect($server->getAddress());
+        $promise = $connector->connect($server->getAddress())->then(function () { }, function () { });
 
         $resource = null;
         $valid = false;
@@ -277,10 +277,11 @@ class TcpConnectorTest extends TestCase
 
         $server = new TcpServer(0, $loop);
 
+        $this->setExpectedException('RuntimeException', 'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake');
+
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake');
         Block\await($promise, $loop);
     }
 
@@ -295,7 +296,7 @@ class TcpConnectorTest extends TestCase
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $connector = new TcpConnector($loop);
-        $promise = $connector->connect('127.0.0.1:9999');
+        $promise = $connector->connect('127.0.0.1:9999')->then(function () { }, function () { });
 
         $promise->cancel();
         unset($promise);

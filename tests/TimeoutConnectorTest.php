@@ -110,7 +110,7 @@ class TimeoutConnectorTest extends TestCase
         $loop = Factory::create();
         $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $promise = $timeout->connect('example.com:80');
+        $promise = $timeout->connect('example.com:80')->then(function () { }, function () { });
         $connection->reject(new \RuntimeException('Connection failed'));
         unset($promise, $connection);
 
@@ -134,7 +134,7 @@ class TimeoutConnectorTest extends TestCase
         $loop = Factory::create();
         $timeout = new TimeoutConnector($connector, 0, $loop);
 
-        $promise = $timeout->connect('example.com:80');
+        $promise = $timeout->connect('example.com:80')->then(function () { }, function () { });
 
         $loop->run();
         unset($promise, $connection);

@@ -26,49 +26,49 @@ class DnsConnectorTest extends TestCase
     public function testPassByResolverIfGivenIp()
     {
         $this->resolver->expects($this->never())->method('resolve');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('127.0.0.1:80'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('127.0.0.1:80'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('127.0.0.1:80');
+        $this->connector->connect('127.0.0.1:80')->then(null, function () {});
     }
 
     public function testPassThroughResolverIfGivenHost()
     {
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('google.com'))->will($this->returnValue(Promise\resolve('1.2.3.4')));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('google.com:80');
+        $this->connector->connect('google.com:80')->then(null, function () {});
     }
 
     public function testPassThroughResolverIfGivenHostWhichResolvesToIpv6()
     {
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('google.com'))->will($this->returnValue(Promise\resolve('::1')));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80?hostname=google.com'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('google.com:80');
+        $this->connector->connect('google.com:80')->then(null, function () {});
     }
 
     public function testPassByResolverIfGivenCompleteUri()
     {
         $this->resolver->expects($this->never())->method('resolve');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment');
+        $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment')->then(null, function () {});
     }
 
     public function testPassThroughResolverIfGivenCompleteUri()
     {
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('google.com'))->will($this->returnValue(Promise\resolve('1.2.3.4')));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/path?query&hostname=google.com#fragment'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/path?query&hostname=google.com#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://google.com:80/path?query#fragment');
+        $this->connector->connect('scheme://google.com:80/path?query#fragment')->then(null, function () {});
     }
 
     public function testPassThroughResolverIfGivenExplicitHost()
     {
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('google.com'))->will($this->returnValue(Promise\resolve('1.2.3.4')));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.de'))->will($this->returnValue(Promise\reject()));
+        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.de'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://google.com:80/?hostname=google.de');
+        $this->connector->connect('scheme://google.com:80/?hostname=google.de')->then(null, function () {});
     }
 
     public function testRejectsImmediatelyIfUriIsInvalid()
@@ -134,7 +134,7 @@ class DnsConnectorTest extends TestCase
 
     public function testCancelDuringDnsCancelsDnsAndDoesNotStartTcpConnection()
     {
-        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
+        $pending = new Promise\Promise(function () { }, function () { });
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->will($this->returnValue($pending));
         $this->tcp->expects($this->never())->method('connect');
 
@@ -157,7 +157,7 @@ class DnsConnectorTest extends TestCase
 
     public function testCancelDuringTcpConnectionCancelsTcpConnectionAfterDnsIsResolved()
     {
-        $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
+        $pending = new Promise\Promise(function () { }, function () { });
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn(Promise\resolve('1.2.3.4'));
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($pending);
 
@@ -196,7 +196,7 @@ class DnsConnectorTest extends TestCase
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
         $this->tcp->expects($this->never())->method('connect');
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(null, function () { });
         $dns->reject(new \RuntimeException('DNS failed'));
         unset($promise, $dns);
 
@@ -217,7 +217,7 @@ class DnsConnectorTest extends TestCase
         $tcp = new Deferred();
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp->promise());
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(null, function () { });
         $dns->resolve('1.2.3.4');
         $tcp->reject(new \RuntimeException('Connection failed'));
         unset($promise, $dns, $tcp);
@@ -242,7 +242,7 @@ class DnsConnectorTest extends TestCase
         });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp->promise());
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(null, function () { });
         $dns->resolve('1.2.3.4');
 
         unset($promise, $dns, $tcp);
@@ -264,7 +264,7 @@ class DnsConnectorTest extends TestCase
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
         $this->tcp->expects($this->never())->method('connect');
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(null, function () { });
 
         $promise->cancel();
         unset($promise, $dns);
@@ -287,7 +287,7 @@ class DnsConnectorTest extends TestCase
         });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($tcp);
 
-        $promise = $this->connector->connect('example.com:80');
+        $promise = $this->connector->connect('example.com:80')->then(function () { }, function () { });
         $dns->resolve('1.2.3.4');
 
         $promise->cancel();
