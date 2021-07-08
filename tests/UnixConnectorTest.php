@@ -19,6 +19,17 @@ class UnixConnectorTest extends TestCase
         $this->connector = new UnixConnector($this->loop);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $connector = new UnixConnector();
+
+        $ref = new \ReflectionProperty($connector, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($connector);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     public function testInvalid()
     {
         $promise = $this->connector->connect('google.com:80');

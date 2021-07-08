@@ -124,7 +124,7 @@ interface ServerInterface extends EventEmitterInterface
      * ```php
      * $server->pause();
      *
-     * $loop->addTimer(1.0, function () use ($server) {
+     * Loop::addTimer(1.0, function () use ($server) {
      *     $server->resume();
      * });
      * ```

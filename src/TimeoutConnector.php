@@ -2,6 +2,7 @@
 
 namespace React\Socket;
 
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Timer;
 use React\Promise\Timer\TimeoutException;
@@ -12,11 +13,11 @@ final class TimeoutConnector implements ConnectorInterface
     private $timeout;
     private $loop;
 
-    public function __construct(ConnectorInterface $connector, $timeout, LoopInterface $loop)
+    public function __construct(ConnectorInterface $connector, $timeout, LoopInterface $loop = null)
     {
         $this->connector = $connector;
         $this->timeout = $timeout;
-        $this->loop = $loop;
+        $this->loop = $loop ?: Loop::get();
     }
 
     public function connect($uri)

@@ -8,7 +8,6 @@
 // $ php examples/21-netcat-client.php www.google.com:80
 // $ php examples/21-netcat-client.php tls://www.google.com:443
 
-use React\EventLoop\Factory;
 use React\Socket\Connector;
 use React\Socket\ConnectionInterface;
 use React\Stream\ReadableResourceStream;
@@ -31,13 +30,12 @@ if (!isset($argv[1])) {
     exit(1);
 }
 
-$loop = Factory::create();
-$connector = new Connector($loop);
+$connector = new Connector();
 
-$stdin = new ReadableResourceStream(STDIN, $loop);
+$stdin = new ReadableResourceStream(STDIN);
 $stdin->pause();
-$stdout = new WritableResourceStream(STDOUT, $loop);
-$stderr = new WritableResourceStream(STDERR, $loop);
+$stdout = new WritableResourceStream(STDOUT);
+$stderr = new WritableResourceStream(STDERR);
 
 $stderr->write('Connecting' . PHP_EOL);
 
@@ -64,5 +62,3 @@ $connector->connect($argv[1])->then(function (ConnectionInterface $connection) u
 }, function ($error) use ($stderr) {
     $stderr->write('Connection ERROR: ' . $error . PHP_EOL);
 });
-
-$loop->run();

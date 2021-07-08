@@ -30,6 +30,8 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
+        env:
+          COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
         if: ${{ matrix.php >= 7.3 }}
@@ -46,6 +48,8 @@ jobs:
         with:
           php-version: 8.0
           coverage: xdebug
+        env:
+          COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
 
@@ -53,6 +57,7 @@ jobs:
     name: PHPUnit (HHVM)
     runs-on: ubuntu-18.04
     continue-on-error: true
+    if: false # temporarily skipped until https://github.com/azjezz/setup-hhvm/issues/3 is addressed
     steps:
       - uses: actions/checkout@v2
       - uses: azjezz/setup-hhvm@v1

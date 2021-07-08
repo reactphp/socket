@@ -13,6 +13,17 @@ class TcpConnectorTest extends TestCase
 {
     const TIMEOUT = 5.0;
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $connector = new TcpConnector();
+
+        $ref = new \ReflectionProperty($connector, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($connector);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     /** @test */
     public function connectionToEmptyPortShouldFail()
     {

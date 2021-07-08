@@ -29,6 +29,17 @@ class UnixServerTest extends TestCase
         $this->server = new UnixServer($this->uds, $this->loop);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $server = new UnixServer($this->getRandomSocketUri());
+
+        $ref = new \ReflectionProperty($server, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($server);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     /**
      * @covers React\Socket\UnixServer::handleConnection
      */

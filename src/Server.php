@@ -3,6 +3,7 @@
 namespace React\Socket;
 
 use Evenement\EventEmitter;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use Exception;
 
@@ -10,8 +11,10 @@ final class Server extends EventEmitter implements ServerInterface
 {
     private $server;
 
-    public function __construct($uri, LoopInterface $loop, array $context = array())
+    public function __construct($uri, LoopInterface $loop = null, array $context = array())
     {
+        $loop = $loop ?: Loop::get();
+
         // sanitize TCP context options if not properly wrapped
         if ($context && (!isset($context['tcp']) && !isset($context['tls']) && !isset($context['unix']))) {
             $context = array('tcp' => $context);

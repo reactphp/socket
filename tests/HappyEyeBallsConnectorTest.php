@@ -30,6 +30,29 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->connector = new HappyEyeBallsConnector($this->loop, $this->tcp, $this->resolver);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $connector = new HappyEyeBallsConnector(null, $this->tcp, $this->resolver);
+
+        $ref = new \ReflectionProperty($connector, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($connector);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
+    public function testConstructWithoutRequiredConnectorThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        new HappyEyeBallsConnector(null, null, $this->resolver);
+    }
+
+    public function testConstructWithoutRequiredResolverThrows()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        new HappyEyeBallsConnector(null, $this->tcp);
+    }
+
     public function testHappyFlow()
     {
         $first = new Deferred();

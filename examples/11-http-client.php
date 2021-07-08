@@ -11,7 +11,6 @@
 // $ php examples/11-http-client.php
 // $ php examples/11-http-client.php reactphp.org
 
-use React\EventLoop\Factory;
 use React\Socket\Connector;
 use React\Socket\ConnectionInterface;
 
@@ -19,8 +18,7 @@ $host = isset($argv[1]) ? $argv[1] : 'www.google.com';
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$loop = Factory::create();
-$connector = new Connector($loop);
+$connector = new Connector();
 
 $connector->connect($host. ':80')->then(function (ConnectionInterface $connection) use ($host) {
     $connection->on('data', function ($data) {
@@ -32,5 +30,3 @@ $connector->connect($host. ':80')->then(function (ConnectionInterface $connectio
 
     $connection->write("GET / HTTP/1.0\r\nHost: $host\r\n\r\n");
 }, 'printf');
-
-$loop->run();

@@ -29,15 +29,12 @@
 // $ php examples/03-http-server.php unix:///tmp/server.sock
 // $ nc -U /tmp/server.sock
 
-use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$loop = Factory::create();
-
-$server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
+$server = new Server(isset($argv[1]) ? $argv[1] : 0, null, array(
     'tls' => array(
         'local_cert' => isset($argv[2]) ? $argv[2] : (__DIR__ . '/localhost.pem')
     )
@@ -53,5 +50,3 @@ $server->on('connection', function (ConnectionInterface $connection) {
 $server->on('error', 'printf');
 
 echo 'Listening on ' . strtr($server->getAddress(), array('tcp:' => 'http:', 'tls:' => 'https:')) . PHP_EOL;
-
-$loop->run();
