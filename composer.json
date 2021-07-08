@@ -28,11 +28,11 @@
     "require": {
         "php": ">=5.3.0",
         "evenement/evenement": "^3.0 || ^2.0 || ^1.0",
-        "react/dns": "dev-default-loop#28e5df1 as 1.8.0",
-        "react/event-loop": "dev-master#78f7f43 as 1.2.0",
+        "react/dns": "^1.8",
+        "react/event-loop": "^1.2",
         "react/promise": "^2.6.0 || ^1.2.1",
         "react/promise-timer": "^1.4.0",
-        "react/stream": "dev-default-loop#e617d63 as 1.2.0"
+        "react/stream": "^1.2"
     },
     "require-dev": {
         "clue/block-react": "^1.2",
@@ -48,15 +48,5 @@
         "psr-4": {
             "React\\Tests\\Socket\\": "tests"
         }
-    },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/clue-labs/dns"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/clue-labs/stream"
-        }
-    ]
+    }
 }
