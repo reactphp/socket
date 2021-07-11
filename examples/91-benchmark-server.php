@@ -22,21 +22,18 @@
 // $ nc -N -U /tmp/server.sock
 // $ dd if=/dev/zero bs=1M count=1000 | nc -N -U /tmp/server.sock
 
-use React\EventLoop\Factory;
 use React\Socket\Server;
 use React\Socket\ConnectionInterface;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$loop = Factory::create();
-
-$server = new Server(isset($argv[1]) ? $argv[1] : 0, $loop, array(
+$server = new Server(isset($argv[1]) ? $argv[1] : 0, null, array(
     'tls' => array(
         'local_cert' => isset($argv[2]) ? $argv[2] : (__DIR__ . '/localhost.pem')
     )
 ));
 
-$server->on('connection', function (ConnectionInterface $connection) use ($loop) {
+$server->on('connection', function (ConnectionInterface $connection) {
     echo '[connected]' . PHP_EOL;
 
     // count the number of bytes received from this connection
@@ -56,5 +53,3 @@ $server->on('connection', function (ConnectionInterface $connection) use ($loop)
 $server->on('error', 'printf');
 
 echo 'Listening on ' . $server->getAddress() . PHP_EOL;
-
-$loop->run();

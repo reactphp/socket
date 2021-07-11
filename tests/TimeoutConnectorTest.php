@@ -10,6 +10,19 @@ use React\Promise\Deferred;
 
 class TimeoutConnectorTest extends TestCase
 {
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $base = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+
+        $connector = new TimeoutConnector($base, 0.01);
+
+        $ref = new \ReflectionProperty($connector, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($connector);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     public function testRejectsWithTimeoutReasonOnTimeout()
     {
         $promise = new Promise\Promise(function () { });

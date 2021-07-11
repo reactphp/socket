@@ -18,6 +18,23 @@ class SecureServerTest extends TestCase
         }
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();
+
+        $server = new SecureServer($tcp);
+
+        $ref = new \ReflectionProperty($server, 'encryption');
+        $ref->setAccessible(true);
+        $encryption = $ref->getValue($server);
+
+        $ref = new \ReflectionProperty($encryption, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($encryption);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     public function testGetAddressWillBePassedThroughToTcpServer()
     {
         $tcp = $this->getMockBuilder('React\Socket\ServerInterface')->getMock();

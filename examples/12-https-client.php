@@ -11,7 +11,6 @@
 // $ php examples/12-https-client.php
 // $ php examples/12-https-client.php reactphp.org
 
-use React\EventLoop\Factory;
 use React\Socket\Connector;
 use React\Socket\ConnectionInterface;
 
@@ -19,8 +18,7 @@ $host = isset($argv[1]) ? $argv[1] : 'www.google.com';
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$loop = Factory::create();
-$connector = new Connector($loop);
+$connector = new Connector();
 
 $connector->connect('tls://' . $host . ':443')->then(function (ConnectionInterface $connection) use ($host) {
     $connection->on('data', function ($data) {
@@ -32,5 +30,3 @@ $connector->connect('tls://' . $host . ':443')->then(function (ConnectionInterfa
 
     $connection->write("GET / HTTP/1.0\r\nHost: $host\r\n\r\n");
 }, 'printf');
-
-$loop->run();

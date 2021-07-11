@@ -2,6 +2,7 @@
 
 namespace React\Socket;
 
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise;
 use InvalidArgumentException;
@@ -17,9 +18,9 @@ final class UnixConnector implements ConnectorInterface
 {
     private $loop;
 
-    public function __construct(LoopInterface $loop)
+    public function __construct(LoopInterface $loop = null)
     {
-        $this->loop = $loop;
+        $this->loop = $loop ?: Loop::get();
     }
 
     public function connect($path)

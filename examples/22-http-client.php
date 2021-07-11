@@ -13,7 +13,6 @@
 // $ php examples/22-http-client.php
 // $ php examples/22-http-client.php https://reactphp.org/
 
-use React\EventLoop\Factory;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use React\Stream\WritableResourceStream;
@@ -32,8 +31,7 @@ if (!$parts || !isset($parts['scheme'], $parts['host'])) {
     exit(1);
 }
 
-$loop = Factory::create();
-$connector = new Connector($loop);
+$connector = new Connector();
 
 if (!isset($parts['port'])) {
     $parts['port'] = $parts['scheme'] === 'https' ? 443 : 80;
@@ -49,12 +47,10 @@ if (isset($parts['query'])) {
     $resource .= '?' . $parts['query'];
 }
 
-$stdout = new WritableResourceStream(STDOUT, $loop);
+$stdout = new WritableResourceStream(STDOUT);
 
 $connector->connect($target)->then(function (ConnectionInterface $connection) use ($resource, $host, $stdout) {
     $connection->pipe($stdout);
 
     $connection->write("GET $resource HTTP/1.0\r\nHost: $host\r\n\r\n");
 }, 'printf');
-
-$loop->run();

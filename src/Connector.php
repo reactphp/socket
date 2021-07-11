@@ -5,6 +5,7 @@ namespace React\Socket;
 use React\Dns\Config\Config as DnsConfig;
 use React\Dns\Resolver\Factory as DnsFactory;
 use React\Dns\Resolver\ResolverInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 
 /**
@@ -26,8 +27,9 @@ final class Connector implements ConnectorInterface
 {
     private $connectors = array();
 
-    public function __construct(LoopInterface $loop, array $options = array())
+    public function __construct(LoopInterface $loop = null, array $options = array())
     {
+        $loop = $loop ?: Loop::get();
         // apply default options if not explicitly given
         $options += array(
             'tcp' => true,

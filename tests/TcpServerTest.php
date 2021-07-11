@@ -34,6 +34,17 @@ class TcpServerTest extends TestCase
         $this->port = parse_url($this->server->getAddress(), PHP_URL_PORT);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $server = new TcpServer(0);
+
+        $ref = new \ReflectionProperty($server, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($server);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     /**
      * @covers React\Socket\TcpServer::handleConnection
      */

@@ -26,6 +26,21 @@ class SecureConnectorTest extends TestCase
         $this->connector = new SecureConnector($this->tcp, $this->loop);
     }
 
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $connector = new SecureConnector($this->tcp);
+
+        $ref = new \ReflectionProperty($connector, 'streamEncryption');
+        $ref->setAccessible(true);
+        $streamEncryption = $ref->getValue($connector);
+
+        $ref = new \ReflectionProperty($streamEncryption, 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($streamEncryption);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     public function testConnectionWillWaitForTcpConnection()
     {
         $pending = new Promise\Promise(function () { });

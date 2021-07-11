@@ -7,6 +7,21 @@ use React\Promise\Promise;
 
 class ConnectorTest extends TestCase
 {
+    public function testConstructWithoutLoopAssignsLoopAutomatically()
+    {
+        $connector = new Connector();
+
+        $ref = new \ReflectionProperty($connector, 'connectors');
+        $ref->setAccessible(true);
+        $connectors = $ref->getValue($connector);
+
+        $ref = new \ReflectionProperty($connectors['tcp'], 'loop');
+        $ref->setAccessible(true);
+        $loop = $ref->getValue($connectors['tcp']);
+
+        $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+    }
+
     public function testConnectorUsesTcpAsDefaultScheme()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
