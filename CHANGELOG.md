@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.8.0 (2021-07-11)
+
+A major new feature release, see [**release announcement**](https://clue.engineering/2021/announcing-reactphp-default-loop).
+
+*   Feature: Simplify usage by supporting new [default loop](https://reactphp.org/event-loop/#loop).
+    (#260 by @clue)
+
+    ```php
+    // old (still supported)
+    $socket = new React\Socket\Server('127.0.0.1:8080', $loop);
+    $connector = new React\Socket\Connector($loop);
+
+    // new (using default loop)
+    $socket = new React\Socket\Server('127.0.0.1:8080');
+    $connector = new React\Socket\Connector();
+    ```
+
 ## 1.7.0 (2021-06-25)
 
 *   Feature: Support falling back to multiple DNS servers from DNS config.
