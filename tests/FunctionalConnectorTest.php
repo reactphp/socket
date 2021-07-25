@@ -24,7 +24,7 @@ class FunctionalConnectorTest extends TestCase
 
         $server = new TcpServer(9998, $loop);
 
-        $connector = new Connector($loop);
+        $connector = new Connector(array(), $loop);
 
         $connection = Block\await($connector->connect('localhost:9998'), $loop, self::TIMEOUT);
 
@@ -48,10 +48,10 @@ class FunctionalConnectorTest extends TestCase
 
         $socket = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
 
-        $connector = new Connector($loop, array(
+        $connector = new Connector(array(
             'dns' => 'udp://' . stream_socket_get_name($socket, false),
             'happy_eyeballs' => false
-        ));
+        ), $loop);
 
         // minimal DNS proxy stub which forwards DNS messages to actual DNS server
         $received = 0;
@@ -86,7 +86,7 @@ class FunctionalConnectorTest extends TestCase
 
         $loop = Factory::create();
 
-        $connector = new Connector($loop, array('happy_eyeballs' => true));
+        $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
         $ip = Block\await($this->request('dual.tlund.se', $connector), $loop, self::TIMEOUT);
 
@@ -101,7 +101,7 @@ class FunctionalConnectorTest extends TestCase
     {
         $loop = Factory::create();
 
-        $connector = new Connector($loop, array('happy_eyeballs' => true));
+        $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
         try {
             $ip = Block\await($this->request('ipv4.tlund.se', $connector), $loop, self::TIMEOUT);
@@ -122,7 +122,7 @@ class FunctionalConnectorTest extends TestCase
     {
         $loop = Factory::create();
 
-        $connector = new Connector($loop, array('happy_eyeballs' => true));
+        $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
         try {
             $ip = Block\await($this->request('ipv6.tlund.se', $connector), $loop, self::TIMEOUT);
@@ -146,7 +146,7 @@ class FunctionalConnectorTest extends TestCase
         $server = new TcpServer(0, $loop);
         $uri = str_replace('tcp://', '', $server->getAddress());
 
-        $connector = new Connector($loop);
+        $connector = new Connector(array(), $loop);
         $promise = $connector->connect('tls://' . $uri);
 
         $deferred = new Deferred();
