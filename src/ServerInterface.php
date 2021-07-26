@@ -23,7 +23,7 @@ use Evenement\EventEmitterInterface;
  *     established, i.e. a new client connects to this server socket:
  *
  *     ```php
- *     $server->on('connection', function (React\Socket\ConnectionInterface $connection) {
+ *     $socket->on('connection', function (React\Socket\ConnectionInterface $connection) {
  *         echo 'new connection' . PHP_EOL;
  *     });
  *     ```
@@ -36,7 +36,7 @@ use Evenement\EventEmitterInterface;
  *     connection from a client.
  *
  *     ```php
- *     $server->on('error', function (Exception $e) {
+ *     $socket->on('error', function (Exception $e) {
  *         echo 'error: ' . $e->getMessage() . PHP_EOL;
  *     });
  *     ```
@@ -52,7 +52,7 @@ interface ServerInterface extends EventEmitterInterface
      * Returns the full address (URI) this server is currently listening on
      *
      * ```php
-     * $address = $server->getAddress();
+     * $address = $socket->getAddress();
      * echo 'Server listening on ' . $address . PHP_EOL;
      * ```
      *
@@ -68,7 +68,7 @@ interface ServerInterface extends EventEmitterInterface
      * use something like this:
      *
      * ```php
-     * $address = $server->getAddress();
+     * $address = $socket->getAddress();
      * $port = parse_url($address, PHP_URL_PORT);
      * echo 'Server listening on port ' . $port . PHP_EOL;
      * ```
@@ -94,9 +94,9 @@ interface ServerInterface extends EventEmitterInterface
      * be emitted.
      *
      * ```php
-     * $server->pause();
+     * $socket->pause();
      *
-     * $server->on('connection', assertShouldNeverCalled());
+     * $socket->on('connection', assertShouldNeverCalled());
      * ```
      *
      * This method is advisory-only, though generally not recommended, the
@@ -122,10 +122,10 @@ interface ServerInterface extends EventEmitterInterface
      * Re-attach the socket resource to the EventLoop after a previous `pause()`.
      *
      * ```php
-     * $server->pause();
+     * $socket->pause();
      *
-     * Loop::addTimer(1.0, function () use ($server) {
-     *     $server->resume();
+     * Loop::addTimer(1.0, function () use ($socket) {
+     *     $socket->resume();
      * });
      * ```
      *
