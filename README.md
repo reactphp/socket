@@ -948,12 +948,6 @@ also shares all of their features and implementation details.
 If you want to typehint in your higher-level protocol implementation, you SHOULD
 use the generic [`ConnectorInterface`](#connectorinterface) instead.
 
-This class takes an optional `LoopInterface|null $loop` parameter that can be used to
-pass the event loop instance to use for this object. You can use a `null` value
-here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
-This value SHOULD NOT be given unless you're sure you want to explicitly use a
-given event loop instance.
-
 As of `v1.4.0`, the `Connector` class defaults to using the
 [happy eyeballs algorithm](https://en.wikipedia.org/wiki/Happy_Eyeballs) to
 automatically connect over IPv4 or IPv6 when a hostname is given.
@@ -964,7 +958,7 @@ If you want to revert to the old behavior of only doing an IPv4 lookup and
 only attempt a single IPv4 connection, you can set up the `Connector` like this:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'happy_eyeballs' => false
 ));
 ```
@@ -978,7 +972,7 @@ If you explicitly want to use a custom DNS server (such as a local DNS relay or
 a company wide DNS server), you can set up the `Connector` like this:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'dns' => '127.0.1.1'
 ));
 
@@ -992,7 +986,7 @@ If you do not want to use a DNS resolver at all and want to connect to IP
 addresses only, you can also set up your `Connector` like this:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'dns' => false
 ));
 
@@ -1009,7 +1003,7 @@ can also set up your `Connector` like this:
 $dnsResolverFactory = new React\Dns\Resolver\Factory();
 $resolver = $dnsResolverFactory->createCached('127.0.1.1');
 
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'dns' => $resolver
 ));
 
@@ -1024,7 +1018,7 @@ respects your `default_socket_timeout` ini setting (which defaults to 60s).
 If you want a custom timeout value, you can simply pass this like this:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'timeout' => 10.0
 ));
 ```
@@ -1033,7 +1027,7 @@ Similarly, if you do not want to apply a timeout at all and let the operating
 system handle this, you can pass a boolean flag like this:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'timeout' => false
 ));
 ```
@@ -1044,7 +1038,7 @@ pass boolean flags like this:
 
 ```php
 // only allow secure TLS connections
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'tcp' => false,
     'tls' => true,
     'unix' => false,
@@ -1063,7 +1057,7 @@ pass arrays of context options like this:
 
 ```php
 // allow insecure TLS connections
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'tcp' => array(
         'bindto' => '192.168.0.1:0'
     ),
@@ -1084,7 +1078,7 @@ SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
 want to negotiate with the remote side:
 
 ```php
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'tls' => array(
         'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
     )
@@ -1110,7 +1104,7 @@ $tls = new React\Socket\SecureConnector($tcp);
 
 $unix = new React\Socket\UnixConnector();
 
-$connector = new React\Socket\Connector(null, array(
+$connector = new React\Socket\Connector(array(
     'tcp' => $tcp,
     'tls' => $tls,
     'unix' => $unix,
@@ -1136,6 +1130,24 @@ $connector->connect('google.com:80')->then(function (React\Socket\ConnectionInte
   explicitly pass a `tls://` connector like above instead.
   Internally, the `tcp://` and `tls://` connectors will always be wrapped by
   `TimeoutConnector`, unless you disable timeouts like in the above example.
+
+This class takes an optional `LoopInterface|null $loop` parameter that can be used to
+pass the event loop instance to use for this object. You can use a `null` value
+here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
+This value SHOULD NOT be given unless you're sure you want to explicitly use a
+given event loop instance.
+
+> Changelog v1.9.0: The constructur signature has been updated to take the
+> optional `$context` as the first parameter and the optional `$loop` as a second
+> argument. The previous signature has been deprecated and should not be used anymore.
+>
+> ```php
+> // constructor signature as of v1.9.0
+> $connector = new React\Socket\Connector(array $context = [], ?LoopInterface $loop = null);
+>
+> // legacy constructor signature before v1.9.0
+> $connector = new React\Socket\Connector(?LoopInterface $loop = null, array $context = []);
+> ```
 
 ### Advanced client usage
 
