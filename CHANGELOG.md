@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.9.0 (2021-08-03)
+
+*   Feature: Add new `SocketServer` and deprecate `Server` to avoid class name collisions.
+    (#263 by @clue)
+
+    The new `SocketServer` class has been added with an improved constructor signature
+    as a replacement for the previous `Server` class in order to avoid any ambiguities.
+    The previous name has been deprecated and should not be used anymore.
+    In its most basic form, the deprecated `Server` can now be considered an alias for new `SocketServer`.
+
+    ```php
+    // deprecated
+    $socket = new React\Socket\Server(0);
+    $socket = new React\Socket\Server('127.0.0.1:8000');
+    $socket = new React\Socket\Server('127.0.0.1:8000', null, $context);
+    $socket = new React\Socket\Server('127.0.0.1:8000', $loop, $context);
+
+    // new
+    $socket = new React\Socket\SocketServer('127.0.0.1:0');
+    $socket = new React\Socket\SocketServer('127.0.0.1:8000');
+    $socket = new React\Socket\SocketServer('127.0.0.1:8000', $context);
+    $socket = new React\Socket\SocketServer('127.0.0.1:8000', $context, $loop);
+    ```
+
+*   Feature: Update `Connector` signature to take optional `$context` as first argument.
+    (#264 by @clue)
+
+    The new signature has been added to match the new `SocketServer` and
+    consistently move the now commonly unneeded loop argument to the last argument.
+    The previous signature has been deprecated and should not be used anymore.
+    In its most basic form, both signatures are compatible.
+
+    ```php
+     // deprecated
+    $connector = new React\Socket\Connector(null, $context);
+    $connector = new React\Socket\Connector($loop, $context);
+
+    // new
+    $connector = new React\Socket\Connector($context);
+    $connector = new React\Socket\Connector($context, $loop);
+    ```
+
 ## 1.8.0 (2021-07-11)
 
 A major new feature release, see [**release announcement**](https://clue.engineering/2021/announcing-reactphp-default-loop).
