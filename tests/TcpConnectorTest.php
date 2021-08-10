@@ -103,21 +103,21 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToInvalidNetworkShouldFailWithUnreachableError()
     {
-        if (!defined('SOCKET_ENETUNREACH') || !function_exists('socket_import_stream')) {
-            $this->markTestSkipped('Test requires ext-socket on PHP 5.4+');
+        if (PHP_OS !== 'Linux' && !function_exists('socket_import_stream')) {
+            $this->markTestSkipped('Test requires either Linux or ext-sockets on PHP 5.4+');
         }
 
+        $enetunreach = defined('SOCKET_ENETUNREACH') ? SOCKET_ENETUNREACH : 101;
+
         // try to find an unreachable network by trying a couple of private network addresses
-        $errno = 0; $errstr = '';
-        for ($i = 0; $i < 20; ++$i) {
+        $errno = 0;
+        $errstr = '';
+        for ($i = 0; $i < 20 && $errno !== $enetunreach; ++$i) {
             $address = 'tcp://192.168.' . mt_rand(0, 255) . '.' . mt_rand(1, 254) . ':8123';
             $client = @stream_socket_client($address, $errno, $errstr, 0.1 * $i);
-            if ($errno === SOCKET_ENETUNREACH) {
-                break;
-            }
         }
-        if ($client || $errno !== SOCKET_ENETUNREACH) {
-            $this->markTestSkipped('Expected error ' . SOCKET_ENETUNREACH . ' but got ' . $errno . ' (' . $errstr . ') for ' . $address);
+        if ($client || $errno !== $enetunreach) {
+            $this->markTestSkipped('Expected error ' . $enetunreach . ' but got ' . $errno . ' (' . $errstr . ') for ' . $address);
         }
 
         $loop = Factory::create();
@@ -127,8 +127,8 @@ class TcpConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to ' . $address . ' failed: ' . socket_strerror(SOCKET_ENETUNREACH),
-            SOCKET_ENETUNREACH
+            'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) : 'Network is unreachable'),
+            $enetunreach
         );
         Block\await($promise, $loop, self::TIMEOUT);
     }
