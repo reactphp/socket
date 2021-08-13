@@ -99,14 +99,27 @@ final class TcpConnector implements ConnectorInterface
                 // The following hack looks like the only way to
                 // detect connection refused errors with PHP's stream sockets.
                 if (false === \stream_socket_get_name($stream, true)) {
-                    // actual socket errno and errstr can only be retrieved when ext-sockets is available (see tests)
+                    // If we reach this point, we know the connection is dead, but we don't know the underlying error condition.
                     // @codeCoverageIgnoreStart
                     if (\function_exists('socket_import_stream')) {
+                        // actual socket errno and errstr can be retrieved with ext-sockets on PHP 5.4+
                         $socket = \socket_import_stream($stream);
                         $errno = \socket_get_option($socket, \SOL_SOCKET, \SO_ERROR);
                         $errstr = \socket_strerror($errno);
+                    } elseif (\PHP_OS === 'Linux') {
+                        // Linux reports socket errno and errstr again when trying to write to the dead socket.
+                        // Suppress error reporting to get error message below and close dead socket before rejecting.
+                        // This is only known to work on Linux, Mac and Windows are known to not support this.
+                        @\fwrite($stream, \PHP_EOL);
+                        $error = \error_get_last();
+
+                        // fwrite(): send of 2 bytes failed with errno=111 Connection refused
+                        \preg_match('/errno=(\d+) (.+)/', $error['message'], $m);
+                        $errno = isset($m[1]) ? (int) $m[1] : 0;
+                        $errstr = isset($m[2]) ? $m[2] : $error['message'];
                     } else {
-                        $errno = \defined('SOCKET_ECONNREFUSED') ? \SOCKET_ECONNRESET : 111;
+                        // Not on Linux and ext-sockets not available? Too bad.
+                        $errno = \defined('SOCKET_ECONNREFUSED') ? \SOCKET_ECONNREFUSED : 111;
                         $errstr = 'Connection refused?';
                     }
                     // @codeCoverageIgnoreEnd
