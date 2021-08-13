@@ -90,4 +90,44 @@ final class SocketServer extends EventEmitter implements ServerInterface
     {
         $this->server->close();
     }
+
+    /**
+     * [internal] Internal helper method to accept new connection from given server socket
+     *
+     * @param resource $socket server socket to accept connection from
+     * @return resource new client socket if any
+     * @throws \RuntimeException if accepting fails
+     * @internal
+     */
+    public static function accept($socket)
+    {
+        $newSocket = @\stream_socket_accept($socket, 0);
+
+        if (false === $newSocket) {
+            // Match errstr from PHP's warning message.
+            // stream_socket_accept(): accept failed: Connection timed out
+            $error = \error_get_last();
+            $errstr = \preg_replace('#.*: #', '', $error['message']);
+
+            // Go through list of possible error constants to find matching errno.
+            // @codeCoverageIgnoreStart
+            $errno = 0;
+            if (\function_exists('socket_strerror')) {
+                foreach (\get_defined_constants(false) as $name => $value) {
+                    if (\strpos($name, 'SOCKET_E') === 0 && \socket_strerror($value) === $errstr) {
+                        $errno = $value;
+                        break;
+                    }
+                }
+            }
+            // @codeCoverageIgnoreEnd
+
+            throw new \RuntimeException(
+                'Unable to accept new connection: ' . $errstr,
+                $errno
+            );
+        }
+
+        return $newSocket;
+    }
 }
