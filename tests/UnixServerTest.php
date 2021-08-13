@@ -292,7 +292,10 @@ class UnixServerTest extends TestCase
 
         $server = new UnixServer($this->getRandomSocketUri(), $loop);
 
-        $server->on('error', $this->expectCallableOnceWith($this->isInstanceOf('RuntimeException')));
+        $exception = null;
+        $server->on('error', function ($e) use (&$exception) {
+            $exception = $e;
+        });
 
         $this->assertNotNull($listener);
         $socket = stream_socket_server('tcp://127.0.0.1:0');
@@ -302,6 +305,23 @@ class UnixServerTest extends TestCase
         $time = microtime(true) - $time;
 
         $this->assertLessThan(1, $time);
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+        $this->assertStringStartsWith('Unable to accept new connection: ', $exception->getMessage());
+
+        return $exception;
+    }
+
+    /**
+     * @param \RuntimeException $e
+     * @requires extension sockets
+     * @depends testEmitsErrorWhenAcceptListenerFails
+     */
+    public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
+    {
+        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT), $exception->getMessage());
+        $this->assertEquals(SOCKET_ETIMEDOUT, $exception->getCode());
     }
 
     public function testListenOnBusyPortThrows()

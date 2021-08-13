@@ -211,31 +211,10 @@ final class TcpServer extends EventEmitter implements ServerInterface
 
         $that = $this;
         $this->loop->addReadStream($this->master, function ($master) use ($that) {
-            $newSocket = @\stream_socket_accept($master, 0);
-            if (false === $newSocket) {
-                // Match errstr from PHP's warning message.
-                // stream_socket_accept(): accept failed: Connection timed out
-                $error = \error_get_last();
-                $errstr = \preg_replace('#.*: #', '', $error['message']);
-
-                // Go through list of possible error constants to find matching errno.
-                // @codeCoverageIgnoreStart
-                $errno = 0;
-                if (\function_exists('socket_strerror')) {
-                    foreach (\get_defined_constants(false) as $name => $value) {
-                        if (\strpos($name, 'SOCKET_E') === 0 && \socket_strerror($value) === $errstr) {
-                            $errno = $value;
-                            break;
-                        }
-                    }
-                }
-                // @codeCoverageIgnoreEnd
-
-                $that->emit('error', array(new \RuntimeException(
-                    'Unable to accept new connection: ' . $errstr,
-                    $errno
-                )));
-
+            try {
+                $newSocket = SocketServer::accept($master);
+            } catch (\RuntimeException $e) {
+                $that->emit('error', array($e));
                 return;
             }
             $that->handleConnection($newSocket);
