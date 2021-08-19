@@ -320,6 +320,10 @@ class UnixServerTest extends TestCase
      */
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('not supported on HHVM');
+        }
+
         $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT), $exception->getMessage());
         $this->assertEquals(SOCKET_ETIMEDOUT, $exception->getCode());
     }
