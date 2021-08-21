@@ -16,7 +16,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
@@ -33,6 +33,15 @@ class FdServerTest extends TestCase
         new FdServer(-1, $loop);
     }
 
+    public function testCtorThrowsForInvalidUrl()
+    {
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addReadStream');
+
+        $this->setExpectedException('InvalidArgumentException');
+        new FdServer('tcp://127.0.0.1:8080', $loop);
+    }
+
     public function testCtorThrowsForUnknownFd()
     {
         if (!is_dir('/dev/fd') || defined('HHVM_VERSION')) {
@@ -40,7 +49,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
         fclose($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -61,7 +70,7 @@ class FdServerTest extends TestCase
         }
 
         $tmpfile = tmpfile();
-        $fd = $this->getFdFromResource($tmpfile);
+        $fd = self::getFdFromResource($tmpfile);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
@@ -83,7 +92,7 @@ class FdServerTest extends TestCase
         $socket = stream_socket_server('tcp://127.0.0.1:0');
         $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
 
-        $fd = $this->getFdFromResource($client);
+        $fd = self::getFdFromResource($client);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
@@ -103,11 +112,27 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $server = new FdServer($fd, $loop);
+
+        $this->assertEquals('tcp://' . stream_socket_get_name($socket, false), $server->getAddress());
+    }
+
+    public function testGetAddressReturnsSameAddressAsOriginalSocketForIpv4SocketGivenAsUrlToFd()
+    {
+        if (!is_dir('/dev/fd') || defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on your platform');
+        }
+
+        $socket = stream_socket_server('127.0.0.1:0');
+        $fd = self::getFdFromResource($socket);
+
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+
+        $server = new FdServer('php://fd/' . $fd, $loop);
 
         $this->assertEquals('tcp://' . stream_socket_get_name($socket, false), $server->getAddress());
     }
@@ -123,7 +148,7 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Listening on IPv6 not supported');
         }
 
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -144,7 +169,7 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Listening on Unix domain socket (UDS) not supported');
         }
 
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -160,7 +185,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -177,7 +202,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -193,7 +218,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -210,7 +235,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
@@ -226,7 +251,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -242,7 +267,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -259,7 +284,7 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
 
@@ -289,7 +314,7 @@ class FdServerTest extends TestCase
         }));
 
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = $this->getFdFromResource($socket);
+        $fd = self::getFdFromResource($socket);
 
         $server = new FdServer($fd, $loop);
 
@@ -333,7 +358,7 @@ class FdServerTest extends TestCase
      * @throws \UnderflowException
      * @copyright Copyright (c) 2018 Christian Lück, taken from https://github.com/clue/fd with permission
      */
-    private function getFdFromResource($resource)
+    public static function getFdFromResource($resource)
     {
         $stat = @fstat($resource);
         if (!isset($stat['ino']) || $stat['ino'] === 0) {

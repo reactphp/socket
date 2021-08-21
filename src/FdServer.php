@@ -70,13 +70,16 @@ final class FdServer extends EventEmitter implements ServerInterface
      * See the exception message and code for more details about the actual error
      * condition.
      *
-     * @param int            $fd
+     * @param int|string     $fd   FD number such as `3` or as URL in the form of `php://fd/3`
      * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
     public function __construct($fd, LoopInterface $loop = null)
     {
+        if (\preg_match('#^php://fd/(\d+)$#', $fd, $m)) {
+            $fd = (int) $m[1];
+        }
         if (!\is_int($fd) || $fd < 0 || $fd >= \PHP_INT_MAX) {
             throw new \InvalidArgumentException('Invalid FD number given');
         }

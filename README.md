@@ -380,6 +380,13 @@ To listen on a Unix domain socket (UDS) path, you MUST prefix the URI with the
 $socket = new React\Socket\SocketServer('unix:///tmp/server.sock');
 ```
 
+In order to listen on an existing file descriptor (FD) number, you MUST prefix
+the URI with `php://fd/` like this:
+
+```php
+$socket = new React\Socket\SocketServer('php://fd/3');
+```
+
 If the given URI is invalid, does not contain a port, any other scheme or if it
 contains a hostname, it will throw an `InvalidArgumentException`:
 
