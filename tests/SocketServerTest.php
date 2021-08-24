@@ -124,8 +124,8 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = FdServerTest::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = FdServerTest::getFdFromResource($socket);
 
         $server = new SocketServer('php://fd/' . $fd);
         $server->pause();

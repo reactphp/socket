@@ -15,8 +15,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
@@ -48,9 +49,7 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
-        $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
-        fclose($socket);
+        $fd = self::getNextFreeFd();
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
@@ -69,8 +68,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $tmpfile = tmpfile();
-        $fd = self::getFdFromResource($tmpfile);
+        assert($tmpfile !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
@@ -90,9 +90,10 @@ class FdServerTest extends TestCase
         }
 
         $socket = stream_socket_server('tcp://127.0.0.1:0');
-        $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
 
-        $fd = self::getFdFromResource($client);
+        $fd = self::getNextFreeFd();
+        $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
+        assert($client !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
@@ -111,8 +112,8 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -127,8 +128,8 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -143,12 +144,11 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = @stream_socket_server('[::1]:0');
         if ($socket === false) {
             $this->markTestSkipped('Listening on IPv6 not supported');
         }
-
-        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -164,12 +164,11 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = @stream_socket_server($this->getRandomSocketUri());
         if ($socket === false) {
             $this->markTestSkipped('Listening on Unix domain socket (UDS) not supported');
         }
-
-        $fd = self::getFdFromResource($socket);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -184,8 +183,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
@@ -201,8 +201,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -217,8 +218,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -234,8 +236,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
@@ -250,8 +253,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -266,8 +270,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
@@ -283,8 +288,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Not supported on your platform');
         }
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
 
@@ -313,8 +319,9 @@ class FdServerTest extends TestCase
             return true;
         }));
 
+        $fd = self::getNextFreeFd();
         $socket = stream_socket_server('127.0.0.1:0');
-        $fd = self::getFdFromResource($socket);
+        assert($socket !== false);
 
         $server = new FdServer($fd, $loop);
 
@@ -351,26 +358,25 @@ class FdServerTest extends TestCase
     }
 
     /**
-     * @param resource $resource
      * @return int
      * @throws \UnexpectedValueException
      * @throws \BadMethodCallException
      * @throws \UnderflowException
      * @copyright Copyright (c) 2018 Christian Lück, taken from https://github.com/clue/fd with permission
      */
-    public static function getFdFromResource($resource)
+    public static function getNextFreeFd()
     {
-        $stat = @fstat($resource);
-        if (!isset($stat['ino']) || $stat['ino'] === 0) {
-            throw new \UnexpectedValueException('Could not access inode of given resource (unsupported type or platform)');
-        }
+        // open tmpfile to occupy next free FD temporarily
+        $tmp = tmpfile();
 
         $dir = @scandir('/dev/fd');
         if ($dir === false) {
             throw new \BadMethodCallException('Not supported on your platform because /dev/fd is not readable');
         }
 
+        $stat = fstat($tmp);
         $ino = (int) $stat['ino'];
+
         foreach ($dir as $file) {
             $stat = @stat('/dev/fd/' . $file);
             if (isset($stat['ino']) && $stat['ino'] === $ino) {
