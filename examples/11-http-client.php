@@ -29,4 +29,6 @@ $connector->connect($host. ':80')->then(function (ConnectionInterface $connectio
     });
 
     $connection->write("GET / HTTP/1.0\r\nHost: $host\r\n\r\n");
-}, 'printf');
+}, function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
