@@ -222,47 +222,7 @@ final class HappyEyeBallsConnectionBuilder
      */
     public function attemptConnection($ip)
     {
-        $uri = '';
-
-        // prepend original scheme if known
-        if (isset($this->parts['scheme'])) {
-            $uri .= $this->parts['scheme'] . '://';
-        }
-
-        if (\strpos($ip, ':') !== false) {
-            // enclose IPv6 addresses in square brackets before appending port
-            $uri .= '[' . $ip . ']';
-        } else {
-            $uri .= $ip;
-        }
-
-        // append original port if known
-        if (isset($this->parts['port'])) {
-            $uri .= ':' . $this->parts['port'];
-        }
-
-        // append orignal path if known
-        if (isset($this->parts['path'])) {
-            $uri .= $this->parts['path'];
-        }
-
-        // append original query if known
-        if (isset($this->parts['query'])) {
-            $uri .= '?' . $this->parts['query'];
-        }
-
-        // append original hostname as query if resolved via DNS and if
-        // destination URI does not contain "hostname" query param already
-        $args = array();
-        \parse_str(isset($this->parts['query']) ? $this->parts['query'] : '', $args);
-        if ($this->host !== $ip && !isset($args['hostname'])) {
-            $uri .= (isset($this->parts['query']) ? '&' : '?') . 'hostname=' . \rawurlencode($this->host);
-        }
-
-        // append original fragment if known
-        if (isset($this->parts['fragment'])) {
-            $uri .= '#' . $this->parts['fragment'];
-        }
+        $uri = Connector::uri($this->parts, $this->host, $ip);
 
         return $this->connector->connect($uri);
     }

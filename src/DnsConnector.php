@@ -46,47 +46,7 @@ final class DnsConnector implements ConnectorInterface
                 // resolve/reject with result of DNS lookup
                 $promise->then(function ($ip) use (&$promise, &$resolved, $connector, $host, $parts) {
                     $resolved = $ip;
-                    $uri = '';
-
-                    // prepend original scheme if known
-                    if (isset($parts['scheme'])) {
-                        $uri .= $parts['scheme'] . '://';
-                    }
-
-                    if (\strpos($ip, ':') !== false) {
-                        // enclose IPv6 addresses in square brackets before appending port
-                        $uri .= '[' . $ip . ']';
-                    } else {
-                        $uri .= $ip;
-                    }
-
-                    // append original port if known
-                    if (isset($parts['port'])) {
-                        $uri .= ':' . $parts['port'];
-                    }
-
-                    // append orignal path if known
-                    if (isset($parts['path'])) {
-                        $uri .= $parts['path'];
-                    }
-
-                    // append original query if known
-                    if (isset($parts['query'])) {
-                        $uri .= '?' . $parts['query'];
-                    }
-
-                    // append original hostname as query if resolved via DNS and if
-                    // destination URI does not contain "hostname" query param already
-                    $args = array();
-                    \parse_str(isset($parts['query']) ? $parts['query'] : '', $args);
-                    if ($host !== $ip && !isset($args['hostname'])) {
-                        $uri .= (isset($parts['query']) ? '&' : '?') . 'hostname=' . \rawurlencode($host);
-                    }
-
-                    // append original fragment if known
-                    if (isset($parts['fragment'])) {
-                        $uri .= '#' . $parts['fragment'];
-                    }
+                    $uri = Connector::uri($parts, $host, $ip);
 
                     return $promise = $connector->connect($uri);
                 }, function ($e) use ($uri, $reject) {
