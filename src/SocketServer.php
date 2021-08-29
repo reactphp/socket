@@ -48,6 +48,8 @@ final class SocketServer extends EventEmitter implements ServerInterface
 
         if ($scheme === 'unix') {
             $server = new UnixServer($uri, $loop, $context['unix']);
+        } elseif ($scheme === 'php') {
+            $server = new FdServer($uri, $loop);
         } else {
             if (preg_match('#^(?:\w+://)?\d+$#', $uri)) {
                 throw new \InvalidArgumentException('Invalid URI given');

@@ -28,6 +28,10 @@
 //
 // $ php examples/03-http-server.php unix:///tmp/server.sock
 // $ nc -U /tmp/server.sock
+//
+// You can also use systemd socket activation and listen on an inherited file descriptor:
+//
+// $ systemd-socket-activate -l 8000 php examples/03-http-server.php php://fd/3
 
 require __DIR__ . '/../vendor/autoload.php';
 
