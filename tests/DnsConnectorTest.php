@@ -81,29 +81,55 @@ class DnsConnectorTest extends TestCase
         $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
     }
 
-    public function testRejectsWithTcpConnectorRejectionIfGivenIp()
+    public function testConnectRejectsIfGivenIpAndTcpConnectorRejectsWithRuntimeException()
     {
-        $promise = Promise\reject(new \RuntimeException('Connection failed'));
+        $promise = Promise\reject(new \RuntimeException('Connection to tcp://1.2.3.4:80 failed: Connection failed', 42));
         $this->resolver->expects($this->never())->method('resolve');
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80'))->willReturn($promise);
+        $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80')->willReturn($promise);
 
         $promise = $this->connector->connect('1.2.3.4:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection failed');
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
         $this->throwRejection($promise);
     }
 
-    public function testRejectsWithTcpConnectorRejectionAfterDnsIsResolved()
+    public function testConnectRejectsIfGivenIpAndTcpConnectorRejectsWithInvalidArgumentException()
     {
-        $promise = Promise\reject(new \RuntimeException('Connection failed'));
-        $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn(Promise\resolve('1.2.3.4'));
-        $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($promise);
+        $promise = Promise\reject(new \InvalidArgumentException('Invalid', 42));
+        $this->resolver->expects($this->never())->method('resolve');
+        $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80')->willReturn($promise);
+
+        $promise = $this->connector->connect('1.2.3.4:80');
+        $promise->cancel();
+
+        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
+        $this->throwRejection($promise);
+    }
+
+    public function testConnectRejectsWithOriginalHostnameInMessageAfterResolvingIfTcpConnectorRejectsWithRuntimeException()
+    {
+        $promise = Promise\reject(new \RuntimeException('Connection to tcp://1.2.3.4:80?hostname=example.com failed: Connection failed', 42));
+        $this->resolver->expects($this->once())->method('resolve')->with('example.com')->willReturn(Promise\resolve('1.2.3.4'));
+        $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80?hostname=example.com')->willReturn($promise);
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection failed');
+        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
+        $this->throwRejection($promise);
+    }
+
+    public function testConnectRejectsWithOriginalExceptionAfterResolvingIfTcpConnectorRejectsWithInvalidArgumentException()
+    {
+        $promise = Promise\reject(new \InvalidArgumentException('Invalid', 42));
+        $this->resolver->expects($this->once())->method('resolve')->with('example.com')->willReturn(Promise\resolve('1.2.3.4'));
+        $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80?hostname=example.com')->willReturn($promise);
+
+        $promise = $this->connector->connect('example.com:80');
+        $promise->cancel();
+
+        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
         $this->throwRejection($promise);
     }
 

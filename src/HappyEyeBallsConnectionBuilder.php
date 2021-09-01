@@ -175,11 +175,12 @@ final class HappyEyeBallsConnectionBuilder
 
             $that->failureCount++;
 
+            $message = \preg_replace('/^(Connection to [^ ]+)[&?]hostname=[^ &]+/', '$1', $e->getMessage());
             if (\strpos($ip, ':') === false) {
-                $that->lastError4 = $e->getMessage();
+                $that->lastError4 = $message;
                 $that->lastErrorFamily = 4;
             } else {
-                $that->lastError6 = $e->getMessage();
+                $that->lastError6 = $message;
                 $that->lastErrorFamily = 6;
             }
 

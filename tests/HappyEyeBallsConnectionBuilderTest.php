@@ -553,6 +553,47 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Connection refused', $exception->getMessage());
     }
 
+    public function testConnectWillRejectWithMessageWithoutHostnameWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.1, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $deferred = new Deferred();
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->exactly(2))->method('connect')->willReturnOnConsecutiveCalls(
+            $deferred->promise(),
+            \React\Promise\reject(new \RuntimeException('Connection to tcp://127.0.0.1:80?hostname=localhost failed: Connection refused'))
+        );
+
+        $resolver = $this->getMockBuilder('React\Dns\Resolver\ResolverInterface')->getMock();
+        $resolver->expects($this->exactly(2))->method('resolveAll')->withConsecutive(
+            array('localhost', Message::TYPE_AAAA),
+            array('localhost', Message::TYPE_A)
+        )->willReturnOnConsecutiveCalls(
+            \React\Promise\resolve(array('::1')),
+            \React\Promise\resolve(array('127.0.0.1'))
+        );
+
+        $uri = 'tcp://localhost:80';
+        $host = 'localhost';
+        $parts = parse_url($uri);
+
+        $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
+
+        $promise = $builder->connect();
+        $deferred->reject(new \RuntimeException('Connection to tcp://[::1]:80?hostname=localhost failed: Connection refused'));
+
+        $exception = null;
+        $promise->then(null, function ($e) use (&$exception) {
+            $exception = $e;
+        });
+
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://localhost:80 failed: Last error for IPv4: Connection to tcp://127.0.0.1:80 failed: Connection refused. Previous error for IPv6: Connection to tcp://[::1]:80 failed: Connection refused', $exception->getMessage());
+    }
+
     public function testCancelConnectWillRejectPromiseAndCancelBothDnsLookups()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
