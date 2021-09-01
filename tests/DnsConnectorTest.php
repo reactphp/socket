@@ -116,7 +116,7 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
         $this->throwRejection($promise);
     }
 
@@ -141,7 +141,7 @@ class DnsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.invalid:80');
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.invalid:80 failed during DNS lookup: DNS error');
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.invalid:80 failed during DNS lookup: DNS error');
         $this->throwRejection($promise);
     }
 
@@ -167,7 +167,7 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during DNS lookup');
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 cancelled during DNS lookup');
         $this->throwRejection($promise);
     }
 

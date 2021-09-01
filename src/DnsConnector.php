@@ -19,15 +19,17 @@ final class DnsConnector implements ConnectorInterface
 
     public function connect($uri)
     {
+        $original = $uri;
         if (\strpos($uri, '://') === false) {
-            $parts = \parse_url('tcp://' . $uri);
+            $uri = 'tcp://' . $uri;
+            $parts = \parse_url($uri);
             unset($parts['scheme']);
         } else {
             $parts = \parse_url($uri);
         }
 
         if (!$parts || !isset($parts['host'])) {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new \InvalidArgumentException('Given URI "' . $original . '" is invalid'));
         }
 
         $host = \trim($parts['host'], '[]');
@@ -35,7 +37,7 @@ final class DnsConnector implements ConnectorInterface
 
         // skip DNS lookup / URI manipulation if this URI already contains an IP
         if (false !== \filter_var($host, \FILTER_VALIDATE_IP)) {
-            return $connector->connect($uri);
+            return $connector->connect($original);
         }
 
         $promise = $this->resolver->resolve($host);
