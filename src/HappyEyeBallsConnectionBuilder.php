@@ -143,7 +143,11 @@ final class HappyEyeBallsConnectionBuilder
             }
 
             if ($that->hasBeenResolved() && $that->ipsCount === 0) {
-                $reject(new \RuntimeException($that->error()));
+                $reject(new \RuntimeException(
+                    $that->error(),
+                    0,
+                    $e
+                ));
             }
 
             // Exception already handled above, so don't throw an unhandled rejection here
@@ -201,7 +205,11 @@ final class HappyEyeBallsConnectionBuilder
             if ($that->ipsCount === $that->failureCount) {
                 $that->cleanUp();
 
-                $reject(new \RuntimeException($that->error()));
+                $reject(new \RuntimeException(
+                    $that->error(),
+                    $e->getCode(),
+                    $e
+                ));
             }
         });
 

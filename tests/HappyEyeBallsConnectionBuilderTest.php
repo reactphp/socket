@@ -62,7 +62,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup: DNS lookup error', $exception->getMessage());
+        $this->assertEquals(0, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
     }
 
     public function testConnectWillRejectWhenBothDnsLookupsRejectWithDifferentMessages()
@@ -98,7 +102,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed during DNS lookup. Last error for IPv6: DNS6 error. Previous error for IPv4: DNS4 error', $exception->getMessage());
+        $this->assertEquals(0, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
     }
 
     public function testConnectWillStartDelayTimerWhenIpv4ResolvesAndIpv6IsPending()
@@ -468,7 +476,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $promise = $builder->connect();
-        $deferred->reject(new \RuntimeException('Connection refused'));
+        $deferred->reject(new \RuntimeException(
+            'Connection refused',
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        ));
 
         $exception = null;
         $promise->then(null, function ($e) use (&$exception) {
@@ -476,7 +487,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv6: Connection refused. Previous error for IPv4: DNS failed', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
     }
 
     public function testConnectWillRejectWhenOnlyTcp4ConnectionRejectsAndWillNeverStartNextAttemptTimer()
@@ -504,7 +519,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $promise = $builder->connect();
-        $deferred->reject(new \RuntimeException('Connection refused'));
+        $deferred->reject(new \RuntimeException(
+            'Connection refused',
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        ));
 
         $exception = null;
         $promise->then(null, function ($e) use (&$exception) {
@@ -512,7 +530,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Last error for IPv4: Connection refused. Previous error for IPv6: DNS failed', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
     }
 
     public function testConnectWillRejectWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()
@@ -542,7 +564,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $promise = $builder->connect();
-        $deferred->reject(new \RuntimeException('Connection refused'));
+        $deferred->reject(new \RuntimeException(
+            'Connection refused',
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        ));
 
         $exception = null;
         $promise->then(null, function ($e) use (&$exception) {
@@ -550,7 +575,11 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 failed: Connection refused', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
     }
 
     public function testConnectWillRejectWithMessageWithoutHostnameWhenAllConnectionsRejectAndCancelNextAttemptTimerImmediately()
