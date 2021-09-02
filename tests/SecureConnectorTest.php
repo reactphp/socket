@@ -68,6 +68,28 @@ class SecureConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnce());
     }
 
+    public function testConnectWillRejectWithTlsUriWhenUnderlyingConnectorRejects()
+    {
+        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \RuntimeException('Connection to tcp://example.com:80 failed: Connection refused', 42)));
+
+        $promise = $this->connector->connect('example.com:80');
+        $promise->cancel();
+
+        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 failed: Connection refused', 42);
+        $this->throwRejection($promise);
+    }
+
+    public function testConnectWillRejectWithOriginalMessageWhenUnderlyingConnectorRejectsWithInvalidArgumentException()
+    {
+        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \InvalidArgumentException('Invalid', 42)));
+
+        $promise = $this->connector->connect('example.com:80');
+        $promise->cancel();
+
+        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
+        $this->throwRejection($promise);
+    }
+
     public function testCancelDuringTcpConnectionCancelsTcpConnection()
     {
         $pending = new Promise\Promise(function () { }, $this->expectCallableOnce());
@@ -79,13 +101,13 @@ class SecureConnectorTest extends TestCase
 
     public function testCancelDuringTcpConnectionCancelsTcpConnectionAndRejectsWithTcpRejection()
     {
-        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
+        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection to tcp://example.com:80 cancelled', 42); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->will($this->returnValue($pending));
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection cancelled');
+        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 cancelled', 42);
         $this->throwRejection($promise);
     }
 
@@ -139,7 +161,7 @@ class SecureConnectorTest extends TestCase
         try {
             $this->throwRejection($promise);
         } catch (\RuntimeException $e) {
-            $this->assertEquals('Connection to example.com:80 failed during TLS handshake: TLS error', $e->getMessage());
+            $this->assertEquals('Connection to tls://example.com:80 failed during TLS handshake: TLS error', $e->getMessage());
             $this->assertEquals(123, $e->getCode());
             $this->assertNull($e->getPrevious());
         }
@@ -165,7 +187,7 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during TLS handshake');
+        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 cancelled during TLS handshake');
         $this->throwRejection($promise);
     }
 

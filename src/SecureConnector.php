@@ -37,12 +37,12 @@ final class SecureConnector implements ConnectorInterface
             return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
         }
 
-        $uri = \str_replace('tls://', '', $uri);
         $context = $this->context;
-
         $encryption = $this->streamEncryption;
         $connected = false;
-        $promise = $this->connector->connect($uri)->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri, &$promise, &$connected) {
+        $promise = $this->connector->connect(
+            \str_replace('tls://', '', $uri)
+        )->then(function (ConnectionInterface $connection) use ($context, $encryption, $uri, &$promise, &$connected) {
             // (unencrypted) TCP/IP connection succeeded
             $connected = true;
 
@@ -66,6 +66,17 @@ final class SecureConnector implements ConnectorInterface
                     $error->getCode()
                 );
             });
+        }, function (\Exception $e) use ($uri) {
+            if ($e instanceof \RuntimeException) {
+                $message = \preg_replace('/^Connection to [^ ]+/', '', $e->getMessage());
+                $e = new \RuntimeException(
+                    'Connection to ' . $uri . $message,
+                    $e->getCode(),
+                    $e
+                );
+            }
+
+            throw $e;
         });
 
         return new \React\Promise\Promise(

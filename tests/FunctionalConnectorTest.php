@@ -144,10 +144,10 @@ class FunctionalConnectorTest extends TestCase
         $loop = Factory::create();
 
         $server = new TcpServer(0, $loop);
-        $uri = str_replace('tcp://', '', $server->getAddress());
+        $uri = str_replace('tcp://', 'tls://', $server->getAddress());
 
         $connector = new Connector(array(), $loop);
-        $promise = $connector->connect('tls://' . $uri);
+        $promise = $connector->connect($uri);
 
         $deferred = new Deferred();
         $server->on('connection', function (ConnectionInterface $connection) use ($promise, $deferred, $loop) {
