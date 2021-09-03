@@ -48,8 +48,8 @@ $connector->connect($argv[1])->then(function (ConnectionInterface $connection) u
     $connection->pipe($stdout);
 
     // report errors to STDERR
-    $connection->on('error', function ($error) use ($stderr) {
-        $stderr->write('Stream ERROR: ' . $error . PHP_EOL);
+    $connection->on('error', function (Exception $e) use ($stderr) {
+        $stderr->write('Stream error: ' . $e->getMessage() . PHP_EOL);
     });
 
     // report closing and stop reading from input
@@ -59,6 +59,6 @@ $connector->connect($argv[1])->then(function (ConnectionInterface $connection) u
     });
 
     $stderr->write('Connected' . PHP_EOL);
-}, function ($error) use ($stderr) {
-    $stderr->write('Connection ERROR: ' . $error . PHP_EOL);
+}, function (Exception $e) use ($stderr) {
+    $stderr->write('Connection error: ' . $e->getMessage() . PHP_EOL);
 });

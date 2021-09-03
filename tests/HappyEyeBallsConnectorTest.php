@@ -256,7 +256,7 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.invalid:80 failed during DNS lookup: DNS error');
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.invalid:80 failed during DNS lookup: DNS error');
         $this->loop->run();
     }
 
@@ -275,7 +275,7 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
-        $this->setExpectedException('RuntimeException', 'Connection to example.com:80 cancelled during DNS lookup');
+        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 cancelled during DNS lookup');
         $this->loop->run();
     }
 

@@ -29,4 +29,6 @@ $connector->connect('tls://' . $host . ':443')->then(function (ConnectionInterfa
     });
 
     $connection->write("GET / HTTP/1.0\r\nHost: $host\r\n\r\n");
-}, 'printf');
+}, function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});

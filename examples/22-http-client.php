@@ -53,4 +53,6 @@ $connector->connect($target)->then(function (ConnectionInterface $connection) us
     $connection->pipe($stdout);
 
     $connection->write("GET $resource HTTP/1.0\r\nHost: $host\r\n\r\n");
-}, 'printf');
+}, function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
