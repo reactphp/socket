@@ -187,7 +187,11 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 cancelled during TLS handshake');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tls://example.com:80 cancelled during TLS handshake',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        );
         $this->throwRejection($promise);
     }
 

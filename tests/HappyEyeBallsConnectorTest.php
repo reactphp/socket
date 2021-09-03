@@ -275,7 +275,11 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 cancelled during DNS lookup');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tcp://example.com:80 cancelled during DNS lookup',
+            \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+        );
         $this->loop->run();
     }
 

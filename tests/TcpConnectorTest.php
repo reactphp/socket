@@ -324,7 +324,11 @@ class TcpConnectorTest extends TestCase
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        );
         Block\await($promise, $loop);
     }
 

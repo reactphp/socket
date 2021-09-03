@@ -664,7 +664,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled during DNS lookup', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
     }
 
     public function testCancelConnectWillRejectPromiseAndCancelPendingIpv6LookupAndCancelDelayTimer()
@@ -701,7 +704,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled during DNS lookup', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
     }
 
     public function testCancelConnectWillRejectPromiseAndCancelPendingIpv6ConnectionAttemptAndPendingIpv4LookupAndCancelAttemptTimer()
@@ -744,7 +750,10 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         });
 
         $this->assertInstanceOf('RuntimeException', $exception);
+        assert($exception instanceof \RuntimeException);
+
         $this->assertEquals('Connection to tcp://reactphp.org:80 cancelled', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
     }
 
     public function testResolveWillReturnResolvedPromiseWithEmptyListWhenDnsResolverFails()

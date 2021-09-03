@@ -105,7 +105,10 @@ final class SecureConnector implements ConnectorInterface
             },
             function ($_, $reject) use (&$promise, $uri, &$connected) {
                 if ($connected) {
-                    $reject(new \RuntimeException('Connection to ' . $uri . ' cancelled during TLS handshake'));
+                    $reject(new \RuntimeException(
+                        'Connection to ' . $uri . ' cancelled during TLS handshake',
+                        \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+                    ));
                 }
 
                 $promise->cancel();

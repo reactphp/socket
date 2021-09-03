@@ -141,7 +141,10 @@ final class TcpConnector implements ConnectorInterface
             }
             // @codeCoverageIgnoreEnd
 
-            throw new \RuntimeException('Connection to ' . $uri . ' cancelled during TCP/IP handshake');
+            throw new \RuntimeException(
+                'Connection to ' . $uri . ' cancelled during TCP/IP handshake',
+                \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+            );
         });
     }
 }

@@ -91,7 +91,10 @@ final class DnsConnector implements ConnectorInterface
                 // cancellation should reject connection attempt
                 // reject DNS resolution with custom reason, otherwise rely on connection cancellation below
                 if ($resolved === null) {
-                    $reject(new \RuntimeException('Connection to ' . $uri . ' cancelled during DNS lookup'));
+                    $reject(new \RuntimeException(
+                        'Connection to ' . $uri . ' cancelled during DNS lookup',
+                        \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+                    ));
                 }
 
                 // (try to) cancel pending DNS lookup / connection attempt
