@@ -232,8 +232,12 @@ class UnixServerTest extends TestCase
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
-        $this->setExpectedException('InvalidArgumentException');
-        $server = new UnixServer('tcp://localhost:0', $loop);
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Given URI "tcp://localhost:0" is invalid',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
+        new UnixServer('tcp://localhost:0', $loop);
     }
 
     public function testCtorThrowsWhenPathIsNotWritable()

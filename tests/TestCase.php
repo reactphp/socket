@@ -41,6 +41,21 @@ class TestCase extends BaseTestCase
         return $mock;
     }
 
+    protected function expectCallableOnceWithException($type, $message = null, $code = null)
+    {
+        return $this->expectCallableOnceWith(
+            $this->logicalAnd(
+                $this->isInstanceOf($type),
+                $this->callback(function (\Exception $e) use ($message) {
+                    return $message === null || $e->getMessage() === $message;
+                }),
+                $this->callback(function (\Exception $e) use ($code) {
+                    return $code === null || $e->getCode() === $code;
+                })
+            )
+        );
+    }
+
     protected function expectCallableNever()
     {
         $mock = $this->createCallableMock();

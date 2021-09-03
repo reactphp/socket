@@ -78,7 +78,11 @@ class DnsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('////');
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "////" is invalid',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectRejectsIfGivenIpAndTcpConnectorRejectsWithRuntimeException()

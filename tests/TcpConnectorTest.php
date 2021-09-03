@@ -255,10 +255,13 @@ class TcpConnectorTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $connector = new TcpConnector($loop);
-        $connector->connect('www.google.com:80')->then(
-            $this->expectCallableNever(),
-            $this->expectCallableOnce()
-        );
+        $promise = $connector->connect('www.google.com:80');
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "tcp://www.google.com:80" does not contain a valid host IP',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     /** @test */
@@ -267,10 +270,13 @@ class TcpConnectorTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $connector = new TcpConnector($loop);
-        $connector->connect('255.255.255.255:12345678')->then(
-            $this->expectCallableNever(),
-            $this->expectCallableOnce()
-        );
+        $promise = $connector->connect('255.255.255.255:12345678');
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "tcp://255.255.255.255:12345678" is invalid',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     /** @test */

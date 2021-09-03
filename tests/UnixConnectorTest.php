@@ -33,13 +33,21 @@ class UnixConnectorTest extends TestCase
     public function testInvalid()
     {
         $promise = $this->connector->connect('google.com:80');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException'
+        ));
     }
 
     public function testInvalidScheme()
     {
         $promise = $this->connector->connect('tcp://google.com:80');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "tcp://google.com:80" is invalid',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testValid()

@@ -154,11 +154,17 @@ final class TcpServer extends EventEmitter implements ServerInterface
 
         // ensure URI contains TCP scheme, host and port
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
-            throw new \InvalidArgumentException('Invalid URI "' . $uri . '" given');
+            throw new \InvalidArgumentException(
+                'Invalid URI "' . $uri . '" given',
+                \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+            );
         }
 
         if (false === \filter_var(\trim($parts['host'], '[]'), \FILTER_VALIDATE_IP)) {
-            throw new \InvalidArgumentException('Given URI "' . $uri . '" does not contain a valid host IP');
+            throw new \InvalidArgumentException(
+                'Given URI "' . $uri . '" does not contain a valid host IP',
+                \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+            );
         }
 
         $this->master = @\stream_socket_server(
@@ -169,7 +175,10 @@ final class TcpServer extends EventEmitter implements ServerInterface
             \stream_context_create(array('socket' => $context + array('backlog' => 511)))
         );
         if (false === $this->master) {
-            throw new \RuntimeException('Failed to listen on "' . $uri . '": ' . $errstr, $errno);
+            throw new \RuntimeException(
+                'Failed to listen on "' . $uri . '": ' . $errstr,
+                $errno
+            );
         }
         \stream_set_blocking($this->master, false);
 

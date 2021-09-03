@@ -52,7 +52,10 @@ final class SocketServer extends EventEmitter implements ServerInterface
             $server = new FdServer($uri, $loop);
         } else {
             if (preg_match('#^(?:\w+://)?\d+$#', $uri)) {
-                throw new \InvalidArgumentException('Invalid URI given');
+                throw new \InvalidArgumentException(
+                    'Invalid URI given',
+                    \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+                );
             }
 
             $server = new TcpServer(str_replace('tls://', '', $uri), $loop, $context['tcp']);

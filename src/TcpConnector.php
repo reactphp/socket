@@ -27,12 +27,18 @@ final class TcpConnector implements ConnectorInterface
 
         $parts = \parse_url($uri);
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $uri . '" is invalid'));
+            return Promise\reject(new \InvalidArgumentException(
+                'Given URI "' . $uri . '" is invalid',
+                \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+            ));
         }
 
         $ip = \trim($parts['host'], '[]');
         if (false === \filter_var($ip, \FILTER_VALIDATE_IP)) {
-            return Promise\reject(new \InvalidArgumentException('Given URI "' . $ip . '" does not contain a valid host IP'));
+            return Promise\reject(new \InvalidArgumentException(
+                'Given URI "' . $uri . '" does not contain a valid host IP',
+                \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+            ));
         }
 
         // use context given in constructor
@@ -125,7 +131,10 @@ final class TcpConnector implements ConnectorInterface
                     // @codeCoverageIgnoreEnd
 
                     \fclose($stream);
-                    $reject(new \RuntimeException('Connection to ' . $uri . ' failed: ' . $errstr, $errno));
+                    $reject(new \RuntimeException(
+                        'Connection to ' . $uri . ' failed: ' . $errstr,
+                        $errno
+                    ));
                 } else {
                     $resolve(new Connection($stream, $loop));
                 }

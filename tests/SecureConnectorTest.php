@@ -65,7 +65,11 @@ class SecureConnectorTest extends TestCase
 
         $promise = $this->connector->connect('tcp://example.com:80');
 
-        $promise->then(null, $this->expectCallableOnce());
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "tcp://example.com:80" is invalid',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectWillRejectWithTlsUriWhenUnderlyingConnectorRejects()

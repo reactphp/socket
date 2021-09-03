@@ -30,7 +30,11 @@ class FdServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid FD number given',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new FdServer(-1, $loop);
     }
 
@@ -39,7 +43,11 @@ class FdServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid FD number given',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new FdServer('tcp://127.0.0.1:8080', $loop);
     }
 
