@@ -74,6 +74,26 @@ final class SecureConnector implements ConnectorInterface
                     $e->getCode(),
                     $e
                 );
+
+                // avoid garbage references by replacing all closures in call stack.
+                // what a lovely piece of code!
+                $r = new \ReflectionProperty('Exception', 'trace');
+                $r->setAccessible(true);
+                $trace = $r->getValue($e);
+
+                // Exception trace arguments are not available on some PHP 7.4 installs
+                // @codeCoverageIgnoreStart
+                foreach ($trace as &$one) {
+                    if (isset($one['args'])) {
+                        foreach ($one['args'] as &$arg) {
+                            if ($arg instanceof \Closure) {
+                                $arg = 'Object(' . \get_class($arg) . ')';
+                            }
+                        }
+                    }
+                }
+                // @codeCoverageIgnoreEnd
+                $r->setValue($e, $trace);
             }
 
             throw $e;
