@@ -664,11 +664,11 @@ class FunctionalSecureServerTest extends TestCase
 
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
-        // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshak
+        // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake
         $this->assertInstanceOf('RuntimeException', $error);
         $this->assertStringStartsWith('Connection from tcp://', $error->getMessage());
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake', $error->getMessage());
-        $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 0, $error->getCode());
+        $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 104, $error->getCode());
         $this->assertNull($error->getPrevious());
     }
 
@@ -692,11 +692,11 @@ class FunctionalSecureServerTest extends TestCase
 
         $error = Block\await($errorEvent, $loop, self::TIMEOUT);
 
-        // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshak
+        // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake
         $this->assertInstanceOf('RuntimeException', $error);
         $this->assertStringStartsWith('Connection from tcp://', $error->getMessage());
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake', $error->getMessage());
-        $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 0, $error->getCode());
+        $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 104, $error->getCode());
         $this->assertNull($error->getPrevious());
     }
 
