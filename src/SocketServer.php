@@ -113,28 +113,43 @@ final class SocketServer extends EventEmitter implements ServerInterface
             // stream_socket_accept(): accept failed: Connection timed out
             $error = \error_get_last();
             $errstr = \preg_replace('#.*: #', '', $error['message']);
-
-            // Go through list of possible error constants to find matching errno.
-            // @codeCoverageIgnoreStart
-            $errno = 0;
-            if (\function_exists('socket_strerror')) {
-                foreach (\get_defined_constants(false) as $name => $value) {
-                    if (\strpos($name, 'SOCKET_E') === 0 && \socket_strerror($value) === $errstr) {
-                        $errno = $value;
-                        $errstr .= ' (' . \substr($name, 7) . ')';
-                        break;
-                    }
-                }
-            }
-            // @codeCoverageIgnoreEnd
+            $errno = self::errno($errstr);
 
             throw new \RuntimeException(
-                'Unable to accept new connection: ' . $errstr,
+                'Unable to accept new connection: ' . $errstr . self::errconst($errno),
                 $errno
             );
         }
 
         return $newSocket;
+    }
+
+    /**
+     * [Internal] Returns errno value for given errstr
+     *
+     * The errno and errstr values describes the type of error that has been
+     * encountered. This method tries to look up the given errstr and find a
+     * matching errno value which can be useful to provide more context to error
+     * messages. It goes through the list of known errno constants when
+     * ext-sockets is available to find an errno matching the given errstr.
+     *
+     * @param string $errstr
+     * @return int errno value (e.g. value of `SOCKET_ECONNREFUSED`) or 0 if not found
+     * @internal
+     * @copyright Copyright (c) 2018 Christian Lück, taken from https://github.com/clue/errno with permission
+     * @codeCoverageIgnore
+     */
+    public static function errno($errstr)
+    {
+        if (\function_exists('socket_strerror')) {
+            foreach (\get_defined_constants(false) as $name => $value) {
+                if (\strpos($name, 'SOCKET_E') === 0 && \socket_strerror($value) === $errstr) {
+                    return $value;
+                }
+            }
+        }
+
+        return 0;
     }
 
     /**

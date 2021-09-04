@@ -175,6 +175,12 @@ final class TcpServer extends EventEmitter implements ServerInterface
             \stream_context_create(array('socket' => $context + array('backlog' => 511)))
         );
         if (false === $this->master) {
+            if ($errno === 0) {
+                // PHP does not seem to report errno, so match errno from errstr
+                // @link https://3v4l.org/3qOBl
+                $errno = SocketServer::errno($errstr);
+            }
+
             throw new \RuntimeException(
                 'Failed to listen on "' . $uri . '": ' . $errstr . SocketServer::errconst($errno),
                 $errno

@@ -51,6 +51,7 @@ class TcpServerTest extends TestCase
     public function testServerEmitsConnectionEventForNewConnection()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
+        assert($client !== false);
 
         $server = $this->server;
         $promise = new Promise(function ($resolve) use ($server) {
@@ -70,6 +71,7 @@ class TcpServerTest extends TestCase
         $client1 = stream_socket_client('tcp://localhost:'.$this->port);
         $client2 = stream_socket_client('tcp://localhost:'.$this->port);
         $client3 = stream_socket_client('tcp://localhost:'.$this->port);
+        assert($client1 !== false && $client2 !== false && $client3 !== false);
 
         $this->server->on('connection', $this->expectCallableExactly(3));
         $this->tick();
@@ -80,6 +82,7 @@ class TcpServerTest extends TestCase
     public function testDataEventWillNotBeEmittedWhenClientSendsNoData()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
+        assert($client !== false);
 
         $mock = $this->expectCallableNever();
 
@@ -150,6 +153,7 @@ class TcpServerTest extends TestCase
     public function testLoopWillEndWhenServerIsClosedAfterSingleConnection()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
+        assert($client !== false);
 
         // explicitly unset server because we only accept a single connection
         // and then already call close()
@@ -203,6 +207,7 @@ class TcpServerTest extends TestCase
     public function testConnectionDoesNotEndWhenClientDoesNotClose()
     {
         $client = stream_socket_client('tcp://localhost:'.$this->port);
+        assert($client !== false);
 
         $mock = $this->expectCallableNever();
 
@@ -236,7 +241,7 @@ class TcpServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
 
-        $server = new TcpServer(0, $loop);
+        new TcpServer(0, $loop);
     }
 
     public function testResumeWithoutPauseIsNoOp()
@@ -316,7 +321,7 @@ class TcpServerTest extends TestCase
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {
         if (defined('HHVM_VERSION')) {
-            $this->markTestSkipped('not supported on HHVM');
+            $this->markTestSkipped('Not supported on HHVM');
         }
 
         $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT) . ' (ETIMEDOUT)', $exception->getMessage());
@@ -328,9 +333,16 @@ class TcpServerTest extends TestCase
         if (DIRECTORY_SEPARATOR === '\\') {
             $this->markTestSkipped('Windows supports listening on same port multiple times');
         }
+        if (defined('HHVM_VERSION')) {
+            $this->markTestSkipped('Not supported on HHVM');
+        }
 
-        $this->setExpectedException('RuntimeException');
-        $another = new TcpServer($this->port, $this->loop);
+        $this->setExpectedException(
+            'RuntimeException',
+            'Failed to listen on "tcp://127.0.0.1:' . $this->port . '": ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EADDRINUSE) . ' (EADDRINUSE)' : 'Address already in use'),
+            defined('SOCKET_EADDRINUSE') ? SOCKET_EADDRINUSE : 0
+        );
+        new TcpServer($this->port, $this->loop);
     }
 
     /**
