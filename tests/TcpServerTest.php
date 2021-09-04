@@ -319,7 +319,7 @@ class TcpServerTest extends TestCase
             $this->markTestSkipped('not supported on HHVM');
         }
 
-        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT), $exception->getMessage());
+        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT) . ' (ETIMEDOUT)', $exception->getMessage());
         $this->assertEquals(SOCKET_ETIMEDOUT, $exception->getCode());
     }
 

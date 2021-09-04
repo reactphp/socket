@@ -104,7 +104,7 @@ final class HappyEyeBallsConnectionBuilder
             })->then($lookupResolve(Message::TYPE_A));
         }, function ($_, $reject) use ($that, &$timer) {
             $reject(new \RuntimeException(
-                'Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : ''),
+                'Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : '') . ' (ECONNABORTED)',
                 \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
             ));
             $_ = $reject = null;

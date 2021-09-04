@@ -40,7 +40,7 @@ final class TimeoutConnector implements ConnectorInterface
         return function (\Exception $e) use ($uri) {
             if ($e instanceof TimeoutException) {
                 throw new \RuntimeException(
-                    'Connection to ' . $uri . ' timed out after ' . $e->getTimeout() . ' seconds',
+                    'Connection to ' . $uri . ' timed out after ' . $e->getTimeout() . ' seconds (ETIMEDOUT)',
                     \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
                 );
             }

@@ -67,30 +67,44 @@ class SecureConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
-            'Given URI "tcp://example.com:80" is invalid',
+            'Given URI "tcp://example.com:80" is invalid (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
 
     public function testConnectWillRejectWithTlsUriWhenUnderlyingConnectorRejects()
     {
-        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \RuntimeException('Connection to tcp://example.com:80 failed: Connection refused', 42)));
+        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \RuntimeException(
+            'Connection to tcp://example.com:80 failed: Connection refused (ECONNREFUSED)',
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        )));
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 failed: Connection refused', 42);
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tls://example.com:80 failed: Connection refused (ECONNREFUSED)',
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        );
         $this->throwRejection($promise);
     }
 
     public function testConnectWillRejectWithOriginalMessageWhenUnderlyingConnectorRejectsWithInvalidArgumentException()
     {
-        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \InvalidArgumentException('Invalid', 42)));
+        $this->tcp->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \InvalidArgumentException(
+            'Invalid',
+            42
+        )));
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid',
+            42
+        );
         $this->throwRejection($promise);
     }
 
@@ -105,13 +119,20 @@ class SecureConnectorTest extends TestCase
 
     public function testCancelDuringTcpConnectionCancelsTcpConnectionAndRejectsWithTcpRejection()
     {
-        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection to tcp://example.com:80 cancelled', 42); });
+        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException(
+            'Connection to tcp://example.com:80 cancelled (ECONNABORTED)',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        ); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->will($this->returnValue($pending));
 
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tls://example.com:80 cancelled', 42);
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tls://example.com:80 cancelled (ECONNABORTED)',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        );
         $this->throwRejection($promise);
     }
 
@@ -193,7 +214,7 @@ class SecureConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to tls://example.com:80 cancelled during TLS handshake',
+            'Connection to tls://example.com:80 cancelled during TLS handshake (ECONNABORTED)',
             defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
         );
         $this->throwRejection($promise);

@@ -168,7 +168,7 @@ class FunctionalConnectorTest extends TestCase
             $this->fail();
         } catch (\Exception $e) {
             $this->assertInstanceOf('RuntimeException', $e);
-            $this->assertEquals('Connection to ' . $uri . ' cancelled during TLS handshake', $e->getMessage());
+            $this->assertEquals('Connection to ' . $uri . ' cancelled during TLS handshake (ECONNABORTED)', $e->getMessage());
         }
     }
 

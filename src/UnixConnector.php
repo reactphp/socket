@@ -29,7 +29,7 @@ final class UnixConnector implements ConnectorInterface
             $path = 'unix://' . $path;
         } elseif (\substr($path, 0, 7) !== 'unix://') {
             return Promise\reject(new \InvalidArgumentException(
-                'Given URI "' . $path . '" is invalid',
+                'Given URI "' . $path . '" is invalid (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             ));
         }
@@ -38,7 +38,7 @@ final class UnixConnector implements ConnectorInterface
 
         if (!$resource) {
             return Promise\reject(new \RuntimeException(
-                'Unable to connect to unix domain socket "' . $path . '": ' . $errstr,
+                'Unable to connect to unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno),
                 $errno
             ));
         }

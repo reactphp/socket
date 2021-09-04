@@ -58,7 +58,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
             $path = 'unix://' . $path;
         } elseif (\substr($path, 0, 7) !== 'unix://') {
             throw new \InvalidArgumentException(
-                'Given URI "' . $path . '" is invalid',
+                'Given URI "' . $path . '" is invalid (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             );
         }
@@ -83,7 +83,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
             }
 
             throw new \RuntimeException(
-                'Failed to listen on Unix domain socket "' . $path . '": ' . $errstr,
+                'Failed to listen on Unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno),
                 $errno
             );
         }

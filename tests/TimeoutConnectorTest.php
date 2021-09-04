@@ -36,7 +36,7 @@ class TimeoutConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to google.com:80 timed out after 0.01 seconds',
+            'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
             \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
         );
         Block\await($timeout->connect('google.com:80'), $loop);

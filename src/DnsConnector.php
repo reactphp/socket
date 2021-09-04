@@ -30,7 +30,7 @@ final class DnsConnector implements ConnectorInterface
 
         if (!$parts || !isset($parts['host'])) {
             return Promise\reject(new \InvalidArgumentException(
-                'Given URI "' . $original . '" is invalid',
+                'Given URI "' . $original . '" is invalid (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             ));
         }
@@ -95,7 +95,7 @@ final class DnsConnector implements ConnectorInterface
                 // reject DNS resolution with custom reason, otherwise rely on connection cancellation below
                 if ($resolved === null) {
                     $reject(new \RuntimeException(
-                        'Connection to ' . $uri . ' cancelled during DNS lookup',
+                        'Connection to ' . $uri . ' cancelled during DNS lookup (ECONNABORTED)',
                         \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
                     ));
                 }

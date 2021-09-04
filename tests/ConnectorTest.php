@@ -172,7 +172,7 @@ class ConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'RuntimeException',
-            'No connector available for URI scheme "unknown"',
+            'No connector available for URI scheme "unknown" (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -188,7 +188,7 @@ class ConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'RuntimeException',
-            'No connector available for URI scheme "tcp"',
+            'No connector available for URI scheme "tcp" (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -204,7 +204,7 @@ class ConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'RuntimeException',
-            'No connector available for URI scheme "tcp"',
+            'No connector available for URI scheme "tcp" (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -220,7 +220,7 @@ class ConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'RuntimeException',
-            'No connector available for URI scheme "tls"',
+            'No connector available for URI scheme "tls" (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -236,7 +236,7 @@ class ConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'RuntimeException',
-            'No connector available for URI scheme "unix"',
+            'No connector available for URI scheme "unix" (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }

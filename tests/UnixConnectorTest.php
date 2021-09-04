@@ -45,7 +45,7 @@ class UnixConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
-            'Given URI "tcp://google.com:80" is invalid',
+            'Given URI "tcp://google.com:80" is invalid (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }

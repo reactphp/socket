@@ -234,7 +234,7 @@ class UnixServerTest extends TestCase
 
         $this->setExpectedException(
             'InvalidArgumentException',
-            'Given URI "tcp://localhost:0" is invalid',
+            'Given URI "tcp://localhost:0" is invalid (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
         new UnixServer('tcp://localhost:0', $loop);
@@ -328,7 +328,7 @@ class UnixServerTest extends TestCase
             $this->markTestSkipped('not supported on HHVM');
         }
 
-        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT), $exception->getMessage());
+        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT) . ' (ETIMEDOUT)', $exception->getMessage());
         $this->assertEquals(SOCKET_ETIMEDOUT, $exception->getCode());
     }
 

@@ -80,7 +80,7 @@ class DnsConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
-            'Given URI "////" is invalid',
+            'Given URI "////" is invalid (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -173,7 +173,7 @@ class DnsConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to tcp://example.com:80 cancelled during DNS lookup',
+            'Connection to tcp://example.com:80 cancelled during DNS lookup (ECONNABORTED)',
             defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
         );
         $this->throwRejection($promise);

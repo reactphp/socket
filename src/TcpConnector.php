@@ -28,7 +28,7 @@ final class TcpConnector implements ConnectorInterface
         $parts = \parse_url($uri);
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
             return Promise\reject(new \InvalidArgumentException(
-                'Given URI "' . $uri . '" is invalid',
+                'Given URI "' . $uri . '" is invalid (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             ));
         }
@@ -36,7 +36,7 @@ final class TcpConnector implements ConnectorInterface
         $ip = \trim($parts['host'], '[]');
         if (false === \filter_var($ip, \FILTER_VALIDATE_IP)) {
             return Promise\reject(new \InvalidArgumentException(
-                'Given URI "' . $uri . '" does not contain a valid host IP',
+                'Given URI "' . $uri . '" does not contain a valid host IP (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             ));
         }
@@ -91,7 +91,7 @@ final class TcpConnector implements ConnectorInterface
 
         if (false === $stream) {
             return Promise\reject(new \RuntimeException(
-                \sprintf("Connection to %s failed: %s", $uri, $errstr),
+                'Connection to ' . $uri . ' failed: ' . $errstr . SocketServer::errconst($errno),
                 $errno
             ));
         }
@@ -132,7 +132,7 @@ final class TcpConnector implements ConnectorInterface
 
                     \fclose($stream);
                     $reject(new \RuntimeException(
-                        'Connection to ' . $uri . ' failed: ' . $errstr,
+                        'Connection to ' . $uri . ' failed: ' . $errstr . SocketServer::errconst($errno),
                         $errno
                     ));
                 } else {
@@ -151,7 +151,7 @@ final class TcpConnector implements ConnectorInterface
             // @codeCoverageIgnoreEnd
 
             throw new \RuntimeException(
-                'Connection to ' . $uri . ' cancelled during TCP/IP handshake',
+                'Connection to ' . $uri . ' cancelled during TCP/IP handshake (ECONNABORTED)',
                 \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
             );
         });

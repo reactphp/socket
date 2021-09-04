@@ -102,7 +102,7 @@ class ServerTest extends TestCase
                 $this->assertStringEndsWith('Unknown error', $e->getMessage());
             } else {
                 $this->assertEquals(SOCKET_EADDRINUSE, $e->getCode());
-                $this->assertStringEndsWith('Address already in use', $e->getMessage());
+                $this->assertStringEndsWith('Address already in use (EADDRINUSE)', $e->getMessage());
             }
         }
     }

@@ -53,7 +53,7 @@ final class SocketServer extends EventEmitter implements ServerInterface
         } else {
             if (preg_match('#^(?:\w+://)?\d+$#', $uri)) {
                 throw new \InvalidArgumentException(
-                    'Invalid URI given',
+                    'Invalid URI given (EINVAL)',
                     \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
                 );
             }
@@ -121,6 +121,7 @@ final class SocketServer extends EventEmitter implements ServerInterface
                 foreach (\get_defined_constants(false) as $name => $value) {
                     if (\strpos($name, 'SOCKET_E') === 0 && \socket_strerror($value) === $errstr) {
                         $errno = $value;
+                        $errstr .= ' (' . \substr($name, 7) . ')';
                         break;
                     }
                 }
@@ -134,5 +135,38 @@ final class SocketServer extends EventEmitter implements ServerInterface
         }
 
         return $newSocket;
+    }
+
+    /**
+     * [Internal] Returns errno constant name for given errno value
+     *
+     * The errno value describes the type of error that has been encountered.
+     * This method tries to look up the given errno value and find a matching
+     * errno constant name which can be useful to provide more context and more
+     * descriptive error messages. It goes through the list of known errno
+     * constants when ext-sockets is available to find the matching errno
+     * constant name.
+     *
+     * Because this method is used to append more context to error messages, the
+     * constant name will be prefixed with a space and put between parenthesis
+     * when found.
+     *
+     * @param int $errno
+     * @return string e.g. ` (ECONNREFUSED)` or empty string if no matching const for the given errno could be found
+     * @internal
+     * @copyright Copyright (c) 2018 Christian Lück, taken from https://github.com/clue/errno with permission
+     * @codeCoverageIgnore
+     */
+    public static function errconst($errno)
+    {
+        if (\function_exists('socket_strerror')) {
+            foreach (\get_defined_constants(false) as $name => $value) {
+                if ($value === $errno && \strpos($name, 'SOCKET_E') === 0) {
+                    return ' (' . \substr($name, 7) . ')';
+                }
+            }
+        }
+
+        return '';
     }
 }

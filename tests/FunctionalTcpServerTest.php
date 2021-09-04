@@ -352,7 +352,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->setExpectedException(
             'InvalidArgumentException',
-            'Invalid URI "tcp://///" given',
+            'Invalid URI "tcp://///" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
         new TcpServer('///', $loop);
@@ -364,7 +364,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->setExpectedException(
             'InvalidArgumentException',
-            'Invalid URI "tcp://127.0.0.1" given',
+            'Invalid URI "tcp://127.0.0.1" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
         new TcpServer('127.0.0.1', $loop);
@@ -376,7 +376,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->setExpectedException(
             'InvalidArgumentException',
-            'Invalid URI "udp://127.0.0.1:0" given',
+            'Invalid URI "udp://127.0.0.1:0" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
         new TcpServer('udp://127.0.0.1:0', $loop);
@@ -388,7 +388,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->setExpectedException(
             'InvalidArgumentException',
-            'Given URI "tcp://localhost:8080" does not contain a valid host IP',
+            'Given URI "tcp://localhost:8080" does not contain a valid host IP (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
         new TcpServer('localhost:8080', $loop);

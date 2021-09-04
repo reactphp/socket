@@ -155,14 +155,14 @@ final class TcpServer extends EventEmitter implements ServerInterface
         // ensure URI contains TCP scheme, host and port
         if (!$parts || !isset($parts['scheme'], $parts['host'], $parts['port']) || $parts['scheme'] !== 'tcp') {
             throw new \InvalidArgumentException(
-                'Invalid URI "' . $uri . '" given',
+                'Invalid URI "' . $uri . '" given (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             );
         }
 
         if (false === \filter_var(\trim($parts['host'], '[]'), \FILTER_VALIDATE_IP)) {
             throw new \InvalidArgumentException(
-                'Given URI "' . $uri . '" does not contain a valid host IP',
+                'Given URI "' . $uri . '" does not contain a valid host IP (EINVAL)',
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
             );
         }
@@ -176,7 +176,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
         );
         if (false === $this->master) {
             throw new \RuntimeException(
-                'Failed to listen on "' . $uri . '": ' . $errstr,
+                'Failed to listen on "' . $uri . '": ' . $errstr . SocketServer::errconst($errno),
                 $errno
             );
         }

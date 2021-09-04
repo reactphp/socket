@@ -32,7 +32,11 @@ class TcpConnectorTest extends TestCase
         $connector = new TcpConnector($loop);
         $promise = $connector->connect('127.0.0.1:9999');
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://127.0.0.1:9999 failed: Connection refused');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tcp://127.0.0.1:9999 failed: Connection refused' . (function_exists('socket_import_stream') ? ' (ECONNREFUSED)' : ''),
+            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
+        );
         Block\await($promise, $loop, self::TIMEOUT);
     }
 
@@ -127,7 +131,7 @@ class TcpConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) : 'Network is unreachable'),
+            'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) . ' (ENETUNREACH)' : 'Network is unreachable'),
             $enetunreach
         );
         Block\await($promise, $loop, self::TIMEOUT);
@@ -259,7 +263,7 @@ class TcpConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
-            'Given URI "tcp://www.google.com:80" does not contain a valid host IP',
+            'Given URI "tcp://www.google.com:80" does not contain a valid host IP (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -274,7 +278,7 @@ class TcpConnectorTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
-            'Given URI "tcp://255.255.255.255:12345678" is invalid',
+            'Given URI "tcp://255.255.255.255:12345678" is invalid (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         ));
     }
@@ -332,7 +336,7 @@ class TcpConnectorTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake',
+            'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake (ECONNABORTED)',
             defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
         );
         Block\await($promise, $loop);
