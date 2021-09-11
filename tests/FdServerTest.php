@@ -30,7 +30,11 @@ class FdServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid FD number given (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new FdServer(-1, $loop);
     }
 
@@ -39,7 +43,11 @@ class FdServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid FD number given (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new FdServer('tcp://127.0.0.1:8080', $loop);
     }
 
@@ -56,7 +64,7 @@ class FdServerTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EBADF) : 'Bad file descriptor'),
+            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EBADF) . ' (EBADF)' : 'Bad file descriptor'),
             defined('SOCKET_EBADF') ? SOCKET_EBADF : 9
         );
         new FdServer($fd, $loop);
@@ -77,7 +85,7 @@ class FdServerTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_ENOTSOCK) : 'Not a socket'),
+            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_ENOTSOCK) : 'Not a socket') . ' (ENOTSOCK)',
             defined('SOCKET_ENOTSOCK') ? SOCKET_ENOTSOCK : 88
         );
         new FdServer($fd, $loop);
@@ -100,7 +108,7 @@ class FdServerTest extends TestCase
 
         $this->setExpectedException(
             'RuntimeException',
-            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EISCONN) : 'Socket is connected'),
+            'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EISCONN) : 'Socket is connected') . ' (EISCONN)',
             defined('SOCKET_EISCONN') ? SOCKET_EISCONN : 106
         );
         new FdServer($fd, $loop);
@@ -353,7 +361,7 @@ class FdServerTest extends TestCase
      */
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {
-        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT), $exception->getMessage());
+        $this->assertEquals('Unable to accept new connection: ' . socket_strerror(SOCKET_ETIMEDOUT) . ' (ETIMEDOUT)', $exception->getMessage());
         $this->assertEquals(SOCKET_ETIMEDOUT, $exception->getCode());
     }
 

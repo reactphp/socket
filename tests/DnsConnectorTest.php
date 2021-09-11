@@ -78,7 +78,11 @@ class DnsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('////');
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "////" is invalid (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectRejectsIfGivenIpAndTcpConnectorRejectsWithRuntimeException()
@@ -167,7 +171,11 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 cancelled during DNS lookup');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tcp://example.com:80 cancelled during DNS lookup (ECONNABORTED)',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        );
         $this->throwRejection($promise);
     }
 
@@ -196,7 +204,10 @@ class DnsConnectorTest extends TestCase
         $first = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($first->promise());
         $pending = new Promise\Promise(function () { }, function () {
-            throw new \RuntimeException('Connection cancelled');
+            throw new \RuntimeException(
+                'Connection cancelled',
+                defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+            );
         });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=example.com'))->willReturn($pending);
 
@@ -205,7 +216,11 @@ class DnsConnectorTest extends TestCase
 
         $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection cancelled');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection cancelled',
+            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
+        );
         $this->throwRejection($promise);
     }
 

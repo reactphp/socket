@@ -81,7 +81,10 @@ final class FdServer extends EventEmitter implements ServerInterface
             $fd = (int) $m[1];
         }
         if (!\is_int($fd) || $fd < 0 || $fd >= \PHP_INT_MAX) {
-            throw new \InvalidArgumentException('Invalid FD number given');
+            throw new \InvalidArgumentException(
+                'Invalid FD number given (EINVAL)',
+                \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : 22
+            );
         }
 
         $this->loop = $loop ?: Loop::get();
@@ -95,7 +98,10 @@ final class FdServer extends EventEmitter implements ServerInterface
             $errno = isset($m[1]) ? (int) $m[1] : 0;
             $errstr = isset($m[2]) ? $m[2] : $error['message'];
 
-            throw new \RuntimeException('Failed to listen on FD ' . $fd . ': ' . $errstr, $errno);
+            throw new \RuntimeException(
+                'Failed to listen on FD ' . $fd . ': ' . $errstr . SocketServer::errconst($errno),
+                $errno
+            );
         }
 
         $meta = \stream_get_meta_data($this->master);
@@ -105,7 +111,10 @@ final class FdServer extends EventEmitter implements ServerInterface
             $errno = \defined('SOCKET_ENOTSOCK') ? \SOCKET_ENOTSOCK : 88;
             $errstr = \function_exists('socket_strerror') ? \socket_strerror($errno) : 'Not a socket';
 
-            throw new \RuntimeException('Failed to listen on FD ' . $fd . ': ' . $errstr, $errno);
+            throw new \RuntimeException(
+                'Failed to listen on FD ' . $fd . ': ' . $errstr . ' (ENOTSOCK)',
+                $errno
+            );
         }
 
         // Socket should not have a peer address if this is a listening socket.
@@ -116,7 +125,10 @@ final class FdServer extends EventEmitter implements ServerInterface
             $errno = \defined('SOCKET_EISCONN') ? \SOCKET_EISCONN : 106;
             $errstr = \function_exists('socket_strerror') ? \socket_strerror($errno) : 'Socket is connected';
 
-            throw new \RuntimeException('Failed to listen on FD ' . $fd . ': ' . $errstr, $errno);
+            throw new \RuntimeException(
+                'Failed to listen on FD ' . $fd . ': ' . $errstr . ' (EISCONN)',
+                $errno
+            );
         }
 
         // Assume this is a Unix domain socket (UDS) when its listening address doesn't parse as a valid URL with a port.

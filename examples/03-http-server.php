@@ -15,14 +15,14 @@
 // $ php examples/03-http-server.php 127.0.0.1:8000
 // $ curl -v http://localhost:8000/
 // $ ab -n1000 -c10 http://localhost:8000/
-// $ docker run -it --rm --net=host jordi/ab ab -n1000 -c10 http://localhost:8000/
+// $ docker run -it --rm --net=host jordi/ab -n1000 -c10 http://localhost:8000/
 //
 // You can also run a secure HTTPS echo server like this:
 //
 // $ php examples/03-http-server.php tls://127.0.0.1:8000 examples/localhost.pem
 // $ curl -v --insecure https://localhost:8000/
 // $ ab -n1000 -c10 https://localhost:8000/
-// $ docker run -it --rm --net=host jordi/ab ab -n1000 -c10 https://localhost:8000/
+// $ docker run -it --rm --net=host jordi/ab -n1000 -c10 https://localhost:8000/
 //
 // You can also run a Unix domain socket (UDS) server like this:
 //
@@ -32,6 +32,9 @@
 // You can also use systemd socket activation and listen on an inherited file descriptor:
 //
 // $ systemd-socket-activate -l 8000 php examples/03-http-server.php php://fd/3
+// $ curl -v --insecure https://localhost:8000/
+// $ ab -n1000 -c10 https://localhost:8000/
+// $ docker run -it --rm --net=host jordi/ab -n1000 -c10 https://localhost:8000/
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -42,12 +45,20 @@ $socket = new React\Socket\SocketServer(isset($argv[1]) ? $argv[1] : '127.0.0.1:
 ));
 
 $socket->on('connection', function (React\Socket\ConnectionInterface $connection) {
+    echo '[' . $connection->getRemoteAddress() . ' connected]' . PHP_EOL;
+
     $connection->once('data', function () use ($connection) {
         $body = "<html><h1>Hello world!</h1></html>\r\n";
         $connection->end("HTTP/1.1 200 OK\r\nContent-Length: " . strlen($body) . "\r\nConnection: close\r\n\r\n" . $body);
     });
+
+    $connection->on('close', function () use ($connection) {
+        echo '[' . $connection->getRemoteAddress() . ' disconnected]' . PHP_EOL;
+    });
 });
 
-$socket->on('error', 'printf');
+$socket->on('error', function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
 
 echo 'Listening on ' . strtr($socket->getAddress(), array('tcp:' => 'http:', 'tls:' => 'https:')) . PHP_EOL;

@@ -41,19 +41,31 @@ class SocketServerTest extends TestCase
 
     public function testConstructorWithInvalidUriThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid URI "tcp://invalid URI" given (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new SocketServer('invalid URI');
     }
 
     public function testConstructorWithInvalidUriWithPortOnlyThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid URI given (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new SocketServer('0');
     }
 
     public function testConstructorWithInvalidUriWithSchemaAndPortOnlyThrows()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->setExpectedException(
+            'InvalidArgumentException',
+            'Invalid URI given (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        );
         new SocketServer('tcp://0');
     }
 
@@ -113,7 +125,7 @@ class SocketServerTest extends TestCase
                 $this->assertStringEndsWith('Unknown error', $e->getMessage());
             } else {
                 $this->assertEquals(SOCKET_EADDRINUSE, $e->getCode());
-                $this->assertStringEndsWith('Address already in use', $e->getMessage());
+                $this->assertStringEndsWith('Address already in use (EADDRINUSE)', $e->getMessage());
             }
         }
     }

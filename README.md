@@ -238,7 +238,6 @@ $socket->on('error', function (Exception $e) {
 Note that this is not a fatal error event, i.e. the server keeps listening for
 new connections even after this event.
 
-
 #### getAddress()
 
 The `getAddress(): ?string` method can be used to

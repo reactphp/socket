@@ -169,7 +169,12 @@ class ConnectorTest extends TestCase
         $connector = new Connector(array(), $loop);
 
         $promise = $connector->connect('unknown://google.com:80');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException',
+            'No connector available for URI scheme "unknown" (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectorWithDisabledTcpDefaultSchemeAlwaysFails()
@@ -180,7 +185,12 @@ class ConnectorTest extends TestCase
         ), $loop);
 
         $promise = $connector->connect('google.com:80');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException',
+            'No connector available for URI scheme "tcp" (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectorWithDisabledTcpSchemeAlwaysFails()
@@ -191,7 +201,12 @@ class ConnectorTest extends TestCase
         ), $loop);
 
         $promise = $connector->connect('tcp://google.com:80');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException',
+            'No connector available for URI scheme "tcp" (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectorWithDisabledTlsSchemeAlwaysFails()
@@ -202,7 +217,12 @@ class ConnectorTest extends TestCase
         ), $loop);
 
         $promise = $connector->connect('tls://google.com:443');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException',
+            'No connector available for URI scheme "tls" (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectorWithDisabledUnixSchemeAlwaysFails()
@@ -213,7 +233,12 @@ class ConnectorTest extends TestCase
         ), $loop);
 
         $promise = $connector->connect('unix://demo.sock');
-        $promise->then(null, $this->expectCallableOnce());
+
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'RuntimeException',
+            'No connector available for URI scheme "unix" (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testConnectorUsesGivenResolverInstance()

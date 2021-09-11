@@ -21,6 +21,13 @@
 // $ php examples/91-benchmark-server.php unix:///tmp/server.sock
 // $ nc -N -U /tmp/server.sock
 // $ dd if=/dev/zero bs=1M count=1000 | nc -N -U /tmp/server.sock
+//
+// You can also use systemd socket activation and listen on an inherited file descriptor:
+//
+// $ systemd-socket-activate -l 8000 php examples/91-benchmark-server.php php://fd/3
+// $ telnet localhost 8000
+// $ echo hello world | nc -N localhost 8000
+// $ dd if=/dev/zero bs=1M count=1000 | nc -N localhost 8000
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -31,7 +38,7 @@ $socket = new React\Socket\SocketServer(isset($argv[1]) ? $argv[1] : '127.0.0.1:
 ));
 
 $socket->on('connection', function (React\Socket\ConnectionInterface $connection) {
-    echo '[connected]' . PHP_EOL;
+    echo '[' . $connection->getRemoteAddress() . ' connected]' . PHP_EOL;
 
     // count the number of bytes received from this connection
     $bytes = 0;
@@ -43,10 +50,12 @@ $socket->on('connection', function (React\Socket\ConnectionInterface $connection
     $t = microtime(true);
     $connection->on('close', function () use ($connection, $t, &$bytes) {
         $t = microtime(true) - $t;
-        echo '[disconnected after receiving ' . $bytes . ' bytes in ' . round($t, 3) . 's => ' . round($bytes / $t / 1024 / 1024, 1) . ' MiB/s]' . PHP_EOL;
+        echo '[' . $connection->getRemoteAddress() . ' disconnected after receiving ' . $bytes . ' bytes in ' . round($t, 3) . 's => ' . round($bytes / $t / 1024 / 1024, 1) . ' MiB/s]' . PHP_EOL;
     });
 });
 
-$socket->on('error', 'printf');
+$socket->on('error', function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
 
 echo 'Listening on ' . $socket->getAddress() . PHP_EOL;

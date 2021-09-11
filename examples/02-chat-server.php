@@ -19,6 +19,7 @@
 // You can also use systemd socket activation and listen on an inherited file descriptor:
 //
 // $ systemd-socket-activate -l 8000 php examples/02-chat-server.php php://fd/3
+// $ telnet localhost 8000
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -30,9 +31,11 @@ $socket = new React\Socket\SocketServer(isset($argv[1]) ? $argv[1] : '127.0.0.1:
 
 $socket = new React\Socket\LimitingServer($socket, null);
 
-$socket->on('connection', function (React\Socket\ConnectionInterface $client) use ($socket) {
+$socket->on('connection', function (React\Socket\ConnectionInterface $connection) use ($socket) {
+    echo '[' . $connection->getRemoteAddress() . ' connected]' . PHP_EOL;
+
     // whenever a new message comes in
-    $client->on('data', function ($data) use ($client, $socket) {
+    $connection->on('data', function ($data) use ($connection, $socket) {
         // remove any non-word characters (just for the demo)
         $data = trim(preg_replace('/[^\w\d \.\,\-\!\?]/u', '', $data));
 
@@ -42,13 +45,19 @@ $socket->on('connection', function (React\Socket\ConnectionInterface $client) us
         }
 
         // prefix with client IP and broadcast to all connected clients
-        $data = trim(parse_url($client->getRemoteAddress(), PHP_URL_HOST), '[]') . ': ' . $data . PHP_EOL;
+        $data = trim(parse_url($connection->getRemoteAddress(), PHP_URL_HOST), '[]') . ': ' . $data . PHP_EOL;
         foreach ($socket->getConnections() as $connection) {
             $connection->write($data);
         }
     });
+
+    $connection->on('close', function () use ($connection) {
+        echo '[' . $connection->getRemoteAddress() . ' disconnected]' . PHP_EOL;
+    });
 });
 
-$socket->on('error', 'printf');
+$socket->on('error', function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
 
 echo 'Listening on ' . $socket->getAddress() . PHP_EOL;

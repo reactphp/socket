@@ -103,7 +103,10 @@ final class HappyEyeBallsConnectionBuilder
                 return $deferred->promise();
             })->then($lookupResolve(Message::TYPE_A));
         }, function ($_, $reject) use ($that, &$timer) {
-            $reject(new \RuntimeException('Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : '')));
+            $reject(new \RuntimeException(
+                'Connection to ' . $that->uri . ' cancelled' . (!$that->connectionPromises ? ' during DNS lookup' : '') . ' (ECONNABORTED)',
+                \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+            ));
             $_ = $reject = null;
 
             $that->cleanUp();
@@ -143,7 +146,11 @@ final class HappyEyeBallsConnectionBuilder
             }
 
             if ($that->hasBeenResolved() && $that->ipsCount === 0) {
-                $reject(new \RuntimeException($that->error()));
+                $reject(new \RuntimeException(
+                    $that->error(),
+                    0,
+                    $e
+                ));
             }
 
             // Exception already handled above, so don't throw an unhandled rejection here
@@ -201,7 +208,11 @@ final class HappyEyeBallsConnectionBuilder
             if ($that->ipsCount === $that->failureCount) {
                 $that->cleanUp();
 
-                $reject(new \RuntimeException($that->error()));
+                $reject(new \RuntimeException(
+                    $that->error(),
+                    $e->getCode(),
+                    $e
+                ));
             }
         });
 

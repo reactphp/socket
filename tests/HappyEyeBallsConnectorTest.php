@@ -221,9 +221,11 @@ class HappyEyeBallsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('////');
 
-        $promise->then($this->expectCallableNever(), $this->expectCallableOnce());
-
-        $this->loop->run();
+        $promise->then(null, $this->expectCallableOnceWithException(
+            'InvalidArgumentException',
+            'Given URI "////" is invalid (EINVAL)',
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+        ));
     }
 
     public function testRejectsWithTcpConnectorRejectionIfGivenIp()
@@ -275,7 +277,11 @@ class HappyEyeBallsConnectorTest extends TestCase
             $that->throwRejection($promise);
         });
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 cancelled during DNS lookup');
+        $this->setExpectedException(
+            'RuntimeException',
+            'Connection to tcp://example.com:80 cancelled during DNS lookup (ECONNABORTED)',
+            \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
+        );
         $this->loop->run();
     }
 
