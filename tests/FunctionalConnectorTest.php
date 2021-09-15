@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
@@ -20,7 +20,7 @@ class FunctionalConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithLocalhost()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(9998, $loop);
 
@@ -44,7 +44,7 @@ class FunctionalConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on Windows for PHP versions < 7.0 and legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = stream_socket_server('udp://127.0.0.1:0', $errno, $errstr, STREAM_SERVER_BIND);
 
@@ -84,7 +84,7 @@ class FunctionalConnectorTest extends TestCase
         // max_nesting_level was set to 100 for PHP Versions < 5.4 which resulted in failing test for legacy PHP
         ini_set('xdebug.max_nesting_level', 256);
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
@@ -99,7 +99,7 @@ class FunctionalConnectorTest extends TestCase
      */
     public function connectionToRemoteTCP4ServerShouldResultInOurIP()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
@@ -120,7 +120,7 @@ class FunctionalConnectorTest extends TestCase
      */
     public function connectionToRemoteTCP6ServerShouldResultInOurIP()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array('happy_eyeballs' => true), $loop);
 
@@ -141,7 +141,7 @@ class FunctionalConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $uri = str_replace('tcp://', 'tls://', $server->getAddress());

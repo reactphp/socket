@@ -2,7 +2,7 @@
 
 namespace React\Tests\Socket;
 
-use React\EventLoop\Factory as LoopFactory;
+use React\EventLoop\Loop;
 use React\Socket\TcpServer;
 use React\Socket\SecureServer;
 use React\Socket\TcpConnector;
@@ -31,7 +31,7 @@ class SecureIntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $this->loop = LoopFactory::create();
+        $this->loop = Loop::get();
         $this->server = new TcpServer(0, $this->loop);
         $this->server = new SecureServer($this->server, $this->loop, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'

@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpConnector;
 use React\Socket\TcpServer;
@@ -27,7 +27,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToEmptyPortShouldFail()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new TcpConnector($loop);
         $promise = $connector->connect('127.0.0.1:9999');
@@ -61,7 +61,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceed()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(9999, $loop);
 
@@ -78,7 +78,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldFailIfFileDescriptorsAreExceeded()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new TcpConnector($loop);
 
@@ -144,7 +144,7 @@ class TcpConnectorTest extends TestCase
             $this->markTestSkipped('Expected error ' . $enetunreach . ' but got ' . $errno . ' (' . $errstr . ') for ' . $address);
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new TcpConnector($loop);
 
         $promise = $connector->connect($address);
@@ -160,7 +160,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithRemoteAdressSameAsTarget()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(9999, $loop);
 
@@ -178,7 +178,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithLocalAdressOnLocalhost()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(9999, $loop);
 
@@ -197,7 +197,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerShouldSucceedWithNullAddressesAfterConnectionClosed()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(9999, $loop);
 
@@ -216,7 +216,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerWillCloseWhenOtherSideCloses()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         // immediately close connection and server once connection is in
         $server = new TcpServer(0, $loop);
@@ -238,7 +238,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToEmptyIp6PortShouldFail()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new TcpConnector($loop);
         $connector
@@ -251,7 +251,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToIp6TcpServerShouldSucceed()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         try {
             $server = new TcpServer('[::1]:9999', $loop);
@@ -346,7 +346,7 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function cancellingConnectionShouldRejectPromise()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new TcpConnector($loop);
 
         $server = new TcpServer(0, $loop);

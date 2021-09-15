@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SocketServer;
@@ -32,7 +32,7 @@ class SocketServerTest extends TestCase
 
     public function testCreateServerWithZeroPortAssignsRandomPort()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
         $this->assertNotEquals(0, $socket->getAddress());
@@ -71,7 +71,7 @@ class SocketServerTest extends TestCase
 
     public function testConstructorCreatesExpectedTcpServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
 
@@ -94,7 +94,7 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer($this->getRandomSocketUri(), array(), $loop);
 
@@ -114,7 +114,7 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         try {
             new SocketServer('unix://' . __FILE__, array(), $loop);
@@ -147,7 +147,7 @@ class SocketServerTest extends TestCase
 
     public function testEmitsErrorWhenUnderlyingTcpServerEmitsError()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
 
@@ -164,7 +164,7 @@ class SocketServerTest extends TestCase
 
     public function testEmitsConnectionForNewConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
         $socket->on('connection', $this->expectCallableOnce());
@@ -180,7 +180,7 @@ class SocketServerTest extends TestCase
 
     public function testDoesNotEmitConnectionForNewConnectionToPausedServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
         $socket->pause();
@@ -193,7 +193,7 @@ class SocketServerTest extends TestCase
 
     public function testDoesEmitConnectionForNewConnectionToResumedServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
         $socket->pause();
@@ -212,7 +212,7 @@ class SocketServerTest extends TestCase
 
     public function testDoesNotAllowConnectionToClosedServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(), $loop);
         $socket->on('connection', $this->expectCallableNever());
@@ -231,7 +231,7 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('127.0.0.1:0', array(
             'tcp' => array(
@@ -259,7 +259,7 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $socket = new SocketServer('tls://127.0.0.1:0', array(
             'tls' => array(

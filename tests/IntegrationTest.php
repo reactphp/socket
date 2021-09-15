@@ -4,7 +4,7 @@ namespace React\Tests\Socket;
 
 use Clue\React\Block;
 use React\Dns\Resolver\Factory as ResolverFactory;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Socket\Connector;
 use React\Socket\DnsConnector;
 use React\Socket\SecureConnector;
@@ -18,7 +18,7 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingStuffFromGoogleShouldWork()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array(), $loop);
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
@@ -40,7 +40,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $secureConnector = new Connector(array(), $loop);
 
         $conn = Block\await($secureConnector->connect('tls://google.com:443'), $loop);
@@ -59,7 +59,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $factory = new ResolverFactory();
         $dns = $factory->create('8.8.8.8', $loop);
@@ -84,7 +84,7 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingPlaintextStuffFromEncryptedGoogleShouldNotWork()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array(), $loop);
 
         $conn = Block\await($connector->connect('google.com:443'), $loop);
@@ -105,7 +105,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Skipped on macOS due to a bug in reactphp/dns (solved in reactphp/dns#171)');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $factory = new ResolverFactory();
         $dns = $factory->create('255.255.255.255', $loop);
@@ -124,7 +124,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false), $loop);
 
         gc_collect_cycles();
@@ -143,7 +143,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array(), $loop);
 
         gc_collect_cycles();
@@ -160,7 +160,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false), $loop);
 
         gc_collect_cycles();
@@ -196,7 +196,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => 0.001), $loop);
 
         gc_collect_cycles();
@@ -229,7 +229,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => 0.000001), $loop);
 
         gc_collect_cycles();
@@ -262,7 +262,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false), $loop);
 
         gc_collect_cycles();
@@ -301,7 +301,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => true
@@ -341,7 +341,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false), $loop);
 
         gc_collect_cycles();
@@ -358,7 +358,7 @@ class IntegrationTest extends TestCase
 
     public function testConnectingFailsIfTimeoutIsTooSmall()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array(
             'timeout' => 0.001
@@ -374,7 +374,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array(
             'tls' => array(
@@ -392,7 +392,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $connector = new Connector(array(
             'tls' => array(

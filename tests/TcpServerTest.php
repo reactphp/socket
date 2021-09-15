@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Socket\TcpServer;
 use React\Stream\DuplexResourceStream;
 use React\Promise\Promise;
@@ -18,7 +18,7 @@ class TcpServerTest extends TestCase
 
     private function createLoop()
     {
-        return Factory::create();
+        return Loop::get();
     }
 
     /**

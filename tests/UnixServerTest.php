@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Socket\UnixServer;
 use React\Stream\DuplexResourceStream;
 
@@ -24,7 +24,7 @@ class UnixServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $this->loop = Factory::create();
+        $this->loop = Loop::get();
         $this->uds = $this->getRandomSocketUri();
         $this->server = new UnixServer($this->uds, $this->loop);
     }

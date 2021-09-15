@@ -4,7 +4,7 @@ namespace React\Tests\Socket;
 
 use Clue\React\Block;
 use Evenement\EventEmitterInterface;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureConnector;
@@ -29,7 +29,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testClientCanConnectToServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -60,7 +60,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data (but excludes PHP 7.3 because it implicitly limits to TLS 1.2) and OpenSSL 1.1.1+ for TLS 1.3');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -97,7 +97,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -127,7 +127,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -157,7 +157,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -193,7 +193,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testServerEmitsConnectionForClientConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -232,7 +232,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testClientEmitsDataEventOnceForDataWrittenFromServer()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -261,7 +261,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testWritesDataInMultipleChunksToConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -298,7 +298,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testWritesMoreDataInMultipleChunksToConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -335,7 +335,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsDataFromConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -363,7 +363,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsDataInMultipleChunksFromConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -398,7 +398,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testPipesDataBackInMultipleChunksFromConnection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -440,7 +440,7 @@ class FunctionalSecureServerTest extends TestCase
      */
     public function testEmitsConnectionForNewTlsv11Connection()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -464,7 +464,7 @@ class FunctionalSecureServerTest extends TestCase
      */
     public function testEmitsErrorForClientWithTlsVersionMismatch()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -486,7 +486,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testServerEmitsConnectionForNewConnectionWithEncryptedCertificate()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -511,7 +511,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testClientRejectsWithErrorForServerWithInvalidCertificate()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -529,7 +529,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testServerEmitsErrorForClientWithInvalidCertificate()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -558,7 +558,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -582,7 +582,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -603,7 +603,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorForConnectionWithPeerVerification()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -627,7 +627,7 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Linux only (OS is ' . PHP_OS . ')');
         }
 
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -648,7 +648,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorIfConnectionIsClosedBeforeHandshake()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -676,7 +676,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorIfConnectionIsClosedWithIncompleteHandshake()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -704,7 +704,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsNothingIfPlaintextConnectionIsIdle()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -722,7 +722,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorIfConnectionIsHttpInsteadOfSecureHandshake()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(
@@ -751,7 +751,7 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testEmitsErrorIfConnectionIsUnknownProtocolInsteadOfSecureHandshake()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new SecureServer($server, $loop, array(

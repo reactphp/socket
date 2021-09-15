@@ -3,7 +3,7 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\LimitingServer;
@@ -143,7 +143,7 @@ class LimitingServerTest extends TestCase
 
     public function testSocketDisconnectionWillRemoveFromList()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $tcp = new TcpServer(0, $loop);
 
@@ -167,7 +167,7 @@ class LimitingServerTest extends TestCase
 
     public function testPausingServerWillEmitOnlyOneButAcceptTwoConnectionsDueToOperatingSystem()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new LimitingServer($server, 1, true);
@@ -189,7 +189,7 @@ class LimitingServerTest extends TestCase
 
     public function testPausingServerWillEmitTwoConnectionsFromBacklog()
     {
-        $loop = Factory::create();
+        $loop = Loop::get();
 
         $server = new TcpServer(0, $loop);
         $server = new LimitingServer($server, 1, true);
