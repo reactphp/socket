@@ -82,13 +82,33 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector($loop);
 
-        $ulimit = exec('ulimit -n 2>&1');
-        if ($ulimit < 1) {
+        /** @var string[] $_ */
+        /** @var int $exit */
+        $ulimit = exec('ulimit -n 2>&1', $_, $exit);
+        if ($exit !== 0 || $ulimit < 1) {
             $this->markTestSkipped('Unable to determine limit of open files (ulimit not available?)');
         }
 
+        $memory = ini_get('memory_limit');
+        if ($memory === '-1') {
+            $memory = PHP_INT_MAX;
+        } elseif (preg_match('/^\d+G$/i', $memory)) {
+            $memory = ((int) $memory) * 1024 * 1024 * 1024;
+        } elseif (preg_match('/^\d+M$/i', $memory)) {
+            $memory = ((int) $memory) * 1024 * 1024;
+        } elseif (preg_match('/^\d+K$/i', $memory)) {
+            $memory = ((int) $memory) * 1024;
+        }
+
+        // each file descriptor takes ~600 bytes of memory, so skip test if this would exceed memory_limit
+        if ($ulimit * 600 > $memory) {
+            $this->markTestSkipped('Test requires ~' . round($ulimit * 600 / 1024 / 1024) . '/' . round($memory / 1024 / 1024) . ' MiB memory with ' . $ulimit . ' file descriptors');
+        }
+
         // dummy rejected promise to make sure autoloader has initialized all classes
-        $foo = new Promise(function () { throw new \RuntimeException('dummy'); });
+        class_exists('React\Socket\SocketServer', true);
+        class_exists('PHPUnit\Framework\Error\Warning', true);
+        new Promise(function () { throw new \RuntimeException('dummy'); });
 
         // keep creating dummy file handles until all file descriptors are exhausted
         $fds = array();
