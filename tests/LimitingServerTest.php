@@ -145,7 +145,7 @@ class LimitingServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $tcp = new TcpServer(0, $loop);
+        $tcp = new TcpServer(0);
 
         $socket = stream_socket_client($tcp->getAddress());
         fclose($socket);
@@ -163,13 +163,15 @@ class LimitingServerTest extends TestCase
         Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertEquals(array(), $server->getConnections());
+
+        $server->close();
     }
 
     public function testPausingServerWillEmitOnlyOneButAcceptTwoConnectionsDueToOperatingSystem()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server = new LimitingServer($server, 1, true);
         $server->on('connection', $this->expectCallableOnce());
         $server->on('error', $this->expectCallableNever());
@@ -185,13 +187,15 @@ class LimitingServerTest extends TestCase
 
         fclose($first);
         fclose($second);
+
+        $server->close();
     }
 
     public function testPausingServerWillEmitTwoConnectionsFromBacklog()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server = new LimitingServer($server, 1, true);
         $server->on('error', $this->expectCallableNever());
 
@@ -212,5 +216,7 @@ class LimitingServerTest extends TestCase
         fclose($second);
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
     }
 }

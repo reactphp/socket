@@ -17,30 +17,36 @@ class FunctionalTcpServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', $resolve);
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
+
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsNoConnectionForNewConnectionWhenPaused()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableNever());
         $server->pause();
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -52,7 +58,7 @@ class FunctionalTcpServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
         $server->pause();
         $server->resume();
@@ -61,26 +67,31 @@ class FunctionalTcpServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithRemoteIp()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
                 $resolve($connection->getRemoteAddress());
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -88,20 +99,25 @@ class FunctionalTcpServerTest extends TestCase
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $peer);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithLocalIp()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
                 $resolve($connection->getLocalAddress());
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -112,6 +128,11 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->assertContainsString('127.0.0.1:', $local);
         $this->assertEquals($server->getAddress(), $local);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithLocalIpDespiteListeningOnAll()
@@ -122,14 +143,14 @@ class FunctionalTcpServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new TcpServer('0.0.0.0:0', $loop);
+        $server = new TcpServer('0.0.0.0:0');
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
                 $resolve($connection->getLocalAddress());
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -137,13 +158,18 @@ class FunctionalTcpServerTest extends TestCase
         $local = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $local);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
                 $connection->on('close', function () use ($connection, $resolve) {
@@ -152,7 +178,7 @@ class FunctionalTcpServerTest extends TestCase
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $connector->connect($server->getAddress())->then(function (ConnectionInterface $connection) {
             $connection->end();
         });
@@ -160,13 +186,15 @@ class FunctionalTcpServerTest extends TestCase
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $peer);
+
+        $server->close();
     }
 
     public function testEmitsConnectionWithRemoteNullAddressAfterConnectionIsClosedByServer()
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
                 $connection->close();
@@ -174,7 +202,7 @@ class FunctionalTcpServerTest extends TestCase
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -182,6 +210,8 @@ class FunctionalTcpServerTest extends TestCase
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertNull($peer);
+
+        $server->close();
     }
 
     public function testEmitsConnectionEvenIfClientConnectionIsCancelled()
@@ -192,20 +222,22 @@ class FunctionalTcpServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', $resolve);
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
 
         $promise->then(null, $this->expectCallableOnce());
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
     }
 
     public function testEmitsConnectionForNewIpv6Connection()
@@ -213,7 +245,7 @@ class FunctionalTcpServerTest extends TestCase
         $loop = Loop::get();
 
         try {
-            $server = new TcpServer('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -224,12 +256,17 @@ class FunctionalTcpServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithRemoteIpv6()
@@ -237,7 +274,7 @@ class FunctionalTcpServerTest extends TestCase
         $loop = Loop::get();
 
         try {
-            $server = new TcpServer('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -248,7 +285,7 @@ class FunctionalTcpServerTest extends TestCase
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -256,6 +293,11 @@ class FunctionalTcpServerTest extends TestCase
         $peer = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertContainsString('[::1]:', $peer);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsConnectionWithLocalIpv6()
@@ -263,7 +305,7 @@ class FunctionalTcpServerTest extends TestCase
         $loop = Loop::get();
 
         try {
-            $server = new TcpServer('[::1]:0', $loop);
+            $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (not available on your platform?)');
         }
@@ -274,7 +316,7 @@ class FunctionalTcpServerTest extends TestCase
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -283,13 +325,16 @@ class FunctionalTcpServerTest extends TestCase
 
         $this->assertContainsString('[::1]:', $local);
         $this->assertEquals($server->getAddress(), $local);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testServerPassesContextOptionsToSocket()
     {
-        $loop = Loop::get();
-
-        $server = new TcpServer(0, $loop, array(
+        $server = new TcpServer(0, null, array(
             'backlog' => 4
         ));
 
@@ -300,13 +345,13 @@ class FunctionalTcpServerTest extends TestCase
         $context = stream_context_get_options($socket);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $context);
+
+        $server->close();
     }
 
     public function testServerPassesDefaultBacklogSizeViaContextOptionsToSocket()
     {
-        $loop = Loop::get();
-
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
 
         $ref = new \ReflectionProperty($server, 'master');
         $ref->setAccessible(true);
@@ -315,6 +360,8 @@ class FunctionalTcpServerTest extends TestCase
         $context = stream_context_get_options($socket);
 
         $this->assertEquals(array('socket' => array('backlog' => 511)), $context);
+
+        $server->close();
     }
 
     public function testEmitsConnectionWithInheritedContextOptions()
@@ -326,7 +373,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new TcpServer(0, $loop, array(
+        $server = new TcpServer(0, null, array(
             'backlog' => 4
         ));
 
@@ -336,7 +383,7 @@ class FunctionalTcpServerTest extends TestCase
             });
         });
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
 
         $promise->then($this->expectCallableOnce());
@@ -344,53 +391,50 @@ class FunctionalTcpServerTest extends TestCase
         $all = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testFailsToListenOnInvalidUri()
     {
-        $loop = Loop::get();
-
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "tcp://///" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
-        new TcpServer('///', $loop);
+        new TcpServer('///');
     }
 
     public function testFailsToListenOnUriWithoutPort()
     {
-        $loop = Loop::get();
-
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "tcp://127.0.0.1" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
-        new TcpServer('127.0.0.1', $loop);
+        new TcpServer('127.0.0.1');
     }
 
     public function testFailsToListenOnUriWithWrongScheme()
     {
-        $loop = Loop::get();
-
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "udp://127.0.0.1:0" given (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
-        new TcpServer('udp://127.0.0.1:0', $loop);
+        new TcpServer('udp://127.0.0.1:0');
     }
 
     public function testFailsToListenOnUriWIthHostname()
     {
-        $loop = Loop::get();
-
         $this->setExpectedException(
             'InvalidArgumentException',
             'Given URI "tcp://localhost:8080" does not contain a valid host IP (EINVAL)',
             defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
         );
-        new TcpServer('localhost:8080', $loop);
+        new TcpServer('localhost:8080');
     }
 }

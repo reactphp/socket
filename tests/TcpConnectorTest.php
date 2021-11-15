@@ -29,7 +29,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect('127.0.0.1:9999');
 
         $this->setExpectedException(
@@ -63,9 +63,9 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(9999, $loop);
+        $server = new TcpServer(9999);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
 
@@ -80,7 +80,7 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         /** @var string[] $_ */
         /** @var int $exit */
@@ -145,7 +145,7 @@ class TcpConnectorTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $promise = $connector->connect($address);
 
@@ -154,7 +154,14 @@ class TcpConnectorTest extends TestCase
             'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) . ' (ENETUNREACH)' : 'Network is unreachable'),
             $enetunreach
         );
-        Block\await($promise, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($promise, $loop, self::TIMEOUT);
+        } catch (\Exception $e) {
+            fclose($client);
+
+            throw $e;
+        }
     }
 
     /** @test */
@@ -162,9 +169,9 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(9999, $loop);
+        $server = new TcpServer(9999);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
@@ -180,9 +187,9 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(9999, $loop);
+        $server = new TcpServer(9999);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
@@ -199,9 +206,9 @@ class TcpConnectorTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new TcpServer(9999, $loop);
+        $server = new TcpServer(9999);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $connection = Block\await($connector->connect('127.0.0.1:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
@@ -216,36 +223,34 @@ class TcpConnectorTest extends TestCase
     /** @test */
     public function connectionToTcpServerWillCloseWhenOtherSideCloses()
     {
-        $loop = Loop::get();
-
         // immediately close connection and server once connection is in
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
         $server->on('connection', function (ConnectionInterface $conn) use ($server) {
             $conn->close();
             $server->close();
         });
 
         $once = $this->expectCallableOnce();
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $connector->connect($server->getAddress())->then(function (ConnectionInterface $conn) use ($once) {
             $conn->write('hello');
             $conn->on('close', $once);
         });
 
-        $loop->run();
+        Loop::run();
     }
 
-    /** @test */
+    /** @test
+     *  @group test
+     */
     public function connectionToEmptyIp6PortShouldFail()
     {
-        $loop = Loop::get();
-
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $connector
             ->connect('[::1]:9999')
             ->then($this->expectCallableNever(), $this->expectCallableOnce());
 
-        $loop->run();
+        Loop::run();
     }
 
     /** @test */
@@ -254,12 +259,12 @@ class TcpConnectorTest extends TestCase
         $loop = Loop::get();
 
         try {
-            $server = new TcpServer('[::1]:9999', $loop);
+            $server = new TcpServer('[::1]:9999');
         } catch (\Exception $e) {
             $this->markTestSkipped('Unable to start IPv6 server socket (IPv6 not supported on this system?)');
         }
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
         $connection = Block\await($connector->connect('[::1]:9999'), $loop, self::TIMEOUT);
         /* @var $connection ConnectionInterface */
@@ -347,9 +352,9 @@ class TcpConnectorTest extends TestCase
     public function cancellingConnectionShouldRejectPromise()
     {
         $loop = Loop::get();
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
 
-        $server = new TcpServer(0, $loop);
+        $server = new TcpServer(0);
 
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
@@ -359,7 +364,13 @@ class TcpConnectorTest extends TestCase
             'Connection to ' . $server->getAddress() . ' cancelled during TCP/IP handshake (ECONNABORTED)',
             defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
         );
-        Block\await($promise, $loop);
+
+        try {
+            Block\await($promise, $loop);
+        } catch (\Exception $e) {
+            $server->close();
+            throw $e;
+        }
     }
 
     public function testCancelDuringConnectionShouldNotCreateAnyGarbageReferences()

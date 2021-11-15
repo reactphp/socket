@@ -27,13 +27,13 @@ class ServerTest extends TestCase
         $loop = $ref->getValue($tcp);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+
+        $server->close();
     }
 
     public function testCreateServerWithZeroPortAssignsRandomPort()
     {
-        $loop = Loop::get();
-
-        $server = new Server(0, $loop);
+        $server = new Server(0);
         $this->assertNotEquals(0, $server->getAddress());
         $server->close();
     }
@@ -50,16 +50,18 @@ class ServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new Server(0, $loop);
+        $server = new Server(0);
 
-        $connector = new TcpConnector($loop);
-        $connector->connect($server->getAddress())
-            ->then($this->expectCallableOnce(), $this->expectCallableNever());
+        $connector = new TcpConnector();
+        $promise = $connector->connect($server->getAddress());
+        $promise->then($this->expectCallableOnce(), $this->expectCallableNever());
 
         $connection = Block\await($connector->connect($server->getAddress()), $loop, self::TIMEOUT);
 
-        $connection->close();
         $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testConstructorCreatesExpectedUnixServer()
@@ -73,9 +75,9 @@ class ServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new Server($this->getRandomSocketUri(), $loop);
+        $server = new Server($this->getRandomSocketUri());
 
-        $connector = new UnixConnector($loop);
+        $connector = new UnixConnector();
         $connector->connect($server->getAddress())
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
@@ -91,10 +93,8 @@ class ServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Loop::get();
-
         try {
-            $server = new Server('unix://' . __FILE__, $loop);
+            $server = new Server('unix://' . __FILE__);
             $this->fail();
         } catch (\RuntimeException $e) {
             if ($e->getCode() === 0) {
@@ -109,9 +109,7 @@ class ServerTest extends TestCase
 
     public function testEmitsErrorWhenUnderlyingTcpServerEmitsError()
     {
-        $loop = Loop::get();
-
-        $server = new Server(0, $loop);
+        $server = new Server(0);
 
         $ref = new \ReflectionProperty($server, 'server');
         $ref->setAccessible(true);
@@ -128,7 +126,7 @@ class ServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new Server(0, $loop);
+        $server = new Server(0);
         $server->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($server) {
@@ -138,13 +136,15 @@ class ServerTest extends TestCase
         $client = stream_socket_client($server->getAddress());
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
     }
 
     public function testDoesNotEmitConnectionForNewConnectionToPausedServer()
     {
         $loop = Loop::get();
 
-        $server = new Server(0, $loop);
+        $server = new Server(0);
         $server->pause();
         $server->on('connection', $this->expectCallableNever());
 
@@ -157,7 +157,7 @@ class ServerTest extends TestCase
     {
         $loop = Loop::get();
 
-        $server = new Server(0, $loop);
+        $server = new Server(0);
         $server->pause();
         $server->on('connection', $this->expectCallableOnce());
 
@@ -170,13 +170,13 @@ class ServerTest extends TestCase
         $server->resume();
 
         Block\await($peer, $loop, self::TIMEOUT);
+
+        $server->close();
     }
 
     public function testDoesNotAllowConnectionToClosedServer()
     {
-        $loop = Loop::get();
-
-        $server = new Server(0, $loop);
+        $server = new Server(0);
         $server->on('connection', $this->expectCallableNever());
         $address = $server->getAddress();
         $server->close();
@@ -195,7 +195,7 @@ class ServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new Server(0, $loop, array(
+        $server = new Server(0, null, array(
             'backlog' => 4
         ));
 
@@ -211,6 +211,8 @@ class ServerTest extends TestCase
         $all = Block\await($peer, $loop, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
+
+        $server->close();
     }
 
     public function testDoesNotEmitSecureConnectionForNewPlaintextConnectionThatIsIdle()
@@ -221,7 +223,7 @@ class ServerTest extends TestCase
 
         $loop = Loop::get();
 
-        $server = new Server('tls://127.0.0.1:0', $loop, array(
+        $server = new Server('tls://127.0.0.1:0', null, array(
             'tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
             )
@@ -231,6 +233,8 @@ class ServerTest extends TestCase
         $client = stream_socket_client(str_replace('tls://', '', $server->getAddress()));
 
         Block\sleep(0.1, $loop);
+
+        $server->close();
     }
 
     private function getRandomSocketUri()

@@ -5,6 +5,7 @@ namespace React\Tests\Socket;
 use Clue\React\Block;
 use React\EventLoop\Loop;
 use React\Promise\Promise;
+use React\Socket\ConnectionInterface;
 use React\Socket\FdServer;
 
 class FdServerTest extends TestCase
@@ -309,9 +310,14 @@ class FdServerTest extends TestCase
 
         $connection = Block\await($promise, Loop::get(), 1.0);
 
+        /**
+         * @var ConnectionInterface $connection
+         */
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         fclose($client);
+        $connection->close();
+        $server->close();
     }
 
     public function testEmitsErrorWhenAcceptListenerFails()

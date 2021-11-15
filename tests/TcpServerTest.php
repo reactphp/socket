@@ -29,7 +29,7 @@ class TcpServerTest extends TestCase
     public function setUpServer()
     {
         $this->loop = $this->createLoop();
-        $this->server = new TcpServer(0, $this->loop);
+        $this->server = new TcpServer(0);
 
         $this->port = parse_url($this->server->getAddress(), PHP_URL_PORT);
     }
@@ -43,6 +43,8 @@ class TcpServerTest extends TestCase
         $loop = $ref->getValue($server);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+
+        $server->close();
     }
 
     /**
@@ -129,7 +131,7 @@ class TcpServerTest extends TestCase
         $this->server->close();
         $this->server = null;
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -165,7 +167,7 @@ class TcpServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -174,7 +176,7 @@ class TcpServerTest extends TestCase
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
     {
         $client = stream_socket_client('tcp://localhost:' . $this->port);
-        $stream = new DuplexResourceStream($client, $this->loop);
+        $stream = new DuplexResourceStream($client);
 
         $bytes = 1024 * 1024;
         $stream->end(str_repeat('*', $bytes));
@@ -199,7 +201,7 @@ class TcpServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         $this->assertEquals($bytes, $received);
     }
@@ -342,7 +344,7 @@ class TcpServerTest extends TestCase
             'Failed to listen on "tcp://127.0.0.1:' . $this->port . '": ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EADDRINUSE) . ' (EADDRINUSE)' : 'Address already in use'),
             defined('SOCKET_EADDRINUSE') ? SOCKET_EADDRINUSE : 0
         );
-        new TcpServer($this->port, $this->loop);
+        new TcpServer($this->port);
     }
 
     /**

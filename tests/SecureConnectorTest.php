@@ -5,6 +5,7 @@ namespace React\Tests\Socket;
 use React\Promise;
 use React\Promise\Deferred;
 use React\Socket\SecureConnector;
+use React\EventLoop\Loop;
 
 class SecureConnectorTest extends TestCase
 {

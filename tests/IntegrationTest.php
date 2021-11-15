@@ -19,7 +19,7 @@ class IntegrationTest extends TestCase
     public function gettingStuffFromGoogleShouldWork()
     {
         $loop = Loop::get();
-        $connector = new Connector(array(), $loop);
+        $connector = new Connector(array());
 
         $conn = Block\await($connector->connect('google.com:80'), $loop);
 
@@ -41,7 +41,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $secureConnector = new Connector(array(), $loop);
+        $secureConnector = new Connector(array());
 
         $conn = Block\await($secureConnector->connect('tls://google.com:443'), $loop);
 
@@ -62,12 +62,11 @@ class IntegrationTest extends TestCase
         $loop = Loop::get();
 
         $factory = new ResolverFactory();
-        $dns = $factory->create('8.8.8.8', $loop);
+        $dns = $factory->create('8.8.8.8');
 
         $connector = new DnsConnector(
             new SecureConnector(
-                new TcpConnector($loop),
-                $loop
+                new TcpConnector()
             ),
             $dns
         );
@@ -85,7 +84,7 @@ class IntegrationTest extends TestCase
     public function gettingPlaintextStuffFromEncryptedGoogleShouldNotWork()
     {
         $loop = Loop::get();
-        $connector = new Connector(array(), $loop);
+        $connector = new Connector(array());
 
         $conn = Block\await($connector->connect('google.com:443'), $loop);
 
@@ -108,7 +107,7 @@ class IntegrationTest extends TestCase
         $loop = Loop::get();
 
         $factory = new ResolverFactory();
-        $dns = $factory->create('255.255.255.255', $loop);
+        $dns = $factory->create('255.255.255.255');
 
         $connector = new Connector(array(
             'dns' => $dns
@@ -124,8 +123,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
-        $connector = new Connector(array('timeout' => false), $loop);
+        $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
         gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
@@ -143,8 +141,7 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
-        $connector = new Connector(array(), $loop);
+        $connector = new Connector(array());
 
         gc_collect_cycles();
         $promise = $connector->connect('8.8.8.8:80');
@@ -161,7 +158,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new Connector(array('timeout' => false), $loop);
+        $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
 
@@ -197,7 +194,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new Connector(array('timeout' => 0.001), $loop);
+        $connector = new Connector(array('timeout' => 0.001));
 
         gc_collect_cycles();
 
@@ -230,7 +227,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new Connector(array('timeout' => 0.000001), $loop);
+        $connector = new Connector(array('timeout' => 0.000001));
 
         gc_collect_cycles();
 
@@ -263,7 +260,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new Connector(array('timeout' => false), $loop);
+        $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
 
@@ -306,7 +303,7 @@ class IntegrationTest extends TestCase
             'tls' => array(
                 'verify_peer' => true
             )
-        ), $loop);
+        ));
 
         gc_collect_cycles();
 
@@ -342,7 +339,7 @@ class IntegrationTest extends TestCase
         }
 
         $loop = Loop::get();
-        $connector = new Connector(array('timeout' => false), $loop);
+        $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
         $promise = $connector->connect('google.com:80')->then(
@@ -362,7 +359,7 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array(
             'timeout' => 0.001
-        ), $loop);
+        ));
 
         $this->setExpectedException('RuntimeException');
         Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
@@ -380,7 +377,7 @@ class IntegrationTest extends TestCase
             'tls' => array(
                 'verify_peer' => true
             )
-        ), $loop);
+        ));
 
         $this->setExpectedException('RuntimeException');
         Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
@@ -398,7 +395,7 @@ class IntegrationTest extends TestCase
             'tls' => array(
                 'verify_peer' => false
             )
-        ), $loop);
+        ));
 
         $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
         $conn->close();

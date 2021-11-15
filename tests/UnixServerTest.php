@@ -26,7 +26,7 @@ class UnixServerTest extends TestCase
 
         $this->loop = Loop::get();
         $this->uds = $this->getRandomSocketUri();
-        $this->server = new UnixServer($this->uds, $this->loop);
+        $this->server = new UnixServer($this->uds);
     }
 
     public function testConstructWithoutLoopAssignsLoopAutomatically()
@@ -38,6 +38,8 @@ class UnixServerTest extends TestCase
         $loop = $ref->getValue($server);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+
+        $server->close();
     }
 
     /**
@@ -115,7 +117,7 @@ class UnixServerTest extends TestCase
         $this->server->close();
         $this->server = null;
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -150,7 +152,7 @@ class UnixServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -159,7 +161,7 @@ class UnixServerTest extends TestCase
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
     {
         $client = stream_socket_client($this->uds);
-        $stream = new DuplexResourceStream($client, $this->loop);
+        $stream = new DuplexResourceStream($client);
 
         $bytes = 1024 * 1024;
         $stream->end(str_repeat('*', $bytes));
@@ -184,7 +186,7 @@ class UnixServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         $this->assertEquals($bytes, $received);
     }
@@ -339,7 +341,7 @@ class UnixServerTest extends TestCase
         }
 
         $this->setExpectedException('RuntimeException');
-        $another = new UnixServer($this->uds, $this->loop);
+        $another = new UnixServer($this->uds);
     }
 
     /**

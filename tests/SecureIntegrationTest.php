@@ -32,12 +32,12 @@ class SecureIntegrationTest extends TestCase
         }
 
         $this->loop = Loop::get();
-        $this->server = new TcpServer(0, $this->loop);
-        $this->server = new SecureServer($this->server, $this->loop, array(
+        $this->server = new TcpServer(0);
+        $this->server = new SecureServer($this->server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $this->address = $this->server->getAddress();
-        $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array('verify_peer' => false));
+        $this->connector = new SecureConnector(new TcpConnector(), null, array('verify_peer' => false));
     }
 
     /**
@@ -108,7 +108,7 @@ class SecureIntegrationTest extends TestCase
                 $this->markTestSkipped('TLS 1.3 supported, but this legacy PHP version does not support explicit choice');
             }
 
-            $this->connector = new SecureConnector(new TcpConnector($this->loop), $this->loop, array(
+            $this->connector = new SecureConnector(new TcpConnector(), null, array(
                 'verify_peer' => false,
                 'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
             ));
@@ -155,7 +155,8 @@ class SecureIntegrationTest extends TestCase
         });
 
         $data = str_repeat('d', 200000);
-        $this->connector->connect($this->address)->then(function (ConnectionInterface $connection) use ($data) {
+        $connecting = $this->connector->connect($this->address);
+        $connecting->then(function (ConnectionInterface $connection) use ($data) {
             $connection->write($data);
         });
 
@@ -163,6 +164,10 @@ class SecureIntegrationTest extends TestCase
 
         $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testConnectToServerWhichSendsSmallDataReceivesOneChunk()
@@ -204,10 +209,10 @@ class SecureIntegrationTest extends TestCase
             $peer->write($data);
         });
 
-        $promise = $this->connector->connect($this->address);
+        $connecting = $this->connector->connect($this->address);
 
-        $promise = new Promise(function ($resolve, $reject) use ($promise) {
-            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+        $promise = new Promise(function ($resolve, $reject) use ($connecting) {
+            $connecting->then(function (ConnectionInterface $connection) use ($resolve) {
                 $received = 0;
                 $connection->on('data', function ($chunk) use (&$received, $resolve) {
                     $received += strlen($chunk);
@@ -222,6 +227,10 @@ class SecureIntegrationTest extends TestCase
         $received = Block\await($promise, $this->loop, self::TIMEOUT);
 
         $this->assertEquals(strlen($data), $received);
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     private function createPromiseForEvent(EventEmitterInterface $emitter, $event, $fn)
