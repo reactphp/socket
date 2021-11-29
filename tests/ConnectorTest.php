@@ -241,6 +241,9 @@ class ConnectorTest extends TestCase
         ));
     }
 
+    /**
+     * @group internet
+     */
     public function testConnectorUsesGivenResolverInstance()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -257,6 +260,9 @@ class ConnectorTest extends TestCase
         $connector->connect('google.com:80');
     }
 
+    /**
+     * @group internet
+     */
     public function testConnectorUsesResolvedHostnameIfDnsIsUsed()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
