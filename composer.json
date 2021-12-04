@@ -31,7 +31,7 @@
         "react/dns": "^1.8",
         "react/event-loop": "^1.2",
         "react/promise": "^2.6.0 || ^1.2.1",
-        "react/promise-timer": "^1.4.0",
+        "react/promise-timer": "^1.8",
         "react/stream": "^1.2"
     },
     "require-dev": {

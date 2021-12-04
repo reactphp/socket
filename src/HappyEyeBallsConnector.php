@@ -35,7 +35,9 @@ final class HappyEyeBallsConnector implements ConnectorInterface
         if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;
             $parts = \parse_url($uri);
-            unset($parts['scheme']);
+            if (isset($parts['scheme'])) {
+                unset($parts['scheme']);
+            }
         } else {
             $parts = \parse_url($uri);
         }
