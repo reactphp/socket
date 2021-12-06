@@ -90,7 +90,7 @@ class FunctionalConnectorTest extends TestCase
 
         $ip = Block\await($this->request('dual.tlund.se', $connector), $loop, self::TIMEOUT);
 
-        $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6), $ip);
+        $this->assertNotFalse(inet_pton($ip));
     }
 
     /**
@@ -110,8 +110,8 @@ class FunctionalConnectorTest extends TestCase
             throw $e;
         }
 
-        $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
-        $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
+        $this->assertNotFalse(inet_pton($ip));
+        $this->assertEquals(4, strlen(inet_pton($ip)));
     }
 
     /**
@@ -131,8 +131,8 @@ class FunctionalConnectorTest extends TestCase
             throw $e;
         }
 
-        $this->assertFalse(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4), $ip);
-        $this->assertSame($ip, filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6), $ip);
+        $this->assertNotFalse(inet_pton($ip));
+        $this->assertEquals(16, strlen(inet_pton($ip)));
     }
 
     public function testCancelPendingTlsConnectionDuringTlsHandshakeShouldCloseTcpConnectionToServer()

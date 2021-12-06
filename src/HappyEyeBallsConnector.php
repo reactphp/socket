@@ -50,7 +50,7 @@ final class HappyEyeBallsConnector implements ConnectorInterface
         $host = \trim($parts['host'], '[]');
 
         // skip DNS lookup / URI manipulation if this URI already contains an IP
-        if (false !== \filter_var($host, \FILTER_VALIDATE_IP)) {
+        if (@\inet_pton($host) !== false) {
             return $this->connector->connect($original);
         }
 
