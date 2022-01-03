@@ -174,11 +174,13 @@ class FunctionalSecureServerTest extends TestCase
         try {
             $client = Block\await($promise, $loop, self::TIMEOUT);
         } catch (\RuntimeException $e) {
-            if (strpos($e->getMessage(), 'no protocols available') !== false || strpos($e->getMessage(), 'routines:state_machine:internal error') !== false) {
-                $this->markTestSkipped('TLS v1.0 not available on this system');
-            }
-
-            throw $e;
+            // legacy TLS 1.0 would be considered insecure by today's standards, so skip test if connection fails
+            // OpenSSL error messages are version/platform specific
+            // […] no protocols available
+            // […] routines:state_machine:internal error
+            // SSL operation failed with code 1. OpenSSL Error messages: error:0A000438:SSL routines::tlsv1 alert internal error
+            // Connection lost during TLS handshake (ECONNRESET)
+            $this->markTestSkipped('TLS 1.0 not available on this system (' . $e->getMessage() . ')');
         }
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
