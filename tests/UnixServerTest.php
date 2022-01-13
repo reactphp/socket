@@ -3,13 +3,12 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Socket\UnixServer;
 use React\Stream\DuplexResourceStream;
 
 class UnixServerTest extends TestCase
 {
-    private $loop;
     private $server;
     private $uds;
 
@@ -24,9 +23,8 @@ class UnixServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $this->loop = Factory::create();
         $this->uds = $this->getRandomSocketUri();
-        $this->server = new UnixServer($this->uds, $this->loop);
+        $this->server = new UnixServer($this->uds);
     }
 
     public function testConstructWithoutLoopAssignsLoopAutomatically()
@@ -38,6 +36,8 @@ class UnixServerTest extends TestCase
         $loop = $ref->getValue($server);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
+
+        $server->close();
     }
 
     /**
@@ -115,7 +115,7 @@ class UnixServerTest extends TestCase
         $this->server->close();
         $this->server = null;
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -150,7 +150,7 @@ class UnixServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         // if we reach this, then everything is good
         $this->assertNull(null);
@@ -159,7 +159,7 @@ class UnixServerTest extends TestCase
     public function testDataWillBeEmittedInMultipleChunksWhenClientSendsExcessiveAmounts()
     {
         $client = stream_socket_client($this->uds);
-        $stream = new DuplexResourceStream($client, $this->loop);
+        $stream = new DuplexResourceStream($client);
 
         $bytes = 1024 * 1024;
         $stream->end(str_repeat('*', $bytes));
@@ -184,7 +184,7 @@ class UnixServerTest extends TestCase
             $server->close();
         });
 
-        $this->loop->run();
+        Loop::run();
 
         $this->assertEquals($bytes, $received);
     }
@@ -339,7 +339,7 @@ class UnixServerTest extends TestCase
         }
 
         $this->setExpectedException('RuntimeException');
-        $another = new UnixServer($this->uds, $this->loop);
+        $another = new UnixServer($this->uds);
     }
 
     /**
@@ -360,6 +360,6 @@ class UnixServerTest extends TestCase
 
     private function tick()
     {
-        Block\sleep(0, $this->loop);
+        Block\sleep(0);
     }
 }

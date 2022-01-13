@@ -5,7 +5,7 @@ namespace React\Tests\Socket;
 use Clue\React\Block;
 use React\Socket\TimeoutConnector;
 use React\Promise;
-use React\EventLoop\Factory;
+use React\EventLoop\Loop;
 use React\Promise\Deferred;
 
 class TimeoutConnectorTest extends TestCase
@@ -30,16 +30,14 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+        $timeout = new TimeoutConnector($connector, 0.01);
 
         $this->setExpectedException(
             'RuntimeException',
             'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
             \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
         );
-        Block\await($timeout->connect('google.com:80'), $loop);
+        Block\await($timeout->connect('google.com:80'));
     }
 
     public function testRejectsWithOriginalReasonWhenConnectorRejects()
@@ -49,16 +47,14 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 5.0, $loop);
+        $timeout = new TimeoutConnector($connector, 5.0);
 
         $this->setExpectedException(
             'RuntimeException',
             'Failed',
             42
         );
-        Block\await($timeout->connect('google.com:80'), $loop);
+        Block\await($timeout->connect('google.com:80'));
     }
 
     public function testResolvesWhenConnectorResolves()
@@ -68,16 +64,14 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 5.0, $loop);
+        $timeout = new TimeoutConnector($connector, 5.0);
 
         $timeout->connect('google.com:80')->then(
             $this->expectCallableOnce(),
             $this->expectCallableNever()
         );
 
-        $loop->run();
+        Loop::run();
     }
 
     public function testRejectsAndCancelsPendingPromiseOnTimeout()
@@ -87,16 +81,14 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+        $timeout = new TimeoutConnector($connector, 0.01);
 
         $timeout->connect('google.com:80')->then(
             $this->expectCallableNever(),
             $this->expectCallableOnce()
         );
 
-        $loop->run();
+        Loop::run();
     }
 
     public function testCancelsPendingPromiseOnCancel()
@@ -106,9 +98,7 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Factory::create();
-
-        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+        $timeout = new TimeoutConnector($connector, 0.01);
 
         $out = $timeout->connect('google.com:80');
         $out->cancel();
@@ -128,8 +118,7 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($connection->promise());
 
-        $loop = Factory::create();
-        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+        $timeout = new TimeoutConnector($connector, 0.01);
 
         $promise = $timeout->connect('example.com:80');
         $connection->reject(new \RuntimeException('Connection failed'));
@@ -152,12 +141,11 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($connection->promise());
 
-        $loop = Factory::create();
-        $timeout = new TimeoutConnector($connector, 0, $loop);
+        $timeout = new TimeoutConnector($connector, 0);
 
         $promise = $timeout->connect('example.com:80');
 
-        $loop->run();
+        Loop::run();
         unset($promise, $connection);
 
         $this->assertEquals(0, gc_collect_cycles());

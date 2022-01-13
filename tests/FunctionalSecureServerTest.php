@@ -4,7 +4,6 @@ namespace React\Tests\Socket;
 
 use Clue\React\Block;
 use Evenement\EventEmitterInterface;
-use React\EventLoop\Factory;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SecureConnector;
@@ -29,20 +28,18 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testClientCanConnectToServer()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = Block\await($promise, $loop, self::TIMEOUT);
+        $client = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $client);
         $this->assertEquals($server->getAddress(), $client->getRemoteAddress());
@@ -60,20 +57,18 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data (but excludes PHP 7.3 because it implicitly limits to TLS 1.2) and OpenSSL 1.1.1+ for TLS 1.3');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = Block\await($promise, $loop, self::TIMEOUT);
+        $client = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -89,6 +84,9 @@ class FunctionalSecureServerTest extends TestCase
         } else {
             $this->assertEquals('TLSv1.3', $meta['crypto']['protocol']);
         }
+
+        $client->close();
+        $server->close();
     }
 
     public function testClientUsesTls12WhenCryptoMethodIsExplicitlyConfiguredByClient()
@@ -97,21 +95,19 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false,
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
         ));
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = Block\await($promise, $loop, self::TIMEOUT);
+        $client = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -119,6 +115,9 @@ class FunctionalSecureServerTest extends TestCase
         $meta = stream_get_meta_data($client->stream);
         $this->assertTrue(isset($meta['crypto']['protocol']));
         $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
+
+        $client->close();
+        $server->close();
     }
 
     public function testClientUsesTls12WhenCryptoMethodIsExplicitlyConfiguredByServer()
@@ -127,21 +126,19 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem',
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = Block\await($promise, $loop, self::TIMEOUT);
+        $client = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -149,6 +146,9 @@ class FunctionalSecureServerTest extends TestCase
         $meta = stream_get_meta_data($client->stream);
         $this->assertTrue(isset($meta['crypto']['protocol']));
         $this->assertEquals('TLSv1.2', $meta['crypto']['protocol']);
+
+        $client->close();
+        $server->close();
     }
 
     public function testClientUsesTls10WhenCryptoMethodIsExplicitlyConfiguredByClient()
@@ -157,14 +157,12 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Test requires PHP 7+ for crypto meta data');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false,
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
         ));
@@ -172,7 +170,7 @@ class FunctionalSecureServerTest extends TestCase
 
         /* @var ConnectionInterface $client */
         try {
-            $client = Block\await($promise, $loop, self::TIMEOUT);
+            $client = Block\await($promise, null, self::TIMEOUT);
         } catch (\RuntimeException $e) {
             // legacy TLS 1.0 would be considered insecure by today's standards, so skip test if connection fails
             // OpenSSL error messages are version/platform specific
@@ -180,6 +178,7 @@ class FunctionalSecureServerTest extends TestCase
             // […] routines:state_machine:internal error
             // SSL operation failed with code 1. OpenSSL Error messages: error:0A000438:SSL routines::tlsv1 alert internal error
             // Connection lost during TLS handshake (ECONNRESET)
+            $server->close();
             $this->markTestSkipped('TLS 1.0 not available on this system (' . $e->getMessage() . ')');
         }
 
@@ -189,14 +188,15 @@ class FunctionalSecureServerTest extends TestCase
         $meta = stream_get_meta_data($client->stream);
         $this->assertTrue(isset($meta['crypto']['protocol']));
         $this->assertEquals('TLSv1', $meta['crypto']['protocol']);
+
+        $client->close();
+        $server->close();
     }
 
     public function testServerEmitsConnectionForClientConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
@@ -205,14 +205,14 @@ class FunctionalSecureServerTest extends TestCase
             $server->on('error', $reject);
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $client = $connector->connect($server->getAddress());
 
         // await both client and server side end of connection
         /* @var ConnectionInterface[] $both */
-        $both = Block\awaitAll(array($peer, $client), $loop, self::TIMEOUT);
+        $both = Block\awaitAll(array($peer, $client), null, self::TIMEOUT);
 
         // both ends of the connection are represented by different instances of ConnectionInterface
         $this->assertCount(2, $both);
@@ -232,10 +232,8 @@ class FunctionalSecureServerTest extends TestCase
 
     public function testClientEmitsDataEventOnceForDataWrittenFromServer()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
 
@@ -243,28 +241,32 @@ class FunctionalSecureServerTest extends TestCase
             $conn->write('foo');
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connecting = $connector->connect($server->getAddress());
 
-        $promise = new Promise(function ($resolve, $reject) use ($promise) {
-            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+        $promise = new Promise(function ($resolve, $reject) use ($connecting) {
+            $connecting->then(function (ConnectionInterface $connection) use ($resolve) {
                 $connection->on('data', $resolve);
             }, $reject);
         });
 
-        $data = Block\await($promise, $loop, self::TIMEOUT);
+        $data = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals('foo', $data);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testWritesDataInMultipleChunksToConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
@@ -273,15 +275,15 @@ class FunctionalSecureServerTest extends TestCase
             $conn->write(str_repeat('*', 400000));
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connecting = $connector->connect($server->getAddress());
 
-        $promise = new Promise(function ($resolve, $reject) use ($promise) {
-            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+        $promise = new Promise(function ($resolve, $reject) use ($connecting) {
+            $connecting->then(function (ConnectionInterface $connection) use ($resolve) {
                 $received = 0;
-                $connection->on('data', function ($chunk) use (&$received, $resolve) {
+                $connection->on('data', function ($chunk) use (&$received, $resolve, $connection) {
                     $received += strlen($chunk);
 
                     if ($received >= 400000) {
@@ -291,17 +293,21 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = Block\await($promise, $loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testWritesMoreDataInMultipleChunksToConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
@@ -310,13 +316,13 @@ class FunctionalSecureServerTest extends TestCase
             $conn->write(str_repeat('*', 2000000));
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connecting = $connector->connect($server->getAddress());
 
-        $promise = new Promise(function ($resolve, $reject) use ($promise) {
-            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+        $promise = new Promise(function ($resolve, $reject) use ($connecting) {
+            $connecting->then(function (ConnectionInterface $connection) use ($resolve) {
                 $received = 0;
                 $connection->on('data', function ($chunk) use (&$received, $resolve) {
                     $received += strlen($chunk);
@@ -328,17 +334,21 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = Block\await($promise, $loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(2000000, $received);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsDataFromConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
@@ -349,24 +359,29 @@ class FunctionalSecureServerTest extends TestCase
             });
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $connector->connect($server->getAddress())->then(function (ConnectionInterface $connection) {
+        $connecting = $connector->connect($server->getAddress());
+        $connecting->then(function (ConnectionInterface $connection) {
             $connection->write('foo');
         });
 
-        $data = Block\await($promise, $loop, self::TIMEOUT);
+        $data = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals('foo', $data);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsDataInMultipleChunksFromConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
@@ -384,24 +399,29 @@ class FunctionalSecureServerTest extends TestCase
             });
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $connector->connect($server->getAddress())->then(function (ConnectionInterface $connection) {
+        $connecting = $connector->connect($server->getAddress());
+        $connecting->then(function (ConnectionInterface $connection) {
             $connection->write(str_repeat('*', 400000));
         });
 
-        $received = Block\await($promise, $loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testPipesDataBackInMultipleChunksFromConnection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableOnce());
@@ -410,13 +430,13 @@ class FunctionalSecureServerTest extends TestCase
             $conn->pipe($conn);
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $promise = $connector->connect($server->getAddress());
+        $connecting = $connector->connect($server->getAddress());
 
-        $promise = new Promise(function ($resolve, $reject) use ($promise) {
-            $promise->then(function (ConnectionInterface $connection) use ($resolve) {
+        $promise = new Promise(function ($resolve, $reject) use ($connecting) {
+            $connecting->then(function (ConnectionInterface $connection) use ($resolve) {
                 $received = 0;
                 $connection->on('data', function ($chunk) use (&$received, $resolve) {
                     $received += strlen($chunk);
@@ -429,9 +449,15 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = Block\await($promise, $loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(400000, $received);
+
+        $server->close();
+
+        $connecting->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     /**
@@ -440,22 +466,25 @@ class FunctionalSecureServerTest extends TestCase
      */
     public function testEmitsConnectionForNewTlsv11Connection()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem',
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_SERVER
         ));
         $server->on('connection', $this->expectCallableOnce());
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false,
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT
         ));
         $promise = $connector->connect($server->getAddress());
 
-        Block\await($promise, $loop, self::TIMEOUT);
+        Block\await($promise, null, self::TIMEOUT);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     /**
@@ -464,32 +493,35 @@ class FunctionalSecureServerTest extends TestCase
      */
     public function testEmitsErrorForClientWithTlsVersionMismatch()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem',
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_1_SERVER|STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false,
             'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_0_CLIENT
         ));
         $promise = $connector->connect($server->getAddress());
 
         $this->setExpectedException('RuntimeException', 'handshake');
-        Block\await($promise, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($promise, null, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $server->close();
+
+            throw $e;
+        }
     }
 
     public function testServerEmitsConnectionForNewConnectionWithEncryptedCertificate()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'swordfish'
         ));
@@ -499,40 +531,46 @@ class FunctionalSecureServerTest extends TestCase
             $server->on('error', $reject);
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $connector->connect($server->getAddress());
 
-        $connection = Block\await($peer, $loop, self::TIMEOUT);
+        $connection = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
+
+        $server->close();
+        $connection->close();
     }
 
     public function testClientRejectsWithErrorForServerWithInvalidCertificate()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => 'invalid.pem'
         ));
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         $this->setExpectedException('RuntimeException', 'handshake');
-        Block\await($promise, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($promise, null, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $server->close();
+
+            throw $e;
+        }
     }
 
     public function testServerEmitsErrorForClientWithInvalidCertificate()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => 'invalid.pem'
         ));
 
@@ -543,13 +581,20 @@ class FunctionalSecureServerTest extends TestCase
             $server->on('error', $reject);
         });
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $connector->connect($server->getAddress());
 
         $this->setExpectedException('RuntimeException', 'handshake');
-        Block\await($peer, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($peer, null, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $server->close();
+
+            throw $e;
+        }
     }
 
     public function testEmitsErrorForServerWithEncryptedCertificateMissingPassphrase()
@@ -558,22 +603,27 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         $this->setExpectedException('RuntimeException', 'handshake');
-        Block\await($promise, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($promise, null, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $server->close();
+
+            throw $e;
+        }
     }
 
     public function testEmitsErrorForServerWithEncryptedCertificateWithInvalidPassphrase()
@@ -582,43 +632,48 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost_swordfish.pem',
             'passphrase' => 'nope'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableOnce());
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
 
         $this->setExpectedException('RuntimeException', 'handshake');
-        Block\await($promise, $loop, self::TIMEOUT);
+
+        try {
+            Block\await($promise, null, self::TIMEOUT);
+        } catch (\Exception $e) {
+            $server->close();
+
+            throw $e;
+        }
     }
 
     public function testEmitsErrorForConnectionWithPeerVerification()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => true
         ));
         $promise = $connector->connect($server->getAddress());
         $promise->then(null, $this->expectCallableOnce());
 
-        Block\await($errorEvent, $loop, self::TIMEOUT);
+        Block\await($errorEvent, null, self::TIMEOUT);
+
+        $server->close();
     }
 
     public function testEmitsErrorIfConnectionIsCancelled()
@@ -627,44 +682,42 @@ class FunctionalSecureServerTest extends TestCase
             $this->markTestSkipped('Linux only (OS is ' . PHP_OS . ')');
         }
 
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new SecureConnector(new TcpConnector($loop), $loop, array(
+        $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
         $promise = $connector->connect($server->getAddress());
         $promise->cancel();
         $promise->then(null, $this->expectCallableOnce());
 
-        Block\await($errorEvent, $loop, self::TIMEOUT);
+        Block\await($errorEvent, null, self::TIMEOUT);
+
+        $server->close();
     }
 
     public function testEmitsErrorIfConnectionIsClosedBeforeHandshake()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then(function (ConnectionInterface $stream) {
             $stream->close();
         });
 
-        $error = Block\await($errorEvent, $loop, self::TIMEOUT);
+        $error = Block\await($errorEvent, null, self::TIMEOUT);
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)
         $this->assertInstanceOf('RuntimeException', $error);
@@ -672,27 +725,27 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)', $error->getMessage());
         $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 104, $error->getCode());
         $this->assertNull($error->getPrevious());
+
+        $server->close();
     }
 
     public function testEmitsErrorIfConnectionIsClosedWithIncompleteHandshake()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then(function (ConnectionInterface $stream) {
             $stream->end("\x1e");
         });
 
-        $error = Block\await($errorEvent, $loop, self::TIMEOUT);
+        $error = Block\await($errorEvent, null, self::TIMEOUT);
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)
         $this->assertInstanceOf('RuntimeException', $error);
@@ -700,45 +753,48 @@ class FunctionalSecureServerTest extends TestCase
         $this->assertStringEndsWith('failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)', $error->getMessage());
         $this->assertEquals(defined('SOCKET_ECONNRESET') ? SOCKET_ECONNRESET : 104, $error->getCode());
         $this->assertNull($error->getPrevious());
+
+        $server->close();
     }
 
     public function testEmitsNothingIfPlaintextConnectionIsIdle()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $server->on('error', $this->expectCallableNever());
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
-        $connection = Block\await($promise, $loop, self::TIMEOUT);
+        $connection = Block\await($promise, null, self::TIMEOUT);
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
+
+        $server->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testEmitsErrorIfConnectionIsHttpInsteadOfSecureHandshake()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then(function (ConnectionInterface $stream) {
             $stream->write("GET / HTTP/1.0\r\n\r\n");
         });
 
-        $error = Block\await($errorEvent, $loop, self::TIMEOUT);
+        $error = Block\await($errorEvent, null, self::TIMEOUT);
 
         $this->assertInstanceOf('RuntimeException', $error);
 
@@ -747,27 +803,27 @@ class FunctionalSecureServerTest extends TestCase
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:func(143):reason(267)
         // Unable to complete TLS handshake: Failed setting RSA key
+
+        $server->close();
     }
 
     public function testEmitsErrorIfConnectionIsUnknownProtocolInsteadOfSecureHandshake()
     {
-        $loop = Factory::create();
-
-        $server = new TcpServer(0, $loop);
-        $server = new SecureServer($server, $loop, array(
+        $server = new TcpServer(0);
+        $server = new SecureServer($server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
         ));
         $server->on('connection', $this->expectCallableNever());
         $errorEvent = $this->createPromiseForServerError($server);
 
-        $connector = new TcpConnector($loop);
+        $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
         $promise->then(function (ConnectionInterface $stream) {
             $stream->write("Hello world!\n");
         });
 
-        $error = Block\await($errorEvent, $loop, self::TIMEOUT);
+        $error = Block\await($errorEvent, null, self::TIMEOUT);
 
         $this->assertInstanceOf('RuntimeException', $error);
 
@@ -776,6 +832,8 @@ class FunctionalSecureServerTest extends TestCase
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:ssl3_get_record:wrong version number
         // Unable to complete TLS handshake: SSL operation failed with code 1. OpenSSL Error messages: error:1408F10B:SSL routines:func(143):reason(267)
         // Unable to complete TLS handshake: Failed setting RSA key
+
+        $server->close();
     }
 
     private function createPromiseForServerError(ServerInterface $server)

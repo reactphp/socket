@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Factory;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SocketServer;
@@ -32,9 +31,7 @@ class SocketServerTest extends TestCase
 
     public function testCreateServerWithZeroPortAssignsRandomPort()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
         $this->assertNotEquals(0, $socket->getAddress());
         $socket->close();
     }
@@ -71,18 +68,18 @@ class SocketServerTest extends TestCase
 
     public function testConstructorCreatesExpectedTcpServer()
     {
-        $loop = Factory::create();
+        $socket = new SocketServer('127.0.0.1:0', array());
 
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $connector = new TcpConnector();
+        $promise = $connector->connect($socket->getAddress());
+        $promise->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connector = new TcpConnector($loop);
-        $connector->connect($socket->getAddress())
-            ->then($this->expectCallableOnce(), $this->expectCallableNever());
+        $connection = Block\await($connector->connect($socket->getAddress()), null, self::TIMEOUT);
 
-        $connection = Block\await($connector->connect($socket->getAddress()), $loop, self::TIMEOUT);
-
-        $connection->close();
         $socket->close();
+        $promise->then(function (ConnectionInterface $connection) {
+            $connection->close();
+        });
     }
 
     public function testConstructorCreatesExpectedUnixServer()
@@ -94,17 +91,14 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Factory::create();
+        $socket = new SocketServer($this->getRandomSocketUri(), array());
 
-        $socket = new SocketServer($this->getRandomSocketUri(), array(), $loop);
-
-        $connector = new UnixConnector($loop);
+        $connector = new UnixConnector();
         $connector->connect($socket->getAddress())
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = Block\await($connector->connect($socket->getAddress()), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect($socket->getAddress()), null, self::TIMEOUT);
 
-        $connection->close();
         $socket->close();
     }
 
@@ -114,10 +108,8 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Factory::create();
-
         try {
-            new SocketServer('unix://' . __FILE__, array(), $loop);
+            new SocketServer('unix://' . __FILE__, array());
             $this->fail();
         } catch (\RuntimeException $e) {
             if ($e->getCode() === 0) {
@@ -147,9 +139,7 @@ class SocketServerTest extends TestCase
 
     public function testEmitsErrorWhenUnderlyingTcpServerEmitsError()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
 
         $ref = new \ReflectionProperty($socket, 'server');
         $ref->setAccessible(true);
@@ -164,9 +154,7 @@ class SocketServerTest extends TestCase
 
     public function testEmitsConnectionForNewConnection()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
         $socket->on('connection', $this->expectCallableOnce());
 
         $peer = new Promise(function ($resolve, $reject) use ($socket) {
@@ -175,27 +163,25 @@ class SocketServerTest extends TestCase
 
         $client = stream_socket_client($socket->getAddress());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
+
+        $socket->close();
     }
 
     public function testDoesNotEmitConnectionForNewConnectionToPausedServer()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
         $socket->pause();
         $socket->on('connection', $this->expectCallableNever());
 
         $client = stream_socket_client($socket->getAddress());
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1);
     }
 
     public function testDoesEmitConnectionForNewConnectionToResumedServer()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
         $socket->pause();
         $socket->on('connection', $this->expectCallableOnce());
 
@@ -207,14 +193,14 @@ class SocketServerTest extends TestCase
 
         $socket->resume();
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
+
+        $socket->close();
     }
 
     public function testDoesNotAllowConnectionToClosedServer()
     {
-        $loop = Factory::create();
-
-        $socket = new SocketServer('127.0.0.1:0', array(), $loop);
+        $socket = new SocketServer('127.0.0.1:0', array());
         $socket->on('connection', $this->expectCallableNever());
         $address = $socket->getAddress();
         $socket->close();
@@ -231,13 +217,11 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
         }
 
-        $loop = Factory::create();
-
         $socket = new SocketServer('127.0.0.1:0', array(
             'tcp' => array(
                 'backlog' => 4
             )
-        ), $loop);
+        ));
 
         $peer = new Promise(function ($resolve, $reject) use ($socket) {
             $socket->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -248,9 +232,11 @@ class SocketServerTest extends TestCase
 
         $client = stream_socket_client($socket->getAddress());
 
-        $all = Block\await($peer, $loop, self::TIMEOUT);
+        $all = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
+
+        $socket->close();
     }
 
     public function testDoesNotEmitSecureConnectionForNewPlaintextConnectionThatIsIdle()
@@ -259,18 +245,18 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Factory::create();
-
         $socket = new SocketServer('tls://127.0.0.1:0', array(
             'tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
             )
-        ), $loop);
+        ));
         $socket->on('connection', $this->expectCallableNever());
 
         $client = stream_socket_client(str_replace('tls://', '', $socket->getAddress()));
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1);
+
+        $socket->close();
     }
 
     private function getRandomSocketUri()

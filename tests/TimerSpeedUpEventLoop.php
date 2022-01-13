@@ -4,7 +4,6 @@ namespace React\Tests\Socket;
 
 use React\Dns\Model\Message;
 use React\Dns\Resolver\ResolverInterface;
-use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 use React\Promise;
@@ -17,12 +16,12 @@ final class TimerSpeedUpEventLoop implements LoopInterface
 {
     /** @var LoopInterface */
     private $loop;
-    
+
     public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
     }
-    
+
     public function addReadStream($stream, $listener)
     {
         return $this->loop->addReadStream($stream, $listener);

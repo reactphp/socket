@@ -3,8 +3,8 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Loop;
 use React\Promise\Promise;
+use React\Socket\ConnectionInterface;
 use React\Socket\FdServer;
 
 class FdServerTest extends TestCase
@@ -302,16 +302,21 @@ class FdServerTest extends TestCase
 
         $client = stream_socket_client('tcp://' . stream_socket_get_name($socket, false));
 
-        $server = new FdServer($fd, Loop::get());
+        $server = new FdServer($fd);
         $promise = new Promise(function ($resolve) use ($server) {
             $server->on('connection', $resolve);
         });
 
-        $connection = Block\await($promise, Loop::get(), 1.0);
+        $connection = Block\await($promise, null, 1.0);
 
+        /**
+         * @var ConnectionInterface $connection
+         */
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         fclose($client);
+        $connection->close();
+        $server->close();
     }
 
     public function testEmitsErrorWhenAcceptListenerFails()
