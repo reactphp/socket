@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\LimitingServer;
@@ -143,8 +142,6 @@ class LimitingServerTest extends TestCase
 
     public function testSocketDisconnectionWillRemoveFromList()
     {
-        $loop = Loop::get();
-
         $tcp = new TcpServer(0);
 
         $socket = stream_socket_client($tcp->getAddress());
@@ -160,7 +157,7 @@ class LimitingServerTest extends TestCase
             });
         });
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $this->assertEquals(array(), $server->getConnections());
 
@@ -169,8 +166,6 @@ class LimitingServerTest extends TestCase
 
     public function testPausingServerWillEmitOnlyOneButAcceptTwoConnectionsDueToOperatingSystem()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $server = new LimitingServer($server, 1, true);
         $server->on('connection', $this->expectCallableOnce());
@@ -183,7 +178,7 @@ class LimitingServerTest extends TestCase
         $first = stream_socket_client($server->getAddress());
         $second = stream_socket_client($server->getAddress());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         fclose($first);
         fclose($second);
@@ -193,8 +188,6 @@ class LimitingServerTest extends TestCase
 
     public function testPausingServerWillEmitTwoConnectionsFromBacklog()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $server = new LimitingServer($server, 1, true);
         $server->on('error', $this->expectCallableNever());
@@ -215,7 +208,7 @@ class LimitingServerTest extends TestCase
         $second = stream_socket_client($server->getAddress());
         fclose($second);
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
     }

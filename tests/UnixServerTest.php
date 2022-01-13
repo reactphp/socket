@@ -9,7 +9,6 @@ use React\Stream\DuplexResourceStream;
 
 class UnixServerTest extends TestCase
 {
-    private $loop;
     private $server;
     private $uds;
 
@@ -24,7 +23,6 @@ class UnixServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $this->loop = Loop::get();
         $this->uds = $this->getRandomSocketUri();
         $this->server = new UnixServer($this->uds);
     }
@@ -362,6 +360,6 @@ class UnixServerTest extends TestCase
 
     private function tick()
     {
-        Block\sleep(0, $this->loop);
+        Block\sleep(0);
     }
 }

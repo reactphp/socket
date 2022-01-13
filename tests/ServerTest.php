@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\Server;
@@ -48,15 +47,13 @@ class ServerTest extends TestCase
 
     public function testConstructorCreatesExpectedTcpServer()
     {
-        $loop = Loop::get();
-
         $server = new Server(0);
 
         $connector = new TcpConnector();
         $promise = $connector->connect($server->getAddress());
         $promise->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = Block\await($connector->connect($server->getAddress()), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect($server->getAddress()), null, self::TIMEOUT);
 
         $server->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -73,15 +70,13 @@ class ServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Loop::get();
-
         $server = new Server($this->getRandomSocketUri());
 
         $connector = new UnixConnector();
         $connector->connect($server->getAddress())
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = Block\await($connector->connect($server->getAddress()), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect($server->getAddress()), null, self::TIMEOUT);
 
         $connection->close();
         $server->close();
@@ -124,8 +119,6 @@ class ServerTest extends TestCase
 
     public function testEmitsConnectionForNewConnection()
     {
-        $loop = Loop::get();
-
         $server = new Server(0);
         $server->on('connection', $this->expectCallableOnce());
 
@@ -135,28 +128,24 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client($server->getAddress());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
     }
 
     public function testDoesNotEmitConnectionForNewConnectionToPausedServer()
     {
-        $loop = Loop::get();
-
         $server = new Server(0);
         $server->pause();
         $server->on('connection', $this->expectCallableNever());
 
         $client = stream_socket_client($server->getAddress());
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1, null);
     }
 
     public function testDoesEmitConnectionForNewConnectionToResumedServer()
     {
-        $loop = Loop::get();
-
         $server = new Server(0);
         $server->pause();
         $server->on('connection', $this->expectCallableOnce());
@@ -169,7 +158,7 @@ class ServerTest extends TestCase
 
         $server->resume();
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
     }
@@ -193,8 +182,6 @@ class ServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
         }
 
-        $loop = Loop::get();
-
         $server = new Server(0, null, array(
             'backlog' => 4
         ));
@@ -208,7 +195,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client($server->getAddress());
 
-        $all = Block\await($peer, $loop, self::TIMEOUT);
+        $all = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
 
@@ -221,8 +208,6 @@ class ServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
-
         $server = new Server('tls://127.0.0.1:0', null, array(
             'tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -232,7 +217,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client(str_replace('tls://', '', $server->getAddress()));
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1, null);
 
         $server->close();
     }

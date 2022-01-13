@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use React\EventLoop\Loop;
 use React\Socket\TcpServer;
 use React\Socket\SecureServer;
 use React\Socket\TcpConnector;
@@ -17,7 +16,6 @@ class SecureIntegrationTest extends TestCase
 {
     const TIMEOUT = 2;
 
-    private $loop;
     private $server;
     private $connector;
     private $address;
@@ -31,7 +29,6 @@ class SecureIntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $this->loop = Loop::get();
         $this->server = new TcpServer(0);
         $this->server = new SecureServer($this->server, null, array(
             'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -53,7 +50,7 @@ class SecureIntegrationTest extends TestCase
 
     public function testConnectToServer()
     {
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect($this->address), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         $client->close();
@@ -68,7 +65,7 @@ class SecureIntegrationTest extends TestCase
 
         $promiseClient = $this->connector->connect($this->address);
 
-        list($_, $client) = Block\awaitAll(array($promiseServer, $promiseClient), $this->loop, self::TIMEOUT);
+        list($_, $client) = Block\awaitAll(array($promiseServer, $promiseClient), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         $client->close();
@@ -84,13 +81,13 @@ class SecureIntegrationTest extends TestCase
             });
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect($this->address), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         $client->write('hello');
 
         // await server to report one "data" event
-        $data = Block\await($received->promise(), $this->loop, self::TIMEOUT);
+        $data = Block\await($received->promise(), null, self::TIMEOUT);
 
         $client->close();
 
@@ -125,14 +122,14 @@ class SecureIntegrationTest extends TestCase
             });
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect($this->address), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         $data = str_repeat('a', 200000);
         $client->end($data);
 
         // await server to report connection "close" event
-        $received = Block\await($disconnected->promise(), $this->loop, self::TIMEOUT);
+        $received = Block\await($disconnected->promise(), null, self::TIMEOUT);
 
         $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
@@ -160,7 +157,7 @@ class SecureIntegrationTest extends TestCase
             $connection->write($data);
         });
 
-        $received = Block\await($promise, $this->loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(strlen($data), strlen($received));
         $this->assertEquals($data, $received);
@@ -176,12 +173,12 @@ class SecureIntegrationTest extends TestCase
             $peer->write('hello');
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect($this->address), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         // await client to report one "data" event
         $receive = $this->createPromiseForEvent($client, 'data', $this->expectCallableOnceWith('hello'));
-        Block\await($receive, $this->loop, self::TIMEOUT);
+        Block\await($receive, null, self::TIMEOUT);
 
         $client->close();
     }
@@ -193,11 +190,11 @@ class SecureIntegrationTest extends TestCase
             $peer->end($data);
         });
 
-        $client = Block\await($this->connector->connect($this->address), $this->loop, self::TIMEOUT);
+        $client = Block\await($this->connector->connect($this->address), null, self::TIMEOUT);
         /* @var $client ConnectionInterface */
 
         // await data from client until it closes
-        $received = $this->buffer($client, $this->loop, self::TIMEOUT);
+        $received = $this->buffer($client, self::TIMEOUT);
 
         $this->assertEquals($data, $received);
     }
@@ -224,7 +221,7 @@ class SecureIntegrationTest extends TestCase
             }, $reject);
         });
 
-        $received = Block\await($promise, $this->loop, self::TIMEOUT);
+        $received = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertEquals(strlen($data), $received);
 

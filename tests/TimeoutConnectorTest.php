@@ -30,8 +30,6 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Loop::get();
-
         $timeout = new TimeoutConnector($connector, 0.01);
 
         $this->setExpectedException(
@@ -39,7 +37,7 @@ class TimeoutConnectorTest extends TestCase
             'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
             \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
         );
-        Block\await($timeout->connect('google.com:80'), $loop);
+        Block\await($timeout->connect('google.com:80'));
     }
 
     public function testRejectsWithOriginalReasonWhenConnectorRejects()
@@ -49,8 +47,6 @@ class TimeoutConnectorTest extends TestCase
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
 
-        $loop = Loop::get();
-
         $timeout = new TimeoutConnector($connector, 5.0);
 
         $this->setExpectedException(
@@ -58,7 +54,7 @@ class TimeoutConnectorTest extends TestCase
             'Failed',
             42
         );
-        Block\await($timeout->connect('google.com:80'), $loop);
+        Block\await($timeout->connect('google.com:80'));
     }
 
     public function testResolvesWhenConnectorResolves()

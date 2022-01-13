@@ -12,14 +12,8 @@ class TcpServerTest extends TestCase
 {
     const TIMEOUT = 5.0;
 
-    private $loop;
     private $server;
     private $port;
-
-    private function createLoop()
-    {
-        return Loop::get();
-    }
 
     /**
      * @before
@@ -28,7 +22,6 @@ class TcpServerTest extends TestCase
      */
     public function setUpServer()
     {
-        $this->loop = $this->createLoop();
         $this->server = new TcpServer(0);
 
         $this->port = parse_url($this->server->getAddress(), PHP_URL_PORT);
@@ -60,7 +53,7 @@ class TcpServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connection = Block\await($promise, $this->loop, self::TIMEOUT);
+        $connection = Block\await($promise, null, self::TIMEOUT);
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
     }
@@ -373,6 +366,6 @@ class TcpServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        Block\sleep(0, $this->loop);
+        Block\sleep(0);
     }
 }

@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\SocketServer;
@@ -69,15 +68,13 @@ class SocketServerTest extends TestCase
 
     public function testConstructorCreatesExpectedTcpServer()
     {
-        $loop = Loop::get();
-
         $socket = new SocketServer('127.0.0.1:0', array());
 
         $connector = new TcpConnector();
         $promise = $connector->connect($socket->getAddress());
         $promise->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = Block\await($connector->connect($socket->getAddress()), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect($socket->getAddress()), null, self::TIMEOUT);
 
         $socket->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -94,15 +91,13 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Unix domain sockets (UDS) not supported on your platform (Windows?)');
         }
 
-        $loop = Loop::get();
-
         $socket = new SocketServer($this->getRandomSocketUri(), array());
 
         $connector = new UnixConnector();
         $connector->connect($socket->getAddress())
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = Block\await($connector->connect($socket->getAddress()), $loop, self::TIMEOUT);
+        $connection = Block\await($connector->connect($socket->getAddress()), null, self::TIMEOUT);
 
         $socket->close();
     }
@@ -159,8 +154,6 @@ class SocketServerTest extends TestCase
 
     public function testEmitsConnectionForNewConnection()
     {
-        $loop = Loop::get();
-
         $socket = new SocketServer('127.0.0.1:0', array());
         $socket->on('connection', $this->expectCallableOnce());
 
@@ -170,28 +163,24 @@ class SocketServerTest extends TestCase
 
         $client = stream_socket_client($socket->getAddress());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $socket->close();
     }
 
     public function testDoesNotEmitConnectionForNewConnectionToPausedServer()
     {
-        $loop = Loop::get();
-
         $socket = new SocketServer('127.0.0.1:0', array());
         $socket->pause();
         $socket->on('connection', $this->expectCallableNever());
 
         $client = stream_socket_client($socket->getAddress());
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1);
     }
 
     public function testDoesEmitConnectionForNewConnectionToResumedServer()
     {
-        $loop = Loop::get();
-
         $socket = new SocketServer('127.0.0.1:0', array());
         $socket->pause();
         $socket->on('connection', $this->expectCallableOnce());
@@ -204,7 +193,7 @@ class SocketServerTest extends TestCase
 
         $socket->resume();
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $socket->close();
     }
@@ -228,8 +217,6 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
         }
 
-        $loop = Loop::get();
-
         $socket = new SocketServer('127.0.0.1:0', array(
             'tcp' => array(
                 'backlog' => 4
@@ -245,7 +232,7 @@ class SocketServerTest extends TestCase
 
         $client = stream_socket_client($socket->getAddress());
 
-        $all = Block\await($peer, $loop, self::TIMEOUT);
+        $all = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
 
@@ -258,8 +245,6 @@ class SocketServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
-
         $socket = new SocketServer('tls://127.0.0.1:0', array(
             'tls' => array(
                 'local_cert' => __DIR__ . '/../examples/localhost.pem'
@@ -269,7 +254,7 @@ class SocketServerTest extends TestCase
 
         $client = stream_socket_client(str_replace('tls://', '', $socket->getAddress()));
 
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1);
 
         $socket->close();
     }

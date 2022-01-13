@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use Clue\React\Block;
-use React\EventLoop\Loop;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\TcpConnector;
@@ -15,8 +14,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionForNewConnection()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
 
@@ -29,7 +26,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
 
@@ -40,8 +37,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsNoConnectionForNewConnectionWhenPaused()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableNever());
         $server->pause();
@@ -51,13 +46,11 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        Block\await($promise, $loop, self::TIMEOUT);
+        Block\await($promise, null, self::TIMEOUT);
     }
 
     public function testConnectionForNewConnectionWhenResumedAfterPause()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
         $server->pause();
@@ -72,7 +65,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -82,8 +75,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithRemoteIp()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -96,7 +87,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $peer = Block\await($peer, $loop, self::TIMEOUT);
+        $peer = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $peer);
 
@@ -108,8 +99,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithLocalIp()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -124,7 +113,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $local = Block\await($peer, $loop, self::TIMEOUT);
+        $local = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $local);
         $this->assertEquals($server->getAddress(), $local);
@@ -141,8 +130,6 @@ class FunctionalTcpServerTest extends TestCase
             $this->markTestSkipped('Skipping on Windows due to default firewall rules');
         }
 
-        $loop = Loop::get();
-
         $server = new TcpServer('0.0.0.0:0');
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -155,7 +142,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $local = Block\await($peer, $loop, self::TIMEOUT);
+        $local = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $local);
 
@@ -167,8 +154,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithRemoteIpAfterConnectionIsClosedByPeer()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -183,7 +168,7 @@ class FunctionalTcpServerTest extends TestCase
             $connection->end();
         });
 
-        $peer = Block\await($peer, $loop, self::TIMEOUT);
+        $peer = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('127.0.0.1:', $peer);
 
@@ -192,8 +177,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithRemoteNullAddressAfterConnectionIsClosedByServer()
     {
-        $loop = Loop::get();
-
         $server = new TcpServer(0);
         $peer = new Promise(function ($resolve, $reject) use ($server) {
             $server->on('connection', function (ConnectionInterface $connection) use ($resolve) {
@@ -207,7 +190,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $peer = Block\await($peer, $loop, self::TIMEOUT);
+        $peer = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertNull($peer);
 
@@ -219,8 +202,6 @@ class FunctionalTcpServerTest extends TestCase
         if (PHP_OS !== 'Linux') {
             $this->markTestSkipped('Linux only (OS is ' . PHP_OS . ')');
         }
-
-        $loop = Loop::get();
 
         $server = new TcpServer(0);
         $server->on('connection', $this->expectCallableOnce());
@@ -235,15 +216,13 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then(null, $this->expectCallableOnce());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
     }
 
     public function testEmitsConnectionForNewIpv6Connection()
     {
-        $loop = Loop::get();
-
         try {
             $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
@@ -261,7 +240,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        Block\await($peer, $loop, self::TIMEOUT);
+        Block\await($peer, null, self::TIMEOUT);
 
         $server->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -271,8 +250,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithRemoteIpv6()
     {
-        $loop = Loop::get();
-
         try {
             $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
@@ -290,7 +267,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $peer = Block\await($peer, $loop, self::TIMEOUT);
+        $peer = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('[::1]:', $peer);
 
@@ -302,8 +279,6 @@ class FunctionalTcpServerTest extends TestCase
 
     public function testEmitsConnectionWithLocalIpv6()
     {
-        $loop = Loop::get();
-
         try {
             $server = new TcpServer('[::1]:0');
         } catch (\RuntimeException $e) {
@@ -321,7 +296,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $local = Block\await($peer, $loop, self::TIMEOUT);
+        $local = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertContainsString('[::1]:', $local);
         $this->assertEquals($server->getAddress(), $local);
@@ -371,8 +346,6 @@ class FunctionalTcpServerTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM < 3.13');
         }
 
-        $loop = Loop::get();
-
         $server = new TcpServer(0, null, array(
             'backlog' => 4
         ));
@@ -388,7 +361,7 @@ class FunctionalTcpServerTest extends TestCase
 
         $promise->then($this->expectCallableOnce());
 
-        $all = Block\await($peer, $loop, self::TIMEOUT);
+        $all = Block\await($peer, null, self::TIMEOUT);
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
 

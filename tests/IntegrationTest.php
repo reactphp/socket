@@ -4,7 +4,6 @@ namespace React\Tests\Socket;
 
 use Clue\React\Block;
 use React\Dns\Resolver\Factory as ResolverFactory;
-use React\EventLoop\Loop;
 use React\Socket\Connector;
 use React\Socket\DnsConnector;
 use React\Socket\SecureConnector;
@@ -18,17 +17,16 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingStuffFromGoogleShouldWork()
     {
-        $loop = Loop::get();
         $connector = new Connector(array());
 
-        $conn = Block\await($connector->connect('google.com:80'), $loop);
+        $conn = Block\await($connector->connect('google.com:80'));
 
         $this->assertContainsString(':80', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:80', $conn->getRemoteAddress());
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = $this->buffer($conn, $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, self::TIMEOUT);
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -40,14 +38,13 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
         $secureConnector = new Connector(array());
 
-        $conn = Block\await($secureConnector->connect('tls://google.com:443'), $loop);
+        $conn = Block\await($secureConnector->connect('tls://google.com:443'));
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = $this->buffer($conn, $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, self::TIMEOUT);
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -59,8 +56,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
-
         $factory = new ResolverFactory();
         $dns = $factory->create('8.8.8.8');
 
@@ -71,11 +66,11 @@ class IntegrationTest extends TestCase
             $dns
         );
 
-        $conn = Block\await($connector->connect('google.com:443'), $loop);
+        $conn = Block\await($connector->connect('google.com:443'));
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = $this->buffer($conn, $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, self::TIMEOUT);
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -83,17 +78,16 @@ class IntegrationTest extends TestCase
     /** @test */
     public function gettingPlaintextStuffFromEncryptedGoogleShouldNotWork()
     {
-        $loop = Loop::get();
         $connector = new Connector(array());
 
-        $conn = Block\await($connector->connect('google.com:443'), $loop);
+        $conn = Block\await($connector->connect('google.com:443'));
 
         $this->assertContainsString(':443', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:443', $conn->getRemoteAddress());
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
-        $response = $this->buffer($conn, $loop, self::TIMEOUT);
+        $response = $this->buffer($conn, self::TIMEOUT);
 
         $this->assertDoesNotMatchRegExp('#^HTTP/1\.0#', $response);
     }
@@ -104,17 +98,15 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Skipped on macOS due to a bug in reactphp/dns (solved in reactphp/dns#171)');
         }
 
-        $loop = Loop::get();
-
         $factory = new ResolverFactory();
         $dns = $factory->create('255.255.255.255');
 
         $connector = new Connector(array(
             'dns' => $dns
-        ), $loop);
+        ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
+        Block\await($connector->connect('google.com:80'), null, self::TIMEOUT);
     }
 
     public function testCancellingPendingConnectionWithoutTimeoutShouldNotCreateAnyGarbageReferences()
@@ -157,7 +149,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
@@ -172,11 +163,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect connection refused error
-        Block\sleep(0.01, $loop);
+        Block\sleep(0.01);
         if ($wait) {
-            Block\sleep(0.2, $loop);
+            Block\sleep(0.2);
             if ($wait) {
-                Block\sleep(2.0, $loop);
+                Block\sleep(2.0);
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -193,7 +184,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array('timeout' => 0.001));
 
         gc_collect_cycles();
@@ -208,9 +198,9 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a connection timeout error
-        Block\sleep(0.01, $loop);
+        Block\sleep(0.01);
         if ($wait) {
-            Block\sleep(0.2, $loop);
+            Block\sleep(0.2);
             if ($wait) {
                 $this->fail('Connection attempt did not fail');
             }
@@ -226,7 +216,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array('timeout' => 0.000001));
 
         gc_collect_cycles();
@@ -241,9 +230,9 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a connection timeout error
-        Block\sleep(0.01, $loop);
+        Block\sleep(0.01);
         if ($wait) {
-            Block\sleep(0.2, $loop);
+            Block\sleep(0.2);
             if ($wait) {
                 $this->fail('Connection attempt did not fail');
             }
@@ -259,7 +248,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
@@ -274,11 +262,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a DNS error
-        Block\sleep(0.01, $loop);
+        Block\sleep(0.01);
         if ($wait) {
-            Block\sleep(0.2, $loop);
+            Block\sleep(0.2);
             if ($wait) {
-                Block\sleep(2.0, $loop);
+                Block\sleep(2.0);
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -298,7 +286,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => true
@@ -317,11 +304,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a TLS error
-        Block\sleep(0.1, $loop);
+        Block\sleep(0.1);
         if ($wait) {
-            Block\sleep(0.4, $loop);
+            Block\sleep(0.4);
             if ($wait) {
-                Block\sleep(self::TIMEOUT - 0.5, $loop);
+                Block\sleep(self::TIMEOUT - 0.5);
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -338,7 +325,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        $loop = Loop::get();
         $connector = new Connector(array('timeout' => false));
 
         gc_collect_cycles();
@@ -347,7 +333,7 @@ class IntegrationTest extends TestCase
                 $conn->close();
             }
         );
-        Block\await($promise, $loop, self::TIMEOUT);
+        Block\await($promise, null, self::TIMEOUT);
         unset($promise);
 
         $this->assertEquals(0, gc_collect_cycles());
@@ -355,14 +341,12 @@ class IntegrationTest extends TestCase
 
     public function testConnectingFailsIfTimeoutIsTooSmall()
     {
-        $loop = Loop::get();
-
         $connector = new Connector(array(
             'timeout' => 0.001
         ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('google.com:80'), $loop, self::TIMEOUT);
+        Block\await($connector->connect('google.com:80'), null, self::TIMEOUT);
     }
 
     public function testSelfSignedRejectsIfVerificationIsEnabled()
@@ -371,8 +355,6 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
-
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => true
@@ -380,7 +362,7 @@ class IntegrationTest extends TestCase
         ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
+        Block\await($connector->connect('tls://self-signed.badssl.com:443'), null, self::TIMEOUT);
     }
 
     public function testSelfSignedResolvesIfVerificationIsDisabled()
@@ -389,15 +371,13 @@ class IntegrationTest extends TestCase
             $this->markTestSkipped('Not supported on legacy HHVM');
         }
 
-        $loop = Loop::get();
-
         $connector = new Connector(array(
             'tls' => array(
                 'verify_peer' => false
             )
         ));
 
-        $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), $loop, self::TIMEOUT);
+        $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), null, self::TIMEOUT);
         $conn->close();
 
         // if we reach this, then everything is good

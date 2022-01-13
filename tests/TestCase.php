@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use React\Stream\ReadableStreamInterface;
-use React\EventLoop\LoopInterface;
 use Clue\React\Block;
 use React\Promise\Promise;
 use PHPUnit\Framework\TestCase as BaseTestCase;
@@ -71,7 +70,7 @@ class TestCase extends BaseTestCase
         return $this->getMockBuilder('React\Tests\Socket\Stub\CallableStub')->getMock();
     }
 
-    protected function buffer(ReadableStreamInterface $stream, LoopInterface $loop, $timeout)
+    protected function buffer(ReadableStreamInterface $stream, $timeout)
     {
         if (!$stream->isReadable()) {
             return '';
@@ -94,7 +93,7 @@ class TestCase extends BaseTestCase
                 $stream->close();
                 throw new \RuntimeException();
             }
-        ), $loop, $timeout);
+        ), null, $timeout);
     }
 
     public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
