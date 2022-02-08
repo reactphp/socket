@@ -102,14 +102,18 @@ class SecureConnectorTest extends TestCase
         )));
 
         $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
 
-        $this->setExpectedException(
-            'InvalidArgumentException',
-            'Invalid',
-            42
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \InvalidArgumentException);
+        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertEquals('Invalid', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testCancelDuringTcpConnectionCancelsTcpConnection()
@@ -154,8 +158,17 @@ class SecureConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.com:80');
 
-        $this->setExpectedException('UnexpectedValueException', 'Base connector does not use internal Connection class exposing stream resource');
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \UnexpectedValueException);
+        $this->assertInstanceOf('UnexpectedValueException', $exception);
+        $this->assertEquals('Base connector does not use internal Connection class exposing stream resource', $exception->getMessage());
+        $this->assertEquals(0, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testStreamEncryptionWillBeEnabledAfterConnecting()
@@ -169,10 +182,9 @@ class SecureConnectorTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($this->connector, $encryption);
 
-        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
 
-        $promise = $this->connector->connect('example.com:80');
+        $this->connector->connect('example.com:80');
     }
 
     public function testConnectionWillBeRejectedIfStreamEncryptionFailsAndClosesConnection()
@@ -187,18 +199,21 @@ class SecureConnectorTest extends TestCase
         $ref->setAccessible(true);
         $ref->setValue($this->connector, $encryption);
 
-        $pending = new Promise\Promise(function () { }, function () { throw new \RuntimeException('Connection cancelled'); });
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
 
         $promise = $this->connector->connect('example.com:80');
 
-        try {
-            $this->throwRejection($promise);
-        } catch (\RuntimeException $e) {
-            $this->assertEquals('Connection to tls://example.com:80 failed during TLS handshake: TLS error', $e->getMessage());
-            $this->assertEquals(123, $e->getCode());
-            $this->assertNull($e->getPrevious());
-        }
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tls://example.com:80 failed during TLS handshake: TLS error', $exception->getMessage());
+        $this->assertEquals(123, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testCancelDuringStreamEncryptionCancelsEncryptionAndClosesConnection()
@@ -221,12 +236,17 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection to tls://example.com:80 cancelled during TLS handshake (ECONNABORTED)',
-            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tls://example.com:80 cancelled during TLS handshake (ECONNABORTED)', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testRejectionDuringConnectionShouldNotCreateAnyGarbageReferences()
@@ -275,15 +295,5 @@ class SecureConnectorTest extends TestCase
         unset($promise, $tcp, $tls);
 
         $this->assertEquals(0, gc_collect_cycles());
-    }
-
-    private function throwRejection($promise)
-    {
-        $ex = null;
-        $promise->then(null, function ($e) use (&$ex) {
-            $ex = $e;
-        });
-
-        throw $ex;
     }
 }
