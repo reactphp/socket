@@ -80,14 +80,18 @@ class SecureConnectorTest extends TestCase
         )));
 
         $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection to tls://example.com:80 failed: Connection refused (ECONNREFUSED)',
-            defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tls://example.com:80 failed: Connection refused (ECONNREFUSED)', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectWillRejectWithOriginalMessageWhenUnderlyingConnectorRejectsWithInvalidArgumentException()
@@ -128,12 +132,17 @@ class SecureConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection to tls://example.com:80 cancelled (ECONNABORTED)',
-            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tls://example.com:80 cancelled (ECONNABORTED)', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectionWillBeClosedAndRejectedIfConnectionIsNoStream()

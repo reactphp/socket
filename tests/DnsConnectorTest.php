@@ -118,10 +118,18 @@ class DnsConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80?hostname=example.com')->willReturn($promise);
 
         $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectRejectsWithOriginalExceptionAfterResolvingIfTcpConnectorRejectsWithInvalidArgumentException()
@@ -216,12 +224,17 @@ class DnsConnectorTest extends TestCase
 
         $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection cancelled',
-            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.com:80 failed: Connection cancelled', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testRejectionDuringDnsLookupShouldNotCreateAnyGarbageReferences()

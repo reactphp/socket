@@ -73,11 +73,11 @@ final class DnsConnector implements ConnectorInterface
 
                             // Exception trace arguments are not available on some PHP 7.4 installs
                             // @codeCoverageIgnoreStart
-                            foreach ($trace as &$one) {
+                            foreach ($trace as $ti => $one) {
                                 if (isset($one['args'])) {
-                                    foreach ($one['args'] as &$arg) {
+                                    foreach ($one['args'] as $ai => $arg) {
                                         if ($arg instanceof \Closure) {
-                                            $arg = 'Object(' . \get_class($arg) . ')';
+                                            $trace[$ti]['args'][$ai] = 'Object(' . \get_class($arg) . ')';
                                         }
                                     }
                                 }
