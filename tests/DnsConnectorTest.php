@@ -92,10 +92,18 @@ class DnsConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80')->willReturn($promise);
 
         $promise = $this->connector->connect('1.2.3.4:80');
-        $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://1.2.3.4:80 failed: Connection failed', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectRejectsIfGivenIpAndTcpConnectorRejectsWithInvalidArgumentException()
@@ -105,10 +113,18 @@ class DnsConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80')->willReturn($promise);
 
         $promise = $this->connector->connect('1.2.3.4:80');
-        $promise->cancel();
 
-        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \InvalidArgumentException);
+        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertEquals('Invalid', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectRejectsWithOriginalHostnameInMessageAfterResolvingIfTcpConnectorRejectsWithRuntimeException()
@@ -118,10 +134,18 @@ class DnsConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80?hostname=example.com')->willReturn($promise);
 
         $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', 42);
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.com:80 failed: Connection to tcp://1.2.3.4:80 failed: Connection failed', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testConnectRejectsWithOriginalExceptionAfterResolvingIfTcpConnectorRejectsWithInvalidArgumentException()
@@ -131,10 +155,18 @@ class DnsConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->with('1.2.3.4:80?hostname=example.com')->willReturn($promise);
 
         $promise = $this->connector->connect('example.com:80');
-        $promise->cancel();
 
-        $this->setExpectedException('InvalidArgumentException', 'Invalid', 42);
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \InvalidArgumentException);
+        $this->assertInstanceOf('InvalidArgumentException', $exception);
+        $this->assertEquals('Invalid', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testSkipConnectionIfDnsFails()
@@ -145,8 +177,17 @@ class DnsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.invalid:80');
 
-        $this->setExpectedException('RuntimeException', 'Connection to tcp://example.invalid:80 failed during DNS lookup: DNS error');
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.invalid:80 failed during DNS lookup: DNS error', $exception->getMessage());
+        $this->assertEquals(0, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testRejectionExceptionUsesPreviousExceptionIfDnsFails()
@@ -171,12 +212,17 @@ class DnsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection to tcp://example.com:80 cancelled during DNS lookup (ECONNABORTED)',
-            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.com:80 cancelled during DNS lookup (ECONNABORTED)', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testCancelDuringTcpConnectionCancelsTcpConnectionIfGivenIp()
@@ -216,12 +262,17 @@ class DnsConnectorTest extends TestCase
 
         $promise->cancel();
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection cancelled',
-            defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103
-        );
-        $this->throwRejection($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertInstanceOf('RuntimeException', $exception);
+        $this->assertEquals('Connection to tcp://example.com:80 failed: Connection cancelled', $exception->getMessage());
+        $this->assertEquals(defined('SOCKET_ECONNABORTED') ? SOCKET_ECONNABORTED : 103, $exception->getCode());
+        $this->assertInstanceOf('RuntimeException', $exception->getPrevious());
+        $this->assertNotEquals('', $exception->getTraceAsString());
     }
 
     public function testRejectionDuringDnsLookupShouldNotCreateAnyGarbageReferences()
@@ -335,15 +386,5 @@ class DnsConnectorTest extends TestCase
         unset($promise, $dns, $tcp);
 
         $this->assertEquals(0, gc_collect_cycles());
-    }
-
-    private function throwRejection($promise)
-    {
-        $ex = null;
-        $promise->then(null, function ($e) use (&$ex) {
-            $ex = $e;
-        });
-
-        throw $ex;
     }
 }
