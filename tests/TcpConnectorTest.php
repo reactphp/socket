@@ -132,7 +132,7 @@ class TcpConnectorTest extends TestCase
         $errstr = '';
         for ($i = 0; $i < 20 && $errno !== $enetunreach; ++$i) {
             $address = 'tcp://192.168.' . mt_rand(0, 255) . '.' . mt_rand(1, 254) . ':8123';
-            $client = @stream_socket_client($address, $errno, $errstr, 0.1 * $i);
+            $client = @stream_socket_client($address, $errno, $errstr, 0.1);
         }
         if ($client || $errno !== $enetunreach) {
             $this->markTestSkipped('Expected error ' . $enetunreach . ' but got ' . $errno . ' (' . $errstr . ') for ' . $address);
@@ -147,14 +147,7 @@ class TcpConnectorTest extends TestCase
             'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) . ' (ENETUNREACH)' : 'Network is unreachable'),
             $enetunreach
         );
-
-        try {
-            Block\await($promise, null, self::TIMEOUT);
-        } catch (\Exception $e) {
-            fclose($client);
-
-            throw $e;
-        }
+        Block\await($promise, null, self::TIMEOUT);
     }
 
     /** @test */
