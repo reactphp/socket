@@ -276,7 +276,7 @@ class TcpServerTest extends TestCase
         $server->close();
     }
 
-    public function testEmitsErrorWhenAcceptListenerFails()
+    public function testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler()
     {
         $listener = null;
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -295,9 +295,17 @@ class TcpServerTest extends TestCase
         $this->assertNotNull($listener);
         $socket = stream_socket_server('tcp://127.0.0.1:0');
 
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
+
         $time = microtime(true);
         $listener($socket);
         $time = microtime(true) - $time;
+
+        restore_error_handler();
+        $this->assertNull($error);
 
         $this->assertLessThan(1, $time);
 
@@ -311,7 +319,7 @@ class TcpServerTest extends TestCase
     /**
      * @param \RuntimeException $e
      * @requires extension sockets
-     * @depends testEmitsErrorWhenAcceptListenerFails
+     * @depends testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler
      */
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {

@@ -51,7 +51,7 @@ class FdServerTest extends TestCase
         new FdServer('tcp://127.0.0.1:8080', $loop);
     }
 
-    public function testCtorThrowsForUnknownFd()
+    public function testCtorThrowsForUnknownFdWithoutCallingCustomErrorHandler()
     {
         if (!is_dir('/dev/fd') || defined('HHVM_VERSION')) {
             $this->markTestSkipped('Not supported on your platform');
@@ -62,12 +62,27 @@ class FdServerTest extends TestCase
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->never())->method('addReadStream');
 
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
+
         $this->setExpectedException(
             'RuntimeException',
             'Failed to listen on FD ' . $fd . ': ' . (function_exists('socket_strerror') ? socket_strerror(SOCKET_EBADF) . ' (EBADF)' : 'Bad file descriptor'),
             defined('SOCKET_EBADF') ? SOCKET_EBADF : 9
         );
-        new FdServer($fd, $loop);
+
+        try {
+            new FdServer($fd, $loop);
+
+            restore_error_handler();
+        } catch (\Exception $e) {
+            restore_error_handler();
+            $this->assertNull($error);
+
+            throw $e;
+        }
     }
 
     public function testCtorThrowsIfFdIsAFileAndNotASocket()
@@ -319,7 +334,7 @@ class FdServerTest extends TestCase
         $server->close();
     }
 
-    public function testEmitsErrorWhenAcceptListenerFails()
+    public function testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler()
     {
         if (!is_dir('/dev/fd') || defined('HHVM_VERSION')) {
             $this->markTestSkipped('Not supported on your platform');
@@ -346,9 +361,17 @@ class FdServerTest extends TestCase
         $this->assertNotNull($listener);
         $socket = stream_socket_server('tcp://127.0.0.1:0');
 
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
+
         $time = microtime(true);
         $listener($socket);
         $time = microtime(true) - $time;
+
+        restore_error_handler();
+        $this->assertNull($error);
 
         $this->assertLessThan(1, $time);
 
@@ -362,7 +385,7 @@ class FdServerTest extends TestCase
     /**
      * @param \RuntimeException $e
      * @requires extension sockets
-     * @depends testEmitsErrorWhenAcceptListenerFails
+     * @depends testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler
      */
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {
