@@ -25,17 +25,32 @@ class TcpConnectorTest extends TestCase
     }
 
     /** @test */
-    public function connectionToEmptyPortShouldFail()
+    public function connectionToEmptyPortShouldFailWithoutCallingCustomErrorHandler()
     {
         $connector = new TcpConnector();
         $promise = $connector->connect('127.0.0.1:9999');
+
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
 
         $this->setExpectedException(
             'RuntimeException',
             'Connection to tcp://127.0.0.1:9999 failed: Connection refused' . (function_exists('socket_import_stream') ? ' (ECONNREFUSED)' : ''),
             defined('SOCKET_ECONNREFUSED') ? SOCKET_ECONNREFUSED : 111
         );
-        Block\await($promise, null, self::TIMEOUT);
+
+        try {
+            Block\await($promise, null, self::TIMEOUT);
+
+            restore_error_handler();
+        } catch (\Exception $e) {
+            restore_error_handler();
+            $this->assertNull($error);
+
+            throw $e;
+        }
     }
 
     /** @test */

@@ -240,12 +240,27 @@ class UnixServerTest extends TestCase
         new UnixServer('tcp://localhost:0', $loop);
     }
 
-    public function testCtorThrowsWhenPathIsNotWritable()
+    public function testCtorThrowsWhenPathIsNotWritableWithoutCallingCustomErrorHandler()
     {
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
+
         $this->setExpectedException('RuntimeException');
-        $server = new UnixServer('/dev/null', $loop);
+
+        try {
+            new UnixServer('/dev/null', $loop);
+
+            restore_error_handler();
+        } catch (\Exception $e) {
+            restore_error_handler();
+            $this->assertNull($error);
+
+            throw $e;
+        }
     }
 
     public function testResumeWithoutPauseIsNoOp()
@@ -285,7 +300,7 @@ class UnixServerTest extends TestCase
         $server->close();
     }
 
-    public function testEmitsErrorWhenAcceptListenerFails()
+    public function testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler()
     {
         $listener = null;
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
@@ -304,9 +319,17 @@ class UnixServerTest extends TestCase
         $this->assertNotNull($listener);
         $socket = stream_socket_server('tcp://127.0.0.1:0');
 
+        $error = null;
+        set_error_handler(function ($_, $errstr) use (&$error) {
+            $error = $errstr;
+        });
+
         $time = microtime(true);
         $listener($socket);
         $time = microtime(true) - $time;
+
+        restore_error_handler();
+        $this->assertNull($error);
 
         $this->assertLessThan(1, $time);
 
@@ -320,7 +343,7 @@ class UnixServerTest extends TestCase
     /**
      * @param \RuntimeException $e
      * @requires extension sockets
-     * @depends testEmitsErrorWhenAcceptListenerFails
+     * @depends testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler
      */
     public function testEmitsTimeoutErrorWhenAcceptListenerFails(\RuntimeException $exception)
     {
