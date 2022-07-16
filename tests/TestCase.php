@@ -2,10 +2,9 @@
 
 namespace React\Tests\Socket;
 
-use React\Stream\ReadableStreamInterface;
-use Clue\React\Block;
-use React\Promise\Promise;
 use PHPUnit\Framework\TestCase as BaseTestCase;
+use React\Promise\Promise;
+use React\Stream\ReadableStreamInterface;
 
 class TestCase extends BaseTestCase
 {
@@ -76,7 +75,7 @@ class TestCase extends BaseTestCase
             return '';
         }
 
-        return Block\await(new Promise(
+        return \Clue\React\Block\await(\React\Promise\Timer\timeout(new Promise(
             function ($resolve, $reject) use ($stream) {
                 $buffer = '';
                 $stream->on('data', function ($chunk) use (&$buffer) {
@@ -93,7 +92,7 @@ class TestCase extends BaseTestCase
                 $stream->close();
                 throw new \RuntimeException();
             }
-        ), null, $timeout);
+        ), $timeout));
     }
 
     public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)

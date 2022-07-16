@@ -2,12 +2,8 @@
 
 namespace React\Tests\Socket;
 
-use React\Dns\Model\Message;
-use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
-use React\Promise;
-use React\Promise\CancellablePromiseInterface;
 
 /**
  * @internal

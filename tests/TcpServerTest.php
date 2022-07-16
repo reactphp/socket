@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\EventLoop\Loop;
 use React\Socket\TcpServer;
 use React\Stream\DuplexResourceStream;
@@ -53,7 +52,7 @@ class TcpServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connection = Block\await($promise, null, self::TIMEOUT);
+        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
     }
@@ -374,6 +373,6 @@ class TcpServerTest extends TestCase
             $this->markTestSkipped('Not supported on Windows');
         }
 
-        Block\sleep(0);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.0));
     }
 }

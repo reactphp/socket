@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\Dns\Resolver\Factory as ResolverFactory;
 use React\Socket\Connector;
 use React\Socket\DnsConnector;
@@ -19,7 +18,7 @@ class IntegrationTest extends TestCase
     {
         $connector = new Connector(array());
 
-        $conn = Block\await($connector->connect('google.com:80'));
+        $conn = \Clue\React\Block\await($connector->connect('google.com:80'));
 
         $this->assertContainsString(':80', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:80', $conn->getRemoteAddress());
@@ -40,7 +39,7 @@ class IntegrationTest extends TestCase
 
         $secureConnector = new Connector(array());
 
-        $conn = Block\await($secureConnector->connect('tls://google.com:443'));
+        $conn = \Clue\React\Block\await($secureConnector->connect('tls://google.com:443'));
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
@@ -66,7 +65,7 @@ class IntegrationTest extends TestCase
             $dns
         );
 
-        $conn = Block\await($connector->connect('google.com:443'));
+        $conn = \Clue\React\Block\await($connector->connect('google.com:443'));
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
@@ -80,7 +79,7 @@ class IntegrationTest extends TestCase
     {
         $connector = new Connector(array());
 
-        $conn = Block\await($connector->connect('google.com:443'));
+        $conn = \Clue\React\Block\await($connector->connect('google.com:443'));
 
         $this->assertContainsString(':443', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:443', $conn->getRemoteAddress());
@@ -106,7 +105,7 @@ class IntegrationTest extends TestCase
         ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('google.com:80'), null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('google.com:80'), self::TIMEOUT));
     }
 
     public function testCancellingPendingConnectionWithoutTimeoutShouldNotCreateAnyGarbageReferences()
@@ -163,11 +162,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect connection refused error
-        Block\sleep(0.01);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.01));
         if ($wait) {
-            Block\sleep(0.2);
+            \Clue\React\Block\await(\React\Promise\Timer\sleep(0.2));
             if ($wait) {
-                Block\sleep(2.0);
+                \Clue\React\Block\await(\React\Promise\Timer\sleep(2.0));
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -198,9 +197,9 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a connection timeout error
-        Block\sleep(0.01);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.01));
         if ($wait) {
-            Block\sleep(0.2);
+            \Clue\React\Block\await(\React\Promise\Timer\sleep(0.2));
             if ($wait) {
                 $this->fail('Connection attempt did not fail');
             }
@@ -230,9 +229,9 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a connection timeout error
-        Block\sleep(0.01);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.01));
         if ($wait) {
-            Block\sleep(0.2);
+            \Clue\React\Block\await(\React\Promise\Timer\sleep(0.2));
             if ($wait) {
                 $this->fail('Connection attempt did not fail');
             }
@@ -262,11 +261,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a DNS error
-        Block\sleep(0.01);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.01));
         if ($wait) {
-            Block\sleep(0.2);
+            \Clue\React\Block\await(\React\Promise\Timer\sleep(0.2));
             if ($wait) {
-                Block\sleep(2.0);
+                \Clue\React\Block\await(\React\Promise\Timer\sleep(2.0));
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -304,11 +303,11 @@ class IntegrationTest extends TestCase
         );
 
         // run loop for short period to ensure we detect a TLS error
-        Block\sleep(0.1);
+        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.01));
         if ($wait) {
-            Block\sleep(0.4);
+            \Clue\React\Block\await(\React\Promise\Timer\sleep(0.4));
             if ($wait) {
-                Block\sleep(self::TIMEOUT - 0.5);
+                \Clue\React\Block\await(\React\Promise\Timer\sleep(self::TIMEOUT - 0.5));
                 if ($wait) {
                     $this->fail('Connection attempt did not fail');
                 }
@@ -333,7 +332,7 @@ class IntegrationTest extends TestCase
                 $conn->close();
             }
         );
-        Block\await($promise, null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         unset($promise);
 
         $this->assertEquals(0, gc_collect_cycles());
@@ -346,7 +345,7 @@ class IntegrationTest extends TestCase
         ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('google.com:80'), null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('google.com:80'), self::TIMEOUT));
     }
 
     public function testSelfSignedRejectsIfVerificationIsEnabled()
@@ -362,7 +361,7 @@ class IntegrationTest extends TestCase
         ));
 
         $this->setExpectedException('RuntimeException');
-        Block\await($connector->connect('tls://self-signed.badssl.com:443'), null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('tls://self-signed.badssl.com:443'), self::TIMEOUT));
     }
 
     public function testSelfSignedResolvesIfVerificationIsDisabled()
@@ -377,7 +376,7 @@ class IntegrationTest extends TestCase
             )
         ));
 
-        $conn = Block\await($connector->connect('tls://self-signed.badssl.com:443'), null, self::TIMEOUT);
+        $conn = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('tls://self-signed.badssl.com:443'), self::TIMEOUT));
         $conn->close();
 
         // if we reach this, then everything is good

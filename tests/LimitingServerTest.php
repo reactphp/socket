@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\LimitingServer;
@@ -157,7 +156,7 @@ class LimitingServerTest extends TestCase
             });
         });
 
-        Block\await($peer, null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $this->assertEquals(array(), $server->getConnections());
 
@@ -178,7 +177,7 @@ class LimitingServerTest extends TestCase
         $first = stream_socket_client($server->getAddress());
         $second = stream_socket_client($server->getAddress());
 
-        Block\await($peer, null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         fclose($first);
         fclose($second);
@@ -208,7 +207,7 @@ class LimitingServerTest extends TestCase
         $second = stream_socket_client($server->getAddress());
         fclose($second);
 
-        Block\await($peer, null, self::TIMEOUT);
+        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $server->close();
     }

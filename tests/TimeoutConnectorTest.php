@@ -2,11 +2,10 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
-use React\Socket\TimeoutConnector;
-use React\Promise;
 use React\EventLoop\Loop;
+use React\Promise;
 use React\Promise\Deferred;
+use React\Socket\TimeoutConnector;
 
 class TimeoutConnectorTest extends TestCase
 {
@@ -37,7 +36,7 @@ class TimeoutConnectorTest extends TestCase
             'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
             \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
         );
-        Block\await($timeout->connect('google.com:80'));
+        \Clue\React\Block\await($timeout->connect('google.com:80'));
     }
 
     public function testRejectsWithOriginalReasonWhenConnectorRejects()
@@ -54,7 +53,7 @@ class TimeoutConnectorTest extends TestCase
             'Failed',
             42
         );
-        Block\await($timeout->connect('google.com:80'));
+        \Clue\React\Block\await($timeout->connect('google.com:80'));
     }
 
     public function testResolvesWhenConnectorResolves()
