@@ -382,6 +382,6 @@ class UnixServerTest extends TestCase
 
     private function tick()
     {
-        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.0));
+        \React\Async\await(\React\Promise\Timer\sleep(0.0));
     }
 }

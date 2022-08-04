@@ -156,7 +156,7 @@ class LimitingServerTest extends TestCase
             });
         });
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $this->assertEquals(array(), $server->getConnections());
 
@@ -177,7 +177,7 @@ class LimitingServerTest extends TestCase
         $first = stream_socket_client($server->getAddress());
         $second = stream_socket_client($server->getAddress());
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         fclose($first);
         fclose($second);
@@ -207,7 +207,7 @@ class LimitingServerTest extends TestCase
         $second = stream_socket_client($server->getAddress());
         fclose($second);
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $server->close();
     }

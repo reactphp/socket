@@ -41,7 +41,7 @@ class TcpConnectorTest extends TestCase
         );
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
             restore_error_handler();
         } catch (\Exception $e) {
@@ -77,7 +77,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector();
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
@@ -129,7 +129,7 @@ class TcpConnectorTest extends TestCase
         }
 
         $this->setExpectedException('RuntimeException');
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
     }
 
     /** @test */
@@ -161,7 +161,7 @@ class TcpConnectorTest extends TestCase
             'Connection to ' . $address . ' failed: ' . (function_exists('socket_strerror') ? socket_strerror($enetunreach) . ' (ENETUNREACH)' : 'Network is unreachable'),
             $enetunreach
         );
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
     }
 
     /** @test */
@@ -171,7 +171,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector();
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
         /* @var $connection ConnectionInterface */
 
         $this->assertEquals('tcp://127.0.0.1:9999', $connection->getRemoteAddress());
@@ -187,7 +187,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector();
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
         /* @var $connection ConnectionInterface */
 
         $this->assertContainsString('tcp://127.0.0.1:', $connection->getLocalAddress());
@@ -204,7 +204,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector();
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('127.0.0.1:9999'), self::TIMEOUT));
         /* @var $connection ConnectionInterface */
 
         $server->close();
@@ -258,7 +258,7 @@ class TcpConnectorTest extends TestCase
 
         $connector = new TcpConnector();
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect('[::1]:9999'), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('[::1]:9999'), self::TIMEOUT));
         /* @var $connection ConnectionInterface */
 
         $this->assertEquals('tcp://[::1]:9999', $connection->getRemoteAddress());
@@ -357,7 +357,7 @@ class TcpConnectorTest extends TestCase
         );
 
         try {
-            \Clue\React\Block\await($promise);
+            \React\Async\await($promise);
         } catch (\Exception $e) {
             $server->close();
             throw $e;

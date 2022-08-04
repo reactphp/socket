@@ -52,7 +52,7 @@ class ServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
         $promise->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect($server->getAddress()), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect($server->getAddress()), self::TIMEOUT));
 
         $server->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -75,7 +75,7 @@ class ServerTest extends TestCase
         $connector->connect($server->getAddress())
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($connector->connect($server->getAddress()), self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect($server->getAddress()), self::TIMEOUT));
 
         $connection->close();
         $server->close();
@@ -127,7 +127,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client($server->getAddress());
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $server->close();
     }
@@ -140,7 +140,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client($server->getAddress());
 
-        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.1));
+        \React\Async\await(\React\Promise\Timer\sleep(0.1));
     }
 
     public function testDoesEmitConnectionForNewConnectionToResumedServer()
@@ -157,7 +157,7 @@ class ServerTest extends TestCase
 
         $server->resume();
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $server->close();
     }
@@ -194,7 +194,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client($server->getAddress());
 
-        $all = \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        $all = \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $this->assertEquals(array('socket' => array('backlog' => 4)), $all);
 
@@ -216,7 +216,7 @@ class ServerTest extends TestCase
 
         $client = stream_socket_client(str_replace('tls://', '', $server->getAddress()));
 
-        \Clue\React\Block\await(\React\Promise\Timer\sleep(0.1));
+        \React\Async\await(\React\Promise\Timer\sleep(0.1));
 
         $server->close();
     }

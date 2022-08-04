@@ -321,7 +321,7 @@ class FdServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, 1.0));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($promise, 1.0));
 
         /**
          * @var ConnectionInterface $connection

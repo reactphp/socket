@@ -31,12 +31,15 @@ class TimeoutConnectorTest extends TestCase
 
         $timeout = new TimeoutConnector($connector, 0.01);
 
+        $promise = $timeout->connect('google.com:80');
+        Loop::run();
+
         $this->setExpectedException(
             'RuntimeException',
             'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
             \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
         );
-        \Clue\React\Block\await($timeout->connect('google.com:80'));
+        \React\Async\await($promise);
     }
 
     public function testRejectsWithOriginalReasonWhenConnectorRejects()
@@ -53,7 +56,7 @@ class TimeoutConnectorTest extends TestCase
             'Failed',
             42
         );
-        \Clue\React\Block\await($timeout->connect('google.com:80'));
+        \React\Async\await($timeout->connect('google.com:80'));
     }
 
     public function testResolvesWhenConnectorResolves()

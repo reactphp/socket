@@ -75,7 +75,7 @@ class TestCase extends BaseTestCase
             return '';
         }
 
-        return \Clue\React\Block\await(\React\Promise\Timer\timeout(new Promise(
+        return \React\Async\await(\React\Promise\Timer\timeout(new Promise(
             function ($resolve, $reject) use ($stream) {
                 $buffer = '';
                 $stream->on('data', function ($chunk) use (&$buffer) {

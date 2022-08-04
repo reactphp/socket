@@ -37,7 +37,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $client = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $client);
         $this->assertEquals($server->getAddress(), $client->getRemoteAddress());
@@ -66,7 +66,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $client = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -105,7 +105,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $client = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -136,7 +136,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
 
         /* @var ConnectionInterface $client */
-        $client = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $client = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\Connection', $client);
         $this->assertTrue(isset($client->stream));
@@ -168,7 +168,7 @@ class FunctionalSecureServerTest extends TestCase
 
         /* @var ConnectionInterface $client */
         try {
-            $client = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            $client = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         } catch (\RuntimeException $e) {
             // legacy TLS 1.0 would be considered insecure by today's standards, so skip test if connection fails
             // OpenSSL error messages are version/platform specific
@@ -210,7 +210,7 @@ class FunctionalSecureServerTest extends TestCase
 
         // await both client and server side end of connection
         /* @var ConnectionInterface[] $both */
-        $both = \Clue\React\Block\await(\React\Promise\Timer\timeout(\React\Promise\all(array($peer, $client)), self::TIMEOUT));
+        $both = \React\Async\await(\React\Promise\Timer\timeout(\React\Promise\all(array($peer, $client)), self::TIMEOUT));
 
         // both ends of the connection are represented by different instances of ConnectionInterface
         $this->assertCount(2, $both);
@@ -250,7 +250,7 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $data = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $data = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals('foo', $data);
 
@@ -291,7 +291,7 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $received = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals(400000, $received);
 
@@ -332,7 +332,7 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $received = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals(2000000, $received);
 
@@ -365,7 +365,7 @@ class FunctionalSecureServerTest extends TestCase
             $connection->write('foo');
         });
 
-        $data = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $data = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals('foo', $data);
 
@@ -405,7 +405,7 @@ class FunctionalSecureServerTest extends TestCase
             $connection->write(str_repeat('*', 400000));
         });
 
-        $received = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $received = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals(400000, $received);
 
@@ -447,7 +447,7 @@ class FunctionalSecureServerTest extends TestCase
             }, $reject);
         });
 
-        $received = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $received = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $this->assertEquals(400000, $received);
 
@@ -477,7 +477,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $promise = $connector->connect($server->getAddress());
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
 
         $server->close();
         $promise->then(function (ConnectionInterface $connection) {
@@ -508,7 +508,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->setExpectedException('RuntimeException', 'handshake');
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         } catch (\Exception $e) {
             $server->close();
 
@@ -534,7 +534,7 @@ class FunctionalSecureServerTest extends TestCase
         ));
         $connector->connect($server->getAddress());
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
 
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
@@ -557,7 +557,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->setExpectedException('RuntimeException', 'handshake');
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         } catch (\Exception $e) {
             $server->close();
 
@@ -587,7 +587,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->setExpectedException('RuntimeException', 'handshake');
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($peer, self::TIMEOUT));
         } catch (\Exception $e) {
             $server->close();
 
@@ -616,7 +616,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->setExpectedException('RuntimeException', 'handshake');
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         } catch (\Exception $e) {
             $server->close();
 
@@ -646,7 +646,7 @@ class FunctionalSecureServerTest extends TestCase
         $this->setExpectedException('RuntimeException', 'handshake');
 
         try {
-            \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         } catch (\Exception $e) {
             $server->close();
 
@@ -669,7 +669,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise = $connector->connect($server->getAddress());
         $promise->then(null, $this->expectCallableOnce());
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         $server->close();
     }
@@ -694,7 +694,7 @@ class FunctionalSecureServerTest extends TestCase
         $promise->cancel();
         $promise->then(null, $this->expectCallableOnce());
 
-        \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         $server->close();
     }
@@ -715,7 +715,7 @@ class FunctionalSecureServerTest extends TestCase
             $stream->close();
         });
 
-        $error = \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        $error = \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)
         $this->assertInstanceOf('RuntimeException', $error);
@@ -743,7 +743,7 @@ class FunctionalSecureServerTest extends TestCase
             $stream->end("\x1e");
         });
 
-        $error = \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        $error = \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         // Connection from tcp://127.0.0.1:39528 failed during TLS handshake: Connection lost during TLS handshake (ECONNRESET)
         $this->assertInstanceOf('RuntimeException', $error);
@@ -767,7 +767,7 @@ class FunctionalSecureServerTest extends TestCase
         $connector = new TcpConnector();
         $promise = $connector->connect(str_replace('tls://', '', $server->getAddress()));
 
-        $connection = \Clue\React\Block\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
         $this->assertInstanceOf('React\Socket\ConnectionInterface', $connection);
 
         $server->close();
@@ -792,7 +792,7 @@ class FunctionalSecureServerTest extends TestCase
             $stream->write("GET / HTTP/1.0\r\n\r\n");
         });
 
-        $error = \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        $error = \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         $this->assertInstanceOf('RuntimeException', $error);
 
@@ -821,7 +821,7 @@ class FunctionalSecureServerTest extends TestCase
             $stream->write("Hello world!\n");
         });
 
-        $error = \Clue\React\Block\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
+        $error = \React\Async\await(\React\Promise\Timer\timeout($errorEvent, self::TIMEOUT));
 
         $this->assertInstanceOf('RuntimeException', $error);
 
