@@ -39,13 +39,13 @@ jobs:
 
   PHPUnit-macOS:
     name: PHPUnit (macOS)
-    runs-on: macos-10.15
+    runs-on: macos-12
     continue-on-error: true
     steps:
       - uses: actions/checkout@v2
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.0
+          php-version: 8.1
           coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
