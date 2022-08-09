@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
 use React\Socket\FdServer;
@@ -322,7 +321,7 @@ class FdServerTest extends TestCase
             $server->on('connection', $resolve);
         });
 
-        $connection = Block\await($promise, null, 1.0);
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($promise, 1.0));
 
         /**
          * @var ConnectionInterface $connection

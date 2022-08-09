@@ -7,7 +7,6 @@ use React\EventLoop\StreamSelectLoop;
 use React\Promise;
 use React\Promise\Deferred;
 use React\Socket\HappyEyeBallsConnector;
-use Clue\React\Block;
 
 class HappyEyeBallsConnectorTest extends TestCase
 {
@@ -63,7 +62,10 @@ class HappyEyeBallsConnectorTest extends TestCase
         $promise = $this->connector->connect('example.com:80');
         $first->resolve(array('1.2.3.4'));
 
-        $resolvedConnection = Block\await($promise, $this->loop);
+        $resolvedConnection = null;
+        $promise->then(function ($value) use (&$resolvedConnection) {
+            $resolvedConnection = $value;
+        });
 
         self::assertSame($connection, $resolvedConnection);
     }
@@ -89,7 +91,11 @@ class HappyEyeBallsConnectorTest extends TestCase
 
         $promise = $this->connector->connect('example.com:80');
 
-        $resolvedConnection = Block\await($promise, $this->loop);
+        $this->loop->run();
+        $resolvedConnection = null;
+        $promise->then(function ($value) use (&$resolvedConnection) {
+            $resolvedConnection = $value;
+        });
 
         self::assertSame($connection, $resolvedConnection);
     }

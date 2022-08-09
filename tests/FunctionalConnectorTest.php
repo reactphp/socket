@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use React\Socket\ConnectionInterface;
@@ -24,7 +23,7 @@ class FunctionalConnectorTest extends TestCase
 
         $connector = new Connector(array());
 
-        $connection = Block\await($connector->connect('localhost:9998'), null, self::TIMEOUT);
+        $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('localhost:9998'), self::TIMEOUT));
 
         $server->close();
 
@@ -63,11 +62,11 @@ class FunctionalConnectorTest extends TestCase
             fclose($client);
         });
 
-        $connection = Block\await($connector->connect('example.com:80'));
+        $connection = \React\Async\await($connector->connect('example.com:80'));
         $connection->close();
         $this->assertEquals(1, $received);
 
-        $connection = Block\await($connector->connect('example.com:80'));
+        $connection = \React\Async\await($connector->connect('example.com:80'));
         $connection->close();
         $this->assertEquals(1, $received);
 
@@ -85,7 +84,7 @@ class FunctionalConnectorTest extends TestCase
 
         $connector = new Connector(array('happy_eyeballs' => true));
 
-        $ip = Block\await($this->request('dual.tlund.se', $connector), null, self::TIMEOUT);
+        $ip = \React\Async\await(\React\Promise\Timer\timeout($this->request('dual.tlund.se', $connector), self::TIMEOUT));
 
         $this->assertNotFalse(inet_pton($ip));
     }
@@ -99,7 +98,7 @@ class FunctionalConnectorTest extends TestCase
         $connector = new Connector(array('happy_eyeballs' => true));
 
         try {
-            $ip = Block\await($this->request('ipv4.tlund.se', $connector), null, self::TIMEOUT);
+            $ip = \React\Async\await(\React\Promise\Timer\timeout($this->request('ipv4.tlund.se', $connector), self::TIMEOUT));
         } catch (\Exception $e) {
             $this->checkIpv4();
             throw $e;
@@ -118,7 +117,7 @@ class FunctionalConnectorTest extends TestCase
         $connector = new Connector(array('happy_eyeballs' => true));
 
         try {
-            $ip = Block\await($this->request('ipv6.tlund.se', $connector), null, self::TIMEOUT);
+            $ip = \React\Async\await(\React\Promise\Timer\timeout($this->request('ipv6.tlund.se', $connector), self::TIMEOUT));
         } catch (\Exception $e) {
             $this->checkIpv6();
             throw $e;
@@ -151,11 +150,11 @@ class FunctionalConnectorTest extends TestCase
             });
         });
 
-        Block\await($deferred->promise(), null, self::TIMEOUT);
+        \React\Async\await(\React\Promise\Timer\timeout($deferred->promise(), self::TIMEOUT));
         $server->close();
 
         try {
-            Block\await($promise, null, self::TIMEOUT);
+            \React\Async\await(\React\Promise\Timer\timeout($promise, self::TIMEOUT));
             $this->fail();
         } catch (\Exception $e) {
             $this->assertInstanceOf('RuntimeException', $e);

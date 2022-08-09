@@ -3,7 +3,6 @@
 namespace React\Tests\Socket;
 
 use React\Socket\FixedUriConnector;
-use React\Tests\Socket\TestCase;
 
 class FixedUriConnectorTest extends TestCase
 {

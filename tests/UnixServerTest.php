@@ -2,7 +2,6 @@
 
 namespace React\Tests\Socket;
 
-use Clue\React\Block;
 use React\EventLoop\Loop;
 use React\Socket\UnixServer;
 use React\Stream\DuplexResourceStream;
@@ -383,6 +382,6 @@ class UnixServerTest extends TestCase
 
     private function tick()
     {
-        Block\sleep(0);
+        \React\Async\await(\React\Promise\Timer\sleep(0.0));
     }
 }
