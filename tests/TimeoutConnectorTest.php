@@ -61,7 +61,7 @@ class TimeoutConnectorTest extends TestCase
 
     public function testResolvesWhenConnectorResolves()
     {
-        $promise = Promise\resolve();
+        $promise = Promise\resolve(null);
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
         $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));

@@ -4,7 +4,7 @@ namespace React\Socket;
 
 use React\Dns\Resolver\ResolverInterface;
 use React\Promise;
-use React\Promise\CancellablePromiseInterface;
+use React\Promise\PromiseInterface;
 
 final class DnsConnector implements ConnectorInterface
 {
@@ -103,7 +103,7 @@ final class DnsConnector implements ConnectorInterface
                 }
 
                 // (try to) cancel pending DNS lookup / connection attempt
-                if ($promise instanceof CancellablePromiseInterface) {
+                if ($promise instanceof PromiseInterface && \method_exists($promise, 'cancel')) {
                     // overwrite callback arguments for PHP7+ only, so they do not show
                     // up in the Exception trace and do not cause a possible cyclic reference.
                     $_ = $reject = null;
