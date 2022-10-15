@@ -109,7 +109,7 @@ class TcpConnectorTest extends TestCase
         }
 
         // each file descriptor takes ~600 bytes of memory, so skip test if this would exceed memory_limit
-        if ($ulimit * 600 > $memory) {
+        if ($ulimit * 600 > $memory || $ulimit > 100000) {
             $this->markTestSkipped('Test requires ~' . round($ulimit * 600 / 1024 / 1024) . '/' . round($memory / 1024 / 1024) . ' MiB memory with ' . $ulimit . ' file descriptors');
         }
 
