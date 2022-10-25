@@ -75,7 +75,7 @@ class TestCase extends BaseTestCase
             return '';
         }
 
-        return \React\Async\await(\React\Promise\Timer\timeout(new Promise(
+        $buffer = \React\Async\await(\React\Promise\Timer\timeout(new Promise(
             function ($resolve, $reject) use ($stream) {
                 $buffer = '';
                 $stream->on('data', function ($chunk) use (&$buffer) {
@@ -93,6 +93,14 @@ class TestCase extends BaseTestCase
                 throw new \RuntimeException();
             }
         ), $timeout));
+
+        // let loop tick for reactphp/async v4 to clean up any remaining stream resources
+        // @link https://github.com/reactphp/async/pull/65 reported upstream // TODO remove me once merged
+        if (function_exists('React\Async\async')) {
+            \React\Async\await(\React\Promise\Timer\sleep(0));
+        }
+
+        return $buffer;
     }
 
     public function setExpectedException($exception, $exceptionMessage = '', $exceptionCode = null)
