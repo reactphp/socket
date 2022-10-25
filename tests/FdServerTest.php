@@ -192,6 +192,9 @@ class FdServerTest extends TestCase
             $this->markTestSkipped('Listening on Unix domain socket (UDS) not supported');
         }
 
+        assert(is_resource($socket));
+        unlink(str_replace('unix://', '', stream_socket_get_name($socket, false)));
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
 
         $server = new FdServer($fd, $loop);
