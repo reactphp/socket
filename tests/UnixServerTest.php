@@ -8,7 +8,10 @@ use React\Stream\DuplexResourceStream;
 
 class UnixServerTest extends TestCase
 {
+    /** @var ?UnixServer */
     private $server;
+
+    /** @var ?string */
     private $uds;
 
     /**
@@ -28,7 +31,10 @@ class UnixServerTest extends TestCase
 
     public function testConstructWithoutLoopAssignsLoopAutomatically()
     {
-        $server = new UnixServer($this->getRandomSocketUri());
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
+        $server = new UnixServer($this->uds);
 
         $ref = new \ReflectionProperty($server, 'loop');
         $ref->setAccessible(true);
@@ -45,8 +51,10 @@ class UnixServerTest extends TestCase
     public function testConnection()
     {
         $client = stream_socket_client($this->uds);
+        assert(is_resource($client));
 
         $this->server->on('connection', $this->expectCallableOnce());
+        $this->tick();
         $this->tick();
     }
 
@@ -56,8 +64,11 @@ class UnixServerTest extends TestCase
     public function testConnectionWithManyClients()
     {
         $client1 = stream_socket_client($this->uds);
+        assert(is_resource($client1));
         $client2 = stream_socket_client($this->uds);
+        assert(is_resource($client2));
         $client3 = stream_socket_client($this->uds);
+        assert(is_resource($client3));
 
         $this->server->on('connection', $this->expectCallableExactly(3));
         $this->tick();
@@ -68,6 +79,7 @@ class UnixServerTest extends TestCase
     public function testDataEventWillNotBeEmittedWhenClientSendsNoData()
     {
         $client = stream_socket_client($this->uds);
+        assert(is_resource($client));
 
         $mock = $this->expectCallableNever();
 
@@ -81,6 +93,7 @@ class UnixServerTest extends TestCase
     public function testDataWillBeEmittedWithDataClientSends()
     {
         $client = stream_socket_client($this->uds);
+        assert(is_resource($client));
 
         fwrite($client, "foo\n");
 
@@ -138,6 +151,7 @@ class UnixServerTest extends TestCase
     public function testLoopWillEndWhenServerIsClosedAfterSingleConnection()
     {
         $client = stream_socket_client($this->uds);
+        assert(is_resource($client));
 
         // explicitly unset server because we only accept a single connection
         // and then already call close()
@@ -191,6 +205,7 @@ class UnixServerTest extends TestCase
     public function testConnectionDoesNotEndWhenClientDoesNotClose()
     {
         $client = stream_socket_client($this->uds);
+        assert(is_resource($client));
 
         $mock = $this->expectCallableNever();
 
@@ -221,10 +236,13 @@ class UnixServerTest extends TestCase
 
     public function testCtorAddsResourceToLoop()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        new UnixServer($this->uds, $loop);
     }
 
     public function testCtorThrowsForInvalidAddressScheme()
@@ -264,43 +282,58 @@ class UnixServerTest extends TestCase
 
     public function testResumeWithoutPauseIsNoOp()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream');
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        $server = new UnixServer($this->uds, $loop);
         $server->resume();
     }
 
     public function testPauseRemovesResourceFromLoop()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        $server = new UnixServer($this->uds, $loop);
         $server->pause();
     }
 
     public function testPauseAfterPauseIsNoOp()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        $server = new UnixServer($this->uds, $loop);
         $server->pause();
         $server->pause();
     }
 
     public function testCloseRemovesResourceFromLoop()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('removeReadStream');
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        $server = new UnixServer($this->uds, $loop);
         $server->close();
     }
 
     public function testEmitsErrorWhenAcceptListenerFailsWithoutCallingCustomErrorHandler()
     {
+        unlink(str_replace('unix://', '', $this->uds));
+        $this->uds = $this->getRandomSocketUri();
+
         $listener = null;
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $loop->expects($this->once())->method('addReadStream')->with($this->anything(), $this->callback(function ($cb) use (&$listener) {
@@ -308,7 +341,7 @@ class UnixServerTest extends TestCase
             return true;
         }));
 
-        $server = new UnixServer($this->getRandomSocketUri(), $loop);
+        $server = new UnixServer($this->uds, $loop);
 
         $exception = null;
         $server->on('error', function ($e) use (&$exception) {
@@ -361,7 +394,7 @@ class UnixServerTest extends TestCase
         }
 
         $this->setExpectedException('RuntimeException');
-        $another = new UnixServer($this->uds);
+        new UnixServer($this->uds);
     }
 
     /**
@@ -372,7 +405,11 @@ class UnixServerTest extends TestCase
     {
         if ($this->server) {
             $this->server->close();
+            $this->server = null;
         }
+
+        assert(is_string($this->uds));
+        unlink(str_replace('unix://', '', $this->uds));
     }
 
     private function getRandomSocketUri()

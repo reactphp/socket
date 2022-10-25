@@ -97,7 +97,11 @@ class SocketServerTest extends TestCase
             ->then($this->expectCallableOnce(), $this->expectCallableNever());
 
         $connection = \React\Async\await(\React\Promise\Timer\timeout($connector->connect($socket->getAddress()), self::TIMEOUT));
+        assert($connection instanceof ConnectionInterface);
 
+        unlink(str_replace('unix://', '', $connection->getRemoteAddress()));
+
+        $connection->close();
         $socket->close();
     }
 
