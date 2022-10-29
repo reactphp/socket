@@ -3,6 +3,8 @@
 namespace React\Tests\Socket;
 
 use React\Dns\Resolver\Factory as ResolverFactory;
+use React\EventLoop\Loop;
+use React\Socket\ConnectionInterface;
 use React\Socket\Connector;
 use React\Socket\DnsConnector;
 use React\Socket\SecureConnector;
@@ -19,6 +21,7 @@ class IntegrationTest extends TestCase
         $connector = new Connector(array());
 
         $conn = \React\Async\await($connector->connect('google.com:80'));
+        assert($conn instanceof ConnectionInterface);
 
         $this->assertContainsString(':80', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:80', $conn->getRemoteAddress());
@@ -26,6 +29,7 @@ class IntegrationTest extends TestCase
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, self::TIMEOUT);
+        assert(!$conn->isReadable());
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -40,10 +44,12 @@ class IntegrationTest extends TestCase
         $secureConnector = new Connector(array());
 
         $conn = \React\Async\await($secureConnector->connect('tls://google.com:443'));
+        assert($conn instanceof ConnectionInterface);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, self::TIMEOUT);
+        assert(!$conn->isReadable());
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -66,10 +72,12 @@ class IntegrationTest extends TestCase
         );
 
         $conn = \React\Async\await($connector->connect('google.com:443'));
+        assert($conn instanceof ConnectionInterface);
 
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, self::TIMEOUT);
+        assert(!$conn->isReadable());
 
         $this->assertMatchesRegExp('#^HTTP/1\.0#', $response);
     }
@@ -80,6 +88,7 @@ class IntegrationTest extends TestCase
         $connector = new Connector(array());
 
         $conn = \React\Async\await($connector->connect('google.com:443'));
+        assert($conn instanceof ConnectionInterface);
 
         $this->assertContainsString(':443', $conn->getRemoteAddress());
         $this->assertNotEquals('google.com:443', $conn->getRemoteAddress());
@@ -87,6 +96,7 @@ class IntegrationTest extends TestCase
         $conn->write("GET / HTTP/1.0\r\n\r\n");
 
         $response = $this->buffer($conn, self::TIMEOUT);
+        assert(!$conn->isReadable());
 
         $this->assertDoesNotMatchRegExp('#^HTTP/1\.0#', $response);
     }
@@ -146,6 +156,13 @@ class IntegrationTest extends TestCase
     {
         if (class_exists('React\Promise\When')) {
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
+        }
+
+        // let loop tick for reactphp/async v4 to clean up any remaining stream resources
+        // @link https://github.com/reactphp/async/pull/65 reported upstream // TODO remove me once merged
+        if (function_exists('React\Async\async')) {
+            \React\Async\await(\React\Promise\Timer\sleep(0));
+            Loop::run();
         }
 
         $connector = new Connector(array('timeout' => false));
@@ -377,6 +394,7 @@ class IntegrationTest extends TestCase
         ));
 
         $conn = \React\Async\await(\React\Promise\Timer\timeout($connector->connect('tls://self-signed.badssl.com:443'), self::TIMEOUT));
+        assert($conn instanceof ConnectionInterface);
         $conn->close();
 
         // if we reach this, then everything is good

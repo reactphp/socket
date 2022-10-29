@@ -32,6 +32,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: xdebug
+          ini-file: development
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
         if: ${{ matrix.php >= 7.3 }}
@@ -57,7 +58,7 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
-      - run: cp `which composer` composer.phar && ./composer.phar self-update --2.2 # downgrade Composer for HHVM
+      - run: cp "$(which composer)" composer.phar && ./composer.phar self-update --2.2 # downgrade Composer for HHVM
       - name: Run hhvm composer.phar install
         uses: docker://hhvm/hhvm:3.30-lts-latest
         with:
