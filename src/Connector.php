@@ -75,6 +75,7 @@ final class Connector implements ConnectorInterface
             'dns' => true,
             'timeout' => true,
             'happy_eyeballs' => true,
+            'opportunistic+tls' => true,
         );
 
         if ($context['timeout'] === true) {
@@ -150,6 +151,9 @@ final class Connector implements ConnectorInterface
             }
 
             $this->connectors['tls'] = $context['tls'];
+            if ($context['opportunistic+tls'] !== false) {
+                $this->connectors['opportunistic+tls'] = $this->connectors['tls'];
+            }
         }
 
         if ($context['unix'] !== false) {
