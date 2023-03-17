@@ -32,7 +32,7 @@ class FdServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid FD number given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new FdServer(-1, $loop);
     }
@@ -45,7 +45,7 @@ class FdServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid FD number given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new FdServer('tcp://127.0.0.1:8080', $loop);
     }

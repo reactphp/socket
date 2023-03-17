@@ -40,7 +40,7 @@ class SocketServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "tcp://invalid URI" given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new SocketServer('invalid URI');
     }
@@ -50,7 +50,7 @@ class SocketServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new SocketServer('0');
     }
@@ -60,7 +60,7 @@ class SocketServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new SocketServer('tcp://0');
     }

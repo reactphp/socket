@@ -394,7 +394,7 @@ class FunctionalTcpServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "tcp://///" given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new TcpServer('///');
     }
@@ -404,7 +404,7 @@ class FunctionalTcpServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "tcp://127.0.0.1" given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new TcpServer('127.0.0.1');
     }
@@ -414,7 +414,7 @@ class FunctionalTcpServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Invalid URI "udp://127.0.0.1:0" given (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new TcpServer('udp://127.0.0.1:0');
     }
@@ -424,7 +424,7 @@ class FunctionalTcpServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Given URI "tcp://localhost:8080" does not contain a valid host IP (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new TcpServer('localhost:8080');
     }
