@@ -252,7 +252,7 @@ class UnixServerTest extends TestCase
         $this->setExpectedException(
             'InvalidArgumentException',
             'Given URI "tcp://localhost:0" is invalid (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         );
         new UnixServer('tcp://localhost:0', $loop);
     }

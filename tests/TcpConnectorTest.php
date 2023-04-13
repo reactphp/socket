@@ -281,7 +281,7 @@ class TcpConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
             'Given URI "tcp://www.google.com:80" does not contain a valid host IP (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         ));
     }
 
@@ -296,7 +296,7 @@ class TcpConnectorTest extends TestCase
         $promise->then(null, $this->expectCallableOnceWithException(
             'InvalidArgumentException',
             'Given URI "tcp://255.255.255.255:12345678" is invalid (EINVAL)',
-            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : 22
+            defined('SOCKET_EINVAL') ? SOCKET_EINVAL : (defined('PCNTL_EINVAL') ? PCNTL_EINVAL : 22)
         ));
     }
 
