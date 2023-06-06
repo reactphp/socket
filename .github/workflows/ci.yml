@@ -33,6 +33,8 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-file: development
+      - run: composer config secure-http false && composer config repo.packagist composer http://packagist.org && composer config preferred-install source
+        if: ${{ matrix.php < 5.5 && matrix.os == 'windows-2022' }} # legacy PHP on Windows is allowed to use insecure downloads until it will be removed again
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
         if: ${{ matrix.php >= 7.3 }}
