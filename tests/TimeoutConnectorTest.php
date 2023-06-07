@@ -3,8 +3,8 @@
 namespace React\Tests\Socket;
 
 use React\EventLoop\Loop;
-use React\Promise;
 use React\Promise\Deferred;
+use React\Promise\Promise;
 use React\Socket\TimeoutConnector;
 
 class TimeoutConnectorTest extends TestCase
@@ -22,90 +22,175 @@ class TimeoutConnectorTest extends TestCase
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
     }
 
-    public function testRejectsWithTimeoutReasonOnTimeout()
+    public function testRejectsPromiseWithoutStartingTimerWhenWrappedConnectorReturnsRejectedPromise()
     {
-        $promise = new Promise\Promise(function () { });
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+        $loop->expects($this->never())->method('cancelTimer');
 
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\reject(new \RuntimeException('Failed', 42)));
 
-        $timeout = new TimeoutConnector($connector, 0.01);
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $promise = $timeout->connect('google.com:80');
-        Loop::run();
+        $promise = $timeout->connect('example.com:80');
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Connection to google.com:80 timed out after 0.01 seconds (ETIMEDOUT)',
-            \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
-        );
-        \React\Async\await($promise);
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertEquals('Failed', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
     }
 
-    public function testRejectsWithOriginalReasonWhenConnectorRejects()
+    public function testRejectsPromiseAfterCancellingTimerWhenWrappedConnectorReturnsPendingPromiseThatRejects()
     {
-        $promise = Promise\reject(new \RuntimeException('Failed', 42));
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(5.0, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
+        $deferred = new Deferred();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($deferred->promise());
 
-        $timeout = new TimeoutConnector($connector, 5.0);
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $this->setExpectedException(
-            'RuntimeException',
-            'Failed',
-            42
-        );
-        \React\Async\await($timeout->connect('google.com:80'));
+        $promise = $timeout->connect('example.com:80');
+
+        $deferred->reject(new \RuntimeException('Failed', 42));
+
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertEquals('Failed', $exception->getMessage());
+        $this->assertEquals(42, $exception->getCode());
     }
 
-    public function testResolvesWhenConnectorResolves()
+    public function testResolvesPromiseWithoutStartingTimerWhenWrappedConnectorReturnsResolvedPromise()
     {
-        $promise = Promise\resolve(null);
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->never())->method('addTimer');
+        $loop->expects($this->never())->method('cancelTimer');
 
+        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn(\React\Promise\resolve($connection));
 
-        $timeout = new TimeoutConnector($connector, 5.0);
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $timeout->connect('google.com:80')->then(
-            $this->expectCallableOnce(),
-            $this->expectCallableNever()
-        );
+        $promise = $timeout->connect('example.com:80');
 
-        Loop::run();
+        $resolved = null;
+        $promise->then(function ($value) use (&$resolved) {
+            $resolved = $value;
+        });
+
+        $this->assertSame($connection, $resolved);
     }
 
-    public function testRejectsAndCancelsPendingPromiseOnTimeout()
+    public function testResolvesPromiseAfterCancellingTimerWhenWrappedConnectorReturnsPendingPromiseThatResolves()
     {
-        $promise = new Promise\Promise(function () { }, $this->expectCallableOnce());
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(5.0, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
+        $deferred = new Deferred();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn($deferred->promise());
 
-        $timeout = new TimeoutConnector($connector, 0.01);
+        $timeout = new TimeoutConnector($connector, 5.0, $loop);
 
-        $timeout->connect('google.com:80')->then(
-            $this->expectCallableNever(),
-            $this->expectCallableOnce()
-        );
+        $promise = $timeout->connect('example.com:80');
 
-        Loop::run();
+        $connection = $this->getMockBuilder('React\Socket\ConnectionInterface')->getMock();
+        $deferred->resolve($connection);
+
+        $resolved = null;
+        $promise->then(function ($value) use (&$resolved) {
+            $resolved = $value;
+        });
+
+        $this->assertSame($connection, $resolved);
     }
 
-    public function testCancelsPendingPromiseOnCancel()
+    public function testRejectsPromiseAndCancelsPendingConnectionWhenTimeoutTriggers()
     {
-        $promise = new Promise\Promise(function () { }, function () { throw new \Exception(); });
+        $timerCallback = null;
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.01, $this->callback(function ($callback) use (&$timerCallback) {
+            $timerCallback = $callback;
+            return true;
+        }))->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
 
+        $cancelled = 0;
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
-        $connector->expects($this->once())->method('connect')->with('google.com:80')->will($this->returnValue($promise));
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn(new Promise(function () { }, function () use (&$cancelled) {
+            ++$cancelled;
+            throw new \RuntimeException();
+        }));
 
-        $timeout = new TimeoutConnector($connector, 0.01);
+        $timeout = new TimeoutConnector($connector, 0.01, $loop);
 
-        $out = $timeout->connect('google.com:80');
-        $out->cancel();
+        $promise = $timeout->connect('example.com:80');
 
-        $out->then($this->expectCallableNever(), $this->expectCallableOnce());
+        $this->assertEquals(0, $cancelled);
+
+        $this->assertNotNull($timerCallback);
+        $timerCallback();
+
+        $this->assertEquals(1, $cancelled);
+
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertEquals('Connection to example.com:80 timed out after 0.01 seconds (ETIMEDOUT)' , $exception->getMessage());
+        $this->assertEquals(\defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110, $exception->getCode());
+    }
+
+    public function testCancellingPromiseWillCancelPendingConnectionAndRejectPromise()
+    {
+        $timer = $this->getMockBuilder('React\EventLoop\TimerInterface')->getMock();
+        $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
+        $loop->expects($this->once())->method('addTimer')->with(0.01, $this->anything())->willReturn($timer);
+        $loop->expects($this->once())->method('cancelTimer')->with($timer);
+
+        $cancelled = 0;
+        $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
+        $connector->expects($this->once())->method('connect')->with('example.com:80')->willReturn(new Promise(function () { }, function () use (&$cancelled) {
+            ++$cancelled;
+            throw new \RuntimeException('Cancelled');
+        }));
+
+        $timeout = new TimeoutConnector($connector, 0.01, $loop);
+
+        $promise = $timeout->connect('example.com:80');
+
+        $this->assertEquals(0, $cancelled);
+
+        assert(method_exists($promise, 'cancel'));
+        $promise->cancel();
+
+        $this->assertEquals(1, $cancelled);
+
+        $exception = null;
+        $promise->then(null, function ($reason) use (&$exception) {
+            $exception = $reason;
+        });
+
+        assert($exception instanceof \RuntimeException);
+        $this->assertEquals('Cancelled', $exception->getMessage());
     }
 
     public function testRejectionDuringConnectionShouldNotCreateAnyGarbageReferences()
