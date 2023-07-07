@@ -582,7 +582,13 @@ class FunctionalSecureServerTest extends TestCase
         $connector = new SecureConnector(new TcpConnector(), null, array(
             'verify_peer' => false
         ));
-        $connector->connect($server->getAddress());
+        $promise = $connector->connect($server->getAddress());
+
+        try {
+            \React\Async\await($promise);
+        } catch (\RuntimeException $e) {
+            // ignore client-side exception
+        }
 
         $this->setExpectedException('RuntimeException', 'handshake');
 

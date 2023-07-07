@@ -265,6 +265,9 @@ class SecureConnectorTest extends TestCase
         $this->tcp->expects($this->once())->method('connect')->willReturn($tcp->promise());
 
         $promise = $this->connector->connect('example.com:80');
+        
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
+
         $tcp->reject(new \RuntimeException());
         unset($promise, $tcp);
 
@@ -293,6 +296,9 @@ class SecureConnectorTest extends TestCase
         $ref->setValue($this->connector, $encryption);
 
         $promise = $this->connector->connect('example.com:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
+
         $tcp->resolve($connection);
         $tls->reject(new \RuntimeException());
         unset($promise, $tcp, $tls);

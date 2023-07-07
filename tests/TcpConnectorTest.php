@@ -116,7 +116,9 @@ class TcpConnectorTest extends TestCase
         // dummy rejected promise to make sure autoloader has initialized all classes
         class_exists('React\Socket\SocketServer', true);
         class_exists('PHPUnit\Framework\Error\Warning', true);
-        new Promise(function () { throw new \RuntimeException('dummy'); });
+        $promise = new Promise(function () { throw new \RuntimeException('dummy'); });
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
+        unset($promise);
 
         // keep creating dummy file handles until all file descriptors are exhausted
         $fds = array();

@@ -115,7 +115,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->never())->method('resolveAll');
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('[::1]:80'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('[::1]:80');
+        $promise = $this->connector->connect('[::1]:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -125,7 +127,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
         $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('1.2.3.4:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('google.com:80');
+        $promise = $this->connector->connect('google.com:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -135,7 +139,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('::1'))));
         $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('[::1]:80?hostname=google.com'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('google.com:80');
+        $promise = $this->connector->connect('google.com:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -145,7 +151,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->never())->method('resolveAll');
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('scheme://127.0.0.1:80/path?query#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment');
+        $promise = $this->connector->connect('scheme://127.0.0.1:80/path?query#fragment');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -155,7 +163,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
         $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/path?query&hostname=google.com#fragment'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://google.com:80/path?query#fragment');
+        $promise = $this->connector->connect('scheme://google.com:80/path?query#fragment');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -165,7 +175,9 @@ class HappyEyeBallsConnectorTest extends TestCase
         $this->resolver->expects($this->exactly(2))->method('resolveAll')->with($this->equalTo('google.com'), $this->anything())->will($this->returnValue(Promise\resolve(array('1.2.3.4'))));
         $this->tcp->expects($this->exactly(2))->method('connect')->with($this->equalTo('scheme://1.2.3.4:80/?hostname=google.de'))->will($this->returnValue(Promise\reject(new \Exception('reject'))));
 
-        $this->connector->connect('scheme://google.com:80/?hostname=google.de');
+        $promise = $this->connector->connect('scheme://google.com:80/?hostname=google.de');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $this->loop->run();
     }
@@ -321,7 +333,6 @@ class HappyEyeBallsConnectorTest extends TestCase
     public function provideIpvAddresses()
     {
         $ipv6 = array(
-            array(),
             array('1:2:3:4'),
             array('1:2:3:4', '5:6:7:8'),
             array('1:2:3:4', '5:6:7:8', '9:10:11:12'),

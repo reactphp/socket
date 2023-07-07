@@ -208,6 +208,9 @@ class TimeoutConnectorTest extends TestCase
         $timeout = new TimeoutConnector($connector, 0.01);
 
         $promise = $timeout->connect('example.com:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
+
         $connection->reject(new \RuntimeException('Connection failed'));
         unset($promise, $connection);
 
@@ -231,6 +234,8 @@ class TimeoutConnectorTest extends TestCase
         $timeout = new TimeoutConnector($connector, 0);
 
         $promise = $timeout->connect('example.com:80');
+
+        $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         Loop::run();
         unset($promise, $connection);

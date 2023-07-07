@@ -174,7 +174,6 @@ class IntegrationTest extends TestCase
             null,
             function ($e) use (&$wait) {
                 $wait = false;
-                throw $e;
             }
         );
 
@@ -209,7 +208,6 @@ class IntegrationTest extends TestCase
             null,
             function ($e) use (&$wait) {
                 $wait = false;
-                throw $e;
             }
         );
 
@@ -241,7 +239,6 @@ class IntegrationTest extends TestCase
             null,
             function ($e) use (&$wait) {
                 $wait = false;
-                throw $e;
             }
         );
 
@@ -273,7 +270,6 @@ class IntegrationTest extends TestCase
             null,
             function ($e) use (&$wait) {
                 $wait = false;
-                throw $e;
             }
         );
 
@@ -315,7 +311,6 @@ class IntegrationTest extends TestCase
             null,
             function ($e) use (&$wait) {
                 $wait = false;
-                throw $e;
             }
         );
 
