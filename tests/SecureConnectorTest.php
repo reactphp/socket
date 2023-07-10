@@ -258,14 +258,15 @@ class SecureConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
-        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $tcp = new Deferred();
         $this->tcp->expects($this->once())->method('connect')->willReturn($tcp->promise());
 
         $promise = $this->connector->connect('example.com:80');
-        
+
         $promise->then(null, $this->expectCallableOnce()); // avoid reporting unhandled rejection
 
         $tcp->reject(new \RuntimeException());
@@ -280,7 +281,9 @@ class SecureConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $connection = $this->getMockBuilder('React\Socket\Connection')->disableOriginalConstructor()->getMock();
 

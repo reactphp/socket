@@ -293,8 +293,9 @@ class DnsConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
-        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $dns = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
@@ -316,7 +317,9 @@ class DnsConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $dns = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
@@ -341,7 +344,9 @@ class DnsConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $dns = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
@@ -369,7 +374,9 @@ class DnsConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $dns = new Deferred(function () {
             throw new \RuntimeException();
@@ -391,7 +398,9 @@ class DnsConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $dns = new Deferred();
         $this->resolver->expects($this->once())->method('resolve')->with($this->equalTo('example.com'))->willReturn($dns->promise());
