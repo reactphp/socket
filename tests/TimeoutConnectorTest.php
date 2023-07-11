@@ -199,7 +199,9 @@ class TimeoutConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $connection = new Deferred();
         $connector = $this->getMockBuilder('React\Socket\ConnectorInterface')->getMock();
@@ -223,7 +225,9 @@ class TimeoutConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $connection = new Deferred(function () {
             throw new \RuntimeException('Connection cancelled');

@@ -126,8 +126,9 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => false));
 
-        gc_collect_cycles();
-        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $promise = $connector->connect('8.8.8.8:80');
         $promise->cancel();
@@ -144,7 +145,10 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array());
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
+
         $promise = $connector->connect('8.8.8.8:80');
         $promise->cancel();
         unset($promise);
@@ -167,7 +171,9 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => false));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $wait = true;
         $promise = $connector->connect('127.0.0.1:1')->then(
@@ -201,7 +207,9 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => 0.001));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $wait = true;
         $promise = $connector->connect('google.com:80')->then(
@@ -232,7 +240,9 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => 0.000001));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $wait = true;
         $promise = $connector->connect('8.8.8.8:53')->then(
@@ -263,7 +273,9 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => false));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $wait = true;
         $promise = $connector->connect('example.invalid:80')->then(
@@ -304,7 +316,9 @@ class IntegrationTest extends TestCase
             )
         ));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $wait = true;
         $promise = $connector->connect('tls://self-signed.badssl.com:443')->then(
@@ -338,7 +352,10 @@ class IntegrationTest extends TestCase
 
         $connector = new Connector(array('timeout' => false));
 
-        gc_collect_cycles();
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
+
         $promise = $connector->connect('google.com:80')->then(
             function ($conn) {
                 $conn->close();

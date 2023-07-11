@@ -372,8 +372,9 @@ class TcpConnectorTest extends TestCase
             $this->markTestSkipped('Not supported on legacy Promise v1 API');
         }
 
-        gc_collect_cycles();
-        gc_collect_cycles(); // clear twice to avoid leftovers in PHP 7.4 with ext-xdebug and code coverage turned on
+        while (gc_collect_cycles()) {
+            // collect all garbage cycles
+        }
 
         $loop = $this->getMockBuilder('React\EventLoop\LoopInterface')->getMock();
         $connector = new TcpConnector($loop);
