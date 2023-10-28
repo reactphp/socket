@@ -14,6 +14,7 @@ jobs:
           - ubuntu-22.04
           - windows-2022
         php:
+          - 8.3
           - 8.2
           - 8.1
           - 8.0
@@ -27,7 +28,7 @@ jobs:
           - 5.4
           - 5.3
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -46,10 +47,10 @@ jobs:
     runs-on: macos-12
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.2
           coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
@@ -59,7 +60,7 @@ jobs:
     runs-on: ubuntu-22.04
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: cp "$(which composer)" composer.phar && ./composer.phar self-update --2.2 # downgrade Composer for HHVM
       - name: Run hhvm composer.phar install
         uses: docker://hhvm/hhvm:3.30-lts-latest
