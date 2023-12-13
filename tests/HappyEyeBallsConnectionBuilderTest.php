@@ -695,7 +695,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             array('reactphp.org', Message::TYPE_AAAA),
             array('reactphp.org', Message::TYPE_A)
         )->willReturnOnConsecutiveCalls(
-            new Promise(function () { }, $this->expectCallableOnce()),
+            new Promise(function () { }, function () {
+                throw new \RuntimeException('DNS cancelled');
+            }),
             \React\Promise\resolve(array('127.0.0.1'))
         );
 
