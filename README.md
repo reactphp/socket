@@ -23,6 +23,8 @@ handle multiple concurrent connections without blocking.
   * [ConnectionInterface](#connectioninterface)
     * [getRemoteAddress()](#getremoteaddress)
     * [getLocalAddress()](#getlocaladdress)
+  * [OpportunisticTlsConnectionInterface](#opportunistictlsconnectioninterface)
+    * [enableEncryption()](#enableencryption)
 * [Server usage](#server-usage)
   * [ServerInterface](#serverinterface)
     * [connection event](#connection-event)
@@ -193,6 +195,64 @@ If your system has multiple interfaces (e.g. a WAN and a LAN interface),
 you can use this method to find out which interface was actually
 used for this connection.
 
+### OpportunisticTlsConnectionInterface
+
+The `OpportunisticTlsConnectionInterface` extends the 
+[`ConnectionInterface`](#connectioninterface) and adds the ability of 
+enabling the TLS encryption on the connection when desired.
+
+#### enableEncryption
+
+When negotiated with the server when to start encrypting traffic using TLS, you 
+can enable it by calling `enableEncryption()`. This will either return a promise 
+that resolves with a `OpportunisticTlsConnectionInterface` connection or throw a 
+`RuntimeException` if the encryption failed. If successful, all traffic back and 
+forth will be encrypted. In the following example we ask the server if they want 
+to encrypt the connection, and when it responds with `yes` we enable the encryption:
+
+```php
+$connector = new React\Socket\Connector();
+$connector->connect('opportunistic+tls://example.com:5432/')->then(function (React\Socket\OpportunisticTlsConnectionInterface $startTlsConnection) {
+    $connection->write('let\'s encrypt?');
+
+    return React\Promise\Stream\first($connection)->then(function ($data) use ($connection) {
+        if ($data === 'yes') {
+            return $connection->enableEncryption();
+        }
+        
+        return $stream;
+    });
+})->then(function (React\Socket\ConnectionInterface $connection) {
+    $connection->write('Hello!');
+});
+```
+
+The `enableEncryption` function resolves with itself. As such you can't see the data 
+encrypted when you hook into the events before enabling, as shown below:
+
+```php
+$connector = new React\Socket\Connector();
+$connector->connect('opportunistic+tls://example.com:5432/')->then(function (React\Socket\OpportunisticTlsConnectionInterface $startTlsConnection) {   
+    $connection->on('data', function ($data) {
+        echo 'Raw: ', $data, PHP_EOL;
+    });
+    
+    return $connection->enableEncryption();
+})->then(function (React\Socket\ConnectionInterface $connection) {
+    $connection->on('data', function ($data) {
+        echo 'TLS: ', $data, PHP_EOL;
+    });
+});
+```
+
+When the other side sends `Hello World!` over the encrypted connection, the output 
+will be the following:
+
+```
+Raw: Hello World!
+TLS: Hello World!
+```
+
 ## Server usage
 
 ### ServerInterface
@@ -253,10 +313,10 @@ If the address can not be determined or is unknown at this time (such as
 after the socket has been closed), it MAY return a `NULL` value instead.
 
 Otherwise, it will return the full address (URI) as a string value, such
-as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`
-`unix://example.sock` or `unix:///path/to/example.sock`.
-Note that individual URI components are application specific and depend
-on the underlying transport protocol.
+as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+`unix://example.sock`, `unix:///path/to/example.sock`, or 
+`opportunistic+tls://127.0.0.1:443`.  Note that individual URI components 
+are application specific and depend on the underlying transport protocol.
 
 If this is a TCP/IP based server and you only want the local port, you may
 use something like this:
@@ -478,6 +538,22 @@ $socket = new React\Socket\SocketServer('tls://127.0.0.1:8000', array(
 ));
 ```
 
+To start a server with opportunistic TLS support use `opportunistic+tls://` as the scheme instead of `tls://`:
+
+```php
+$socket = new React\Socket\SocketServer('opportunistic+tls://127.0.0.1:8000', array(
+    'tls' => array(
+        'local_cert' => 'server.pem',
+        'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_SERVER
+    )
+));
+$server->on('connection', static function (OpportunisticTlsConnectionInterface $connection) use ($server) {
+    return $connection->enableEncryption();
+});
+```
+
+See also the [examples](examples).
+
 > Note that available [TLS context options](https://www.php.net/manual/en/context.ssl.php),
   their defaults and effects of changing these may vary depending on your system
   and/or PHP version.
@@ -696,6 +772,21 @@ pass the event loop instance to use for this object. You can use a `null` value
 here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
 This value SHOULD NOT be given unless you're sure you want to explicitly use a
 given event loop instance.
+
+The `SecureServer` class supports opportunistic TLS  by passing true in as a 4th 
+constructor parameter. This, when a client connects, emits a 
+[`OpportunisticTlsConnectionInterface`](#opportunistictlsconnectioninterface) 
+instead of the default [`ConnectionInterface`](#connectioninterface). It won't be 
+TLS encrypted from the start, but you can enable the TLS encryption on the connection 
+after negotiating with the client.
+
+```php
+$server = new React\Socket\TcpServer(8000);
+$server = new React\Socket\SecureServer($server, null, array(
+    'local_cert' => 'server.pem',
+    'passphrase' => 'secret'
+), true);
+```
 
 > Advanced usage: Despite allowing any `ServerInterface` as first parameter,
 you SHOULD pass a `TcpServer` instance as first parameter, unless you
@@ -1387,6 +1478,22 @@ want to negotiate with the remote side:
 $secureConnector = new React\Socket\SecureConnector($dnsConnector, null, array(
     'crypto_method' => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
 ));
+```
+
+The `SecureConnector` class supports opportunistic TLS  by using 
+`opportunistic-tls://` as scheme instead of `tls://`. This, when connected, 
+returns a [`OpportunisticTlsConnectionInterface`](#opportunistictlsconnectioninterface) 
+instead of the default [`ConnectionInterface`](#connectioninterface). It won't be 
+TLS encrypted from the start, but you can enable the TLS encryption on the connection 
+after negotiating with the server.
+
+```php
+$secureConnector = new React\Socket\SecureConnector($dnsConnector);
+$secureConnector->connect('opportunistic-tls://example.com:5432')->then(function (OpportunisticTlsConnectionInterface $connection) {
+    return $connection->enableEncryption();
+})->then(function (OpportunisticTlsConnectionInterface $connection) {
+    $connection->write('Encrypted hi!');
+});
 ```
 
 > Advanced usage: Internally, the `SecureConnector` relies on setting up the

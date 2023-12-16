@@ -58,10 +58,13 @@ final class SocketServer extends EventEmitter implements ServerInterface
                 );
             }
 
-            $server = new TcpServer(str_replace('tls://', '', $uri), $loop, $context['tcp']);
+            $server = new TcpServer(str_replace(array('opportunistic+tls://', 'tls://'), '', $uri), $loop, $context['tcp']);
 
             if ($scheme === 'tls') {
                 $server = new SecureServer($server, $loop, $context['tls']);
+            }
+            if ($scheme === 'opportunistic+tls') {
+                $server = new SecureServer($server, $loop, $context['tls'], true);
             }
         }
 

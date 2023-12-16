@@ -60,9 +60,10 @@ interface ServerInterface extends EventEmitterInterface
      * after the socket has been closed), it MAY return a `NULL` value instead.
      *
      * Otherwise, it will return the full address (URI) as a string value, such
-     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80` or `tls://127.0.0.1:443`.
-     * Note that individual URI components are application specific and depend
-     * on the underlying transport protocol.
+     * as `tcp://127.0.0.1:8080`, `tcp://[::1]:80`, `tls://127.0.0.1:443`,
+     * `unix://example.sock`, `unix:///path/to/example.sock`, or
+     * `opportunistic+tls://127.0.0.1:443`.  Note that individual URI components
+     * are application specific and depend on the underlying transport protocol.
      *
      * If this is a TCP/IP based server and you only want the local port, you may
      * use something like this:

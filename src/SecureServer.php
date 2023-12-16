@@ -57,6 +57,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
     private $tcp;
     private $encryption;
     private $context;
+    private $opportunisticTls = false;
 
     /**
      * Creates a secure TLS server and starts waiting for incoming connections
@@ -122,11 +123,13 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * @see TcpServer
      * @link https://www.php.net/manual/en/context.ssl.php for TLS context options
      */
-    public function __construct(ServerInterface $tcp, LoopInterface $loop = null, array $context = array())
+    public function __construct(ServerInterface $tcp, LoopInterface $loop = null, array $context = array(), $opportunisticTls = false)
     {
         if (!\function_exists('stream_socket_enable_crypto')) {
             throw new \BadMethodCallException('Encryption not supported on your platform (HHVM < 3.8?)'); // @codeCoverageIgnore
         }
+
+        $this->opportunisticTls = $opportunisticTls;
 
         // default to empty passphrase to suppress blocking passphrase prompt
         $context += array(
@@ -151,6 +154,10 @@ final class SecureServer extends EventEmitter implements ServerInterface
         $address = $this->tcp->getAddress();
         if ($address === null) {
             return null;
+        }
+
+        if ($this->opportunisticTls) {
+            $address = 'opportunistic+' . $address;
         }
 
         return \str_replace('tcp://' , 'tls://', $address);
@@ -187,6 +194,12 @@ final class SecureServer extends EventEmitter implements ServerInterface
         // get remote address before starting TLS handshake in case connection closes during handshake
         $remote = $connection->getRemoteAddress();
         $that = $this;
+
+        if ($this->opportunisticTls === true) {
+            $connection = new OpportunisticTlsConnection($connection, $this->encryption, $remote);
+            $that->emit('connection', array($connection));
+            return ;
+        }
 
         $this->encryption->enable($connection)->then(
             function ($conn) use ($that) {
