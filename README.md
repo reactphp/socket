@@ -6,6 +6,14 @@
 Async, streaming plaintext TCP/IP and secure TLS socket server and client
 connections for [ReactPHP](https://reactphp.org/).
 
+> **Development version:** This branch contains the code for the upcoming v3
+> release. For the code of the current stable v1 release, check out the
+> [`1.x` branch](https://github.com/reactphp/socket/tree/1.x).
+>
+> The upcoming v3 release will be the way forward for this package. However,
+> we will still actively support v1 for those not yet on the latest version.
+> See also [installation instructions](#install) for more details.
+
 The socket library provides re-usable interfaces for a socket-layer
 server and client based on the [`EventLoop`](https://github.com/reactphp/event-loop)
 and [`Stream`](https://github.com/reactphp/stream) components.
@@ -1490,11 +1498,11 @@ $promise = $connector->connect('localhost:80');
 The recommended way to install this library is [through Composer](https://getcomposer.org/).
 [New to Composer?](https://getcomposer.org/doc/00-intro.md)
 
-This project follows [SemVer](https://semver.org/).
-This will install the latest supported version:
+Once released, this project will follow [SemVer](https://semver.org/).
+At the moment, this will install the latest development version:
 
 ```bash
-composer require react/socket:^1.15
+composer require react/socket:^3@dev
 ```
 
 See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
