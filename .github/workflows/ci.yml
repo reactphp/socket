@@ -8,6 +8,7 @@ jobs:
   PHPUnit:
     name: PHPUnit (PHP ${{ matrix.php }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'windows-2022' }}
     strategy:
       matrix:
         os:
@@ -28,7 +29,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
+          coverage: ${{ (matrix.os != 'windows-2022' || matrix.php < 8.1) && 'xdebug' || '' }} # temporarily skip Xdebug on Windows with PHP 8.1+ due to segfault with Xdebug 3.4.2
           ini-file: development
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
@@ -45,6 +46,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
+          extensions: xdebug-3.4.1 # temporarily downgrade Xdebug due to segfault on macOS with Xdebug 3.4.2
           coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
