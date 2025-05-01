@@ -28,7 +28,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          coverage: xdebug
+          coverage: ${{ matrix.php < 8.0 && 'xdebug' || 'pcov' }}
           ini-file: development
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
@@ -45,6 +45,6 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: 8.2
-          coverage: xdebug
+          coverage: pcov
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
