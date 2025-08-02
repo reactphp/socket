@@ -37,7 +37,9 @@ class TcpServerTest extends TestCase
         $server = new TcpServer(0);
 
         $ref = new \ReflectionProperty($server, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($server);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);

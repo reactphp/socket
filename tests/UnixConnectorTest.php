@@ -30,7 +30,9 @@ class UnixConnectorTest extends TestCase
         $connector = new UnixConnector();
 
         $ref = new \ReflectionProperty($connector, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($connector);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);

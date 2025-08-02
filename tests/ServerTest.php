@@ -17,11 +17,15 @@ class ServerTest extends TestCase
         $server = new Server(0);
 
         $ref = new \ReflectionProperty($server, 'server');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $tcp = $ref->getValue($server);
 
         $ref = new \ReflectionProperty($tcp, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($tcp);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
@@ -115,7 +119,9 @@ class ServerTest extends TestCase
         $server = new Server(0);
 
         $ref = new \ReflectionProperty($server, 'server');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $tcp = $ref->getvalue($server);
 
         $error = new \RuntimeException();
