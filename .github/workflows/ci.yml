@@ -11,9 +11,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2022
         php:
+          - 8.4
           - 8.3
           - 8.2
           - 8.1
@@ -44,13 +45,13 @@ jobs:
 
   PHPUnit-macOS:
     name: PHPUnit (macOS)
-    runs-on: macos-12
+    runs-on: macos-14
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.2
+          php-version: 8.4
           coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
