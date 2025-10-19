@@ -845,13 +845,17 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $ref = new \ReflectionProperty($builder, 'connectQueue');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($builder, ['::1']);
 
         $builder->check($this->expectCallableNever(), function () { });
 
         $ref = new \ReflectionProperty($builder, 'connectionPromises');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $promises = $ref->getValue($builder);
 
         $this->assertEquals([], $promises);
@@ -877,7 +881,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $ref = new \ReflectionProperty($builder, 'connectQueue');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($builder, ['::1', '::1']);
 
         $builder->check($this->expectCallableNever(), function () { });
@@ -905,7 +911,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
         $builder = new HappyEyeBallsConnectionBuilder($loop, $connector, $resolver, $uri, $host, $parts);
 
         $ref = new \ReflectionProperty($builder, 'connectQueue');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($builder, ['::1', '::1']);
 
         $builder->check($this->expectCallableNever(), function () { });
@@ -928,7 +936,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             $builder->mixIpsIntoConnectQueue(['::1', '::2']);
 
             $ref = new \ReflectionProperty($builder, 'connectQueue');
-            $ref->setAccessible(true);
+            if (\PHP_VERSION_ID < 80100) {
+                $ref->setAccessible(true);
+            }
             $value = $ref->getValue($builder);
 
             if ($value === ['::1', '::2']) {
@@ -954,7 +964,9 @@ class HappyEyeBallsConnectionBuilderTest extends TestCase
             $builder->mixIpsIntoConnectQueue(['::1', '::2']);
 
             $ref = new \ReflectionProperty($builder, 'connectQueue');
-            $ref->setAccessible(true);
+            if (\PHP_VERSION_ID < 80100) {
+                $ref->setAccessible(true);
+            }
             $value = $ref->getValue($builder);
 
             if ($value === ['::2', '::1']) {

@@ -22,11 +22,15 @@ class SocketServerTest extends TestCase
         $socket->close();
 
         $ref = new \ReflectionProperty($socket, 'server');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $tcp = $ref->getValue($socket);
 
         $ref = new \ReflectionProperty($tcp, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($tcp);
 
         $this->assertInstanceOf(LoopInterface::class, $loop);
@@ -140,7 +144,9 @@ class SocketServerTest extends TestCase
         $socket = new SocketServer('127.0.0.1:0', []);
 
         $ref = new \ReflectionProperty($socket, 'server');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $tcp = $ref->getvalue($socket);
 
         $error = new \RuntimeException();

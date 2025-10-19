@@ -15,11 +15,15 @@ class ConnectorTest extends TestCase
         $connector = new Connector();
 
         $ref = new \ReflectionProperty($connector, 'connectors');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $connectors = $ref->getValue($connector);
 
         $ref = new \ReflectionProperty($connectors['tcp'], 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($connectors['tcp']);
 
         $this->assertInstanceOf(LoopInterface::class, $loop);
@@ -32,11 +36,15 @@ class ConnectorTest extends TestCase
         $connector = new Connector([], $loop);
 
         $ref = new \ReflectionProperty($connector, 'connectors');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $connectors = $ref->getValue($connector);
 
         $ref = new \ReflectionProperty($connectors['tcp'], 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($connectors['tcp']);
 
         $this->assertInstanceOf(LoopInterface::class, $loop);
@@ -53,7 +61,9 @@ class ConnectorTest extends TestCase
         ]);
 
         $ref = new \ReflectionProperty($connector, 'connectors');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $connectors = $ref->getValue($connector);
 
         $this->assertSame($tcp, $connectors['tcp']);

@@ -22,7 +22,9 @@ class TcpConnectorTest extends TestCase
         $connector = new TcpConnector();
 
         $ref = new \ReflectionProperty($connector, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($connector);
 
         $this->assertInstanceOf(LoopInterface::class, $loop);
