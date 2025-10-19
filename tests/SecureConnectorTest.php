@@ -37,11 +37,15 @@ class SecureConnectorTest extends TestCase
         $connector = new SecureConnector($this->tcp);
 
         $ref = new \ReflectionProperty($connector, 'streamEncryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $streamEncryption = $ref->getValue($connector);
 
         $ref = new \ReflectionProperty($streamEncryption, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($streamEncryption);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
@@ -185,7 +189,9 @@ class SecureConnectorTest extends TestCase
         $encryption->expects($this->once())->method('enable')->with($connection)->willReturn(new \React\Promise\Promise(function () { }));
 
         $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($this->connector, $encryption);
 
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
@@ -202,7 +208,9 @@ class SecureConnectorTest extends TestCase
         $encryption->expects($this->once())->method('enable')->willReturn(Promise\reject(new \RuntimeException('TLS error', 123)));
 
         $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($this->connector, $encryption);
 
         $this->tcp->expects($this->once())->method('connect')->with($this->equalTo('example.com:80'))->willReturn(Promise\resolve($connection));
@@ -234,7 +242,9 @@ class SecureConnectorTest extends TestCase
         $encryption->expects($this->once())->method('enable')->willReturn($pending);
 
         $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($this->connector, $encryption);
 
         $deferred = new Deferred();
@@ -301,7 +311,9 @@ class SecureConnectorTest extends TestCase
         $encryption->expects($this->once())->method('enable')->willReturn($tls->promise());
 
         $ref = new \ReflectionProperty($this->connector, 'streamEncryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($this->connector, $encryption);
 
         $promise = $this->connector->connect('example.com:80');

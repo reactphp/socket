@@ -331,7 +331,9 @@ class FunctionalTcpServerTest extends TestCase
         ));
 
         $ref = new \ReflectionProperty($server, 'master');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $socket = $ref->getValue($server);
 
         $context = stream_context_get_options($socket);
@@ -346,7 +348,9 @@ class FunctionalTcpServerTest extends TestCase
         $server = new TcpServer(0);
 
         $ref = new \ReflectionProperty($server, 'master');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $socket = $ref->getValue($server);
 
         $context = stream_context_get_options($socket);

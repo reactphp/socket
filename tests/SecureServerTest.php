@@ -33,11 +33,15 @@ class SecureServerTest extends TestCase
         $server = new SecureServer($tcp);
 
         $ref = new \ReflectionProperty($server, 'encryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $encryption = $ref->getValue($server);
 
         $ref = new \ReflectionProperty($encryption, 'loop');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $loop = $ref->getValue($encryption);
 
         $this->assertInstanceOf('React\EventLoop\LoopInterface', $loop);
@@ -137,11 +141,15 @@ class SecureServerTest extends TestCase
         $encryption->expects($this->once())->method('enable')->willReturn($pending);
 
         $ref = new \ReflectionProperty($server, 'encryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($server, $encryption);
 
         $ref = new \ReflectionProperty($server, 'context');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($server, array());
 
         $server->on('error', $this->expectCallableNever());
@@ -168,11 +176,15 @@ class SecureServerTest extends TestCase
         $encryption->expects($this->once())->method('enable')->willReturn(\React\Promise\reject($error));
 
         $ref = new \ReflectionProperty($server, 'encryption');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($server, $encryption);
 
         $ref = new \ReflectionProperty($server, 'context');
-        $ref->setAccessible(true);
+        if (\PHP_VERSION_ID < 80100) {
+            $ref->setAccessible(true);
+        }
         $ref->setValue($server, array());
 
         $error = null;
