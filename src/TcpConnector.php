@@ -88,14 +88,21 @@ final class TcpConnector implements ConnectorInterface
         // HHVM fails to parse URIs with a query but no path, so let's simplify our URI here
         $remote = 'tcp://' . $parts['host'] . ':' . $parts['port'];
 
-        $stream = @\stream_socket_client(
-            $remote,
-            $errno,
-            $errstr,
-            0,
-            \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT,
-            \stream_context_create($context)
-        );
+        try {
+            $stream = @\stream_socket_client(
+                $remote,
+                $errno,
+                $errstr,
+                0,
+                \STREAM_CLIENT_CONNECT | \STREAM_CLIENT_ASYNC_CONNECT,
+                \stream_context_create($context)
+            );
+        } catch (\Exception $e) {
+            return Promise\reject(new \RuntimeException(
+                'Connection to ' . $uri . ' failed: ' . $errstr . SocketServer::errconst($errno),
+                $errno
+            ));
+        }
 
         if (false === $stream) {
             return Promise\reject(new \RuntimeException(
