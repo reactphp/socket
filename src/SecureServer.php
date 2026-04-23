@@ -114,12 +114,11 @@ final class SecureServer extends EventEmitter implements ServerInterface
      * then close the underlying connection.
      *
      * @param ServerInterface|TcpServer $tcp
-     * @param ?LoopInterface $loop
      * @param array $context
      * @see TcpServer
      * @link https://www.php.net/manual/en/context.ssl.php for TLS context options
      */
-    public function __construct(ServerInterface $tcp, ?LoopInterface $loop = null, array $context = [])
+    public function __construct(ServerInterface $tcp, array $context = [])
     {
         // default to empty passphrase to suppress blocking passphrase prompt
         $context += [
@@ -127,7 +126,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
         ];
 
         $this->tcp = $tcp;
-        $this->encryption = new StreamEncryption($loop ?? Loop::get());
+        $this->encryption = new StreamEncryption();
         $this->context = $context;
 
         $this->tcp->on('connection', function ($connection) {

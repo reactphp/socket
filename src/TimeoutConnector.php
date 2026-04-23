@@ -10,13 +10,11 @@ final class TimeoutConnector implements ConnectorInterface
 {
     private $connector;
     private $timeout;
-    private $loop;
 
-    public function __construct(ConnectorInterface $connector, $timeout, ?LoopInterface $loop = null)
+    public function __construct(ConnectorInterface $connector, $timeout)
     {
         $this->connector = $connector;
         $this->timeout = $timeout;
-        $this->loop = $loop ?? Loop::get();
     }
 
     public function connect($uri)
@@ -27,13 +25,13 @@ final class TimeoutConnector implements ConnectorInterface
             $timer = null;
             $promise = $promise->then(function ($v) use (&$timer, $resolve) {
                 if ($timer) {
-                    $this->loop->cancelTimer($timer);
+                    Loop::cancelTimer($timer);
                 }
                 $timer = false;
                 $resolve($v);
             }, function ($v) use (&$timer, $reject) {
                 if ($timer) {
-                    $this->loop->cancelTimer($timer);
+                    Loop::cancelTimer($timer);
                 }
                 $timer = false;
                 $reject($v);
@@ -45,7 +43,7 @@ final class TimeoutConnector implements ConnectorInterface
             }
 
             // start timeout timer which will cancel the pending promise
-            $timer = $this->loop->addTimer($this->timeout, function () use (&$promise, $reject, $uri) {
+            $timer = Loop::addTimer($this->timeout, function () use (&$promise, $reject, $uri) {
                 $reject(new \RuntimeException(
                     'Connection to ' . $uri . ' timed out after ' . $this->timeout . ' seconds (ETIMEDOUT)',
                     \defined('SOCKET_ETIMEDOUT') ? \SOCKET_ETIMEDOUT : 110
