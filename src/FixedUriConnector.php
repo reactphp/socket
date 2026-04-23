@@ -2,6 +2,8 @@
 
 namespace React\Socket;
 
+use React\Promise\PromiseInterface;
+
 /**
  * Decorates an existing Connector to always use a fixed, preconfigured URI
  *
@@ -34,7 +36,7 @@ class FixedUriConnector implements ConnectorInterface
         $this->connector = $connector;
     }
 
-    public function connect($_)
+    public function connect($_): PromiseInterface
     {
         return $this->connector->connect($this->uri);
     }

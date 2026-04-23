@@ -113,17 +113,17 @@ class LimitingServer extends EventEmitter implements ServerInterface
      *
      * @return ConnectionInterface[]
      */
-    public function getConnections()
+    public function getConnections(): array
     {
         return $this->connections;
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->server->getAddress();
     }
 
-    public function pause()
+    public function pause(): void
     {
         if (!$this->manuPaused) {
             $this->manuPaused = true;
@@ -134,7 +134,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
         }
     }
 
-    public function resume()
+    public function resume(): void
     {
         if ($this->manuPaused) {
             $this->manuPaused = false;
@@ -145,13 +145,13 @@ class LimitingServer extends EventEmitter implements ServerInterface
         }
     }
 
-    public function close()
+    public function close(): void
     {
         $this->server->close();
     }
 
     /** @internal */
-    public function handleConnection(ConnectionInterface $connection)
+    public function handleConnection(ConnectionInterface $connection): void
     {
         // close connection if limit exceeded
         if ($this->limit !== null && \count($this->connections) >= $this->limit) {
@@ -178,7 +178,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
     }
 
     /** @internal */
-    public function handleDisconnection(ConnectionInterface $connection)
+    public function handleDisconnection(ConnectionInterface $connection): void
     {
         unset($this->connections[\array_search($connection, $this->connections)]);
 
@@ -193,7 +193,7 @@ class LimitingServer extends EventEmitter implements ServerInterface
     }
 
     /** @internal */
-    public function handleError(\Exception $error)
+    public function handleError(\Exception $error): void
     {
         $this->emit('error', [$error]);
     }

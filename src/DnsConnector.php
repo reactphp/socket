@@ -18,7 +18,7 @@ final class DnsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function connect($uri)
+    public function connect($uri): PromiseInterface
     {
         $original = $uri;
         if (\strpos($uri, '://') === false) {

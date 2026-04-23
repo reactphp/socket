@@ -5,6 +5,7 @@ namespace React\Socket;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 
 final class TimeoutConnector implements ConnectorInterface
 {
@@ -19,7 +20,7 @@ final class TimeoutConnector implements ConnectorInterface
         $this->loop = $loop ?? Loop::get();
     }
 
-    public function connect($uri)
+    public function connect($uri): PromiseInterface
     {
         $promise = $this->connector->connect($uri);
 
