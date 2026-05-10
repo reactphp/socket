@@ -34,7 +34,7 @@
         "react/stream": "^1.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.6 || ^7.5",
+        "phpunit/phpunit": "^9.6 || ^8.5 || ^7.5",
         "react/async": "^4.3 || ^3",
         "react/promise-stream": "^1.4",
         "react/promise-timer": "^1.11"
