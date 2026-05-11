@@ -27,11 +27,10 @@ final class SocketServer extends EventEmitter implements ServerInterface
      *
      * @param string         $uri
      * @param array          $context
-     * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, array $context = [], ?LoopInterface $loop = null)
+    public function __construct($uri, array $context = [])
     {
         // apply default options if not explicitly given
         $context += [
@@ -47,9 +46,9 @@ final class SocketServer extends EventEmitter implements ServerInterface
         }
 
         if ($scheme === 'unix') {
-            $server = new UnixServer($uri, $loop, $context['unix']);
+            $server = new UnixServer($uri, $context['unix']);
         } elseif ($scheme === 'php') {
-            $server = new FdServer($uri, $loop);
+            $server = new FdServer($uri);
         } else {
             if (preg_match('#^(?:\w+://)?\d+$#', $uri)) {
                 throw new \InvalidArgumentException(
@@ -58,10 +57,10 @@ final class SocketServer extends EventEmitter implements ServerInterface
                 );
             }
 
-            $server = new TcpServer(str_replace('tls://', '', $uri), $loop, $context['tcp']);
+            $server = new TcpServer(str_replace('tls://', '', $uri), $context['tcp']);
 
             if ($scheme === 'tls') {
-                $server = new SecureServer($server, $loop, $context['tls']);
+                $server = new SecureServer($server, $context['tls']);
             }
         }
 

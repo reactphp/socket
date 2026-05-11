@@ -4,6 +4,7 @@ namespace React\Socket;
 
 use React\Dns\Model\Message;
 use React\Dns\Resolver\ResolverInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\EventLoop\TimerInterface;
 use React\Promise\Deferred;
@@ -31,7 +32,6 @@ final class HappyEyeBallsConnectionBuilder
      */
     const RESOLUTION_DELAY = 0.05;
 
-    public $loop;
     public $connector;
     public $resolver;
     public $uri;
@@ -54,9 +54,8 @@ final class HappyEyeBallsConnectionBuilder
     public $lastError6;
     public $lastError4;
 
-    public function __construct(LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver, $uri, $host, $parts)
+    public function __construct(ConnectorInterface $connector, ResolverInterface $resolver, $uri, $host, $parts)
     {
-        $this->loop = $loop;
         $this->connector = $connector;
         $this->resolver = $resolver;
         $this->uri = $uri;
@@ -93,12 +92,12 @@ final class HappyEyeBallsConnectionBuilder
                     // discard all IPv4 addresses if cancelled
                     $ips = [];
                 });
-                $timer = $this->loop->addTimer($this::RESOLUTION_DELAY, function () use ($deferred, $ips) {
+                $timer = Loop::addTimer($this::RESOLUTION_DELAY, function () use ($deferred, $ips) {
                     $deferred->resolve($ips);
                 });
 
                 $this->resolverPromises[Message::TYPE_AAAA]->then(function () use ($timer, $deferred, &$ips) {
-                    $this->loop->cancelTimer($timer);
+                    Loop::cancelTimer($timer);
                     $deferred->resolve($ips);
                 });
 
@@ -139,7 +138,7 @@ final class HappyEyeBallsConnectionBuilder
 
             // cancel next attempt timer when there are no more IPs to connect to anymore
             if ($this->nextAttemptTimer !== null && !$this->connectQueue) {
-                $this->loop->cancelTimer($this->nextAttemptTimer);
+                Loop::cancelTimer($this->nextAttemptTimer);
                 $this->nextAttemptTimer = null;
             }
 
@@ -191,7 +190,7 @@ final class HappyEyeBallsConnectionBuilder
             // start next connection attempt immediately on error
             if ($this->connectQueue) {
                 if ($this->nextAttemptTimer !== null) {
-                    $this->loop->cancelTimer($this->nextAttemptTimer);
+                    Loop::cancelTimer($this->nextAttemptTimer);
                     $this->nextAttemptTimer = null;
                 }
 
@@ -216,7 +215,7 @@ final class HappyEyeBallsConnectionBuilder
         // Allow next connection attempt in 100ms: https://tools.ietf.org/html/rfc8305#section-5
         // Only start timer when more IPs are queued or when DNS query is still pending (might add more IPs)
         if ($this->nextAttemptTimer === null && (\count($this->connectQueue) > 0 || $this->resolved[Message::TYPE_A] === false || $this->resolved[Message::TYPE_AAAA] === false)) {
-            $this->nextAttemptTimer = $this->loop->addTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($resolve, $reject) {
+            $this->nextAttemptTimer = Loop::addTimer(self::CONNECTION_ATTEMPT_DELAY, function () use ($resolve, $reject) {
                 $this->nextAttemptTimer = null;
 
                 if ($this->connectQueue) {
@@ -259,7 +258,7 @@ final class HappyEyeBallsConnectionBuilder
         }
 
         if ($this->nextAttemptTimer instanceof TimerInterface) {
-            $this->loop->cancelTimer($this->nextAttemptTimer);
+            Loop::cancelTimer($this->nextAttemptTimer);
             $this->nextAttemptTimer = null;
         }
     }
