@@ -5,6 +5,7 @@ namespace React\Socket;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 final class TcpConnector implements ConnectorInterface
@@ -18,7 +19,7 @@ final class TcpConnector implements ConnectorInterface
         $this->context = $context;
     }
 
-    public function connect($uri)
+    public function connect($uri): PromiseInterface
     {
         if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;

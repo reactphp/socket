@@ -5,6 +5,7 @@ namespace React\Socket;
 use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 final class HappyEyeBallsConnector implements ConnectorInterface
@@ -20,7 +21,7 @@ final class HappyEyeBallsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function connect($uri)
+    public function connect($uri): PromiseInterface
     {
         $original = $uri;
         if (\strpos($uri, '://') === false) {

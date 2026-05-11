@@ -2,6 +2,8 @@
 
 namespace React\Socket;
 
+use React\Promise\PromiseInterface;
+
 /**
  * The `ConnectorInterface` is responsible for providing an interface for
  * establishing streaming connections, such as a normal TCP/IP connection.
@@ -55,5 +57,5 @@ interface ConnectorInterface
      *     Resolves with a `ConnectionInterface` on success or rejects with an `Exception` on error.
      * @see ConnectionInterface
      */
-    public function connect($uri);
+    public function connect($uri): PromiseInterface;
 }

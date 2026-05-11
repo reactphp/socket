@@ -54,7 +54,7 @@ final class HappyEyeBallsConnectionBuilder
     public $lastError6;
     public $lastError4;
 
-    public function __construct(LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver, $uri, $host, $parts)
+    public function __construct(LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver, string $uri, string $host, array $parts)
     {
         $this->loop = $loop;
         $this->connector = $connector;
@@ -64,7 +64,7 @@ final class HappyEyeBallsConnectionBuilder
         $this->parts = $parts;
     }
 
-    public function connect()
+    public function connect(): PromiseInterface
     {
         return new Promise(function ($resolve, $reject) {
             $lookupResolve = function ($type) use ($resolve, $reject) {
@@ -123,7 +123,7 @@ final class HappyEyeBallsConnectionBuilder
      *     always resolves with a list of IP addresses on success or an empty
      *     list on error.
      */
-    public function resolve($type, $reject)
+    public function resolve(int $type, callable $reject): PromiseInterface
     {
         return $this->resolver->resolveAll($this->host, $type)->then(null, function (\Exception $e) use ($type, $reject) {
             unset($this->resolverPromises[$type]);
@@ -159,7 +159,7 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function check($resolve, $reject)
+    public function check(callable $resolve, callable $reject)
     {
         $ip = \array_shift($this->connectQueue);
 
@@ -168,13 +168,13 @@ final class HappyEyeBallsConnectionBuilder
         \end($this->connectionPromises);
         $index = \key($this->connectionPromises);
 
-        $this->connectionPromises[$index]->then(function ($connection) use ($index, $resolve) {
+        $this->connectionPromises[$index]->then(function ($connection) use ($index, $resolve): void {
             unset($this->connectionPromises[$index]);
 
             $this->cleanUp();
 
             $resolve($connection);
-        }, function (\Exception $e) use ($index, $ip, $resolve, $reject) {
+        }, function (\Exception $e) use ($index, $ip, $resolve, $reject): void {
             unset($this->connectionPromises[$index]);
 
             $this->failureCount++;
@@ -228,8 +228,9 @@ final class HappyEyeBallsConnectionBuilder
 
     /**
      * @internal
+     * @return PromiseInterface<ConnectionInterface>
      */
-    public function attemptConnection($ip)
+    public function attemptConnection($ip): PromiseInterface
     {
         $uri = Connector::uri($this->parts, $this->host, $ip);
 
@@ -239,7 +240,7 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function cleanUp()
+    public function cleanUp(): void
     {
         // clear list of outstanding IPs to avoid creating new connections
         $this->connectQueue = [];
@@ -267,7 +268,7 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function hasBeenResolved()
+    public function hasBeenResolved(): bool
     {
         foreach ($this->resolved as $typeHasBeenResolved) {
             if ($typeHasBeenResolved === false) {
@@ -286,6 +287,8 @@ final class HappyEyeBallsConnectionBuilder
      * @link https://tools.ietf.org/html/rfc8305#section-4
      *
      * @internal
+     *
+     * @param array<string> $ips
      */
     public function mixIpsIntoConnectQueue(array $ips)
     {
@@ -307,7 +310,7 @@ final class HappyEyeBallsConnectionBuilder
      * @internal
      * @return string
      */
-    public function error()
+    public function error(): string
     {
         if ($this->lastError4 === $this->lastError6) {
             $message = $this->lastError6;
