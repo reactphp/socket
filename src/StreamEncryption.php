@@ -4,6 +4,7 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 
 /**
  * This class is considered internal and its API should not be relied upon
@@ -45,7 +46,7 @@ class StreamEncryption
      * @param Connection $stream
      * @return \React\Promise\PromiseInterface<Connection>
      */
-    public function enable(Connection $stream)
+    public function enable(Connection $stream): PromiseInterface
     {
         return $this->toggle($stream, true);
     }
@@ -55,7 +56,7 @@ class StreamEncryption
      * @param bool $toggle
      * @return \React\Promise\PromiseInterface<Connection>
      */
-    public function toggle(Connection $stream, $toggle)
+    public function toggle(Connection $stream, bool $toggle): PromiseInterface
     {
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
@@ -106,10 +107,10 @@ class StreamEncryption
      * @param int $method
      * @return void
      */
-    public function toggleCrypto($socket, Deferred $deferred, $toggle, $method)
+    public function toggleCrypto($socket, Deferred $deferred, $toggle, $method): void
     {
         $error = null;
-        \set_error_handler(function ($_, $errstr) use (&$error) {
+        \set_error_handler(function ($_, string $errstr) use (&$error) {
             $error = \str_replace(["\r", "\n"], ' ', $errstr);
 
             // remove useless function name from error message

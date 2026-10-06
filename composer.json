@@ -31,7 +31,7 @@
         "react/dns": "^1.13",
         "react/event-loop": "^1.2",
         "react/promise": "^3.2 || ^2.6 || ^1.2.1",
-        "react/stream": "^1.4"
+        "react/stream": "3.x-dev as 1.666.666"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.6 || ^8.5 || ^7.5",

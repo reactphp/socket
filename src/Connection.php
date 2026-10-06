@@ -78,42 +78,42 @@ class Connection extends EventEmitter implements ConnectionInterface
         $this->input->on('close', [$this, 'close']);
     }
 
-    public function isReadable()
+    public function isReadable(): bool
     {
         return $this->input->isReadable();
     }
 
-    public function isWritable()
+    public function isWritable(): bool
     {
         return $this->input->isWritable();
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->input->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->input->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = [])
+    public function pipe(WritableStreamInterface $dest, array $options = []): WritableStreamInterface
     {
         return $this->input->pipe($dest, $options);
     }
 
-    public function write($data)
+    public function write($data): bool
     {
         return $this->input->write($data);
     }
 
-    public function end($data = null)
+    public function end($data = null): void
     {
         $this->input->end($data);
     }
 
-    public function close()
+    public function close(): void
     {
         $this->input->close();
         $this->handleClose();
@@ -132,7 +132,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         @\stream_socket_shutdown($this->stream, \STREAM_SHUT_RDWR);
     }
 
-    public function getRemoteAddress()
+    public function getRemoteAddress(): ?string
     {
         if (!\is_resource($this->stream)) {
             return null;
@@ -141,7 +141,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         return $this->parseAddress(\stream_socket_get_name($this->stream, true));
     }
 
-    public function getLocalAddress()
+    public function getLocalAddress(): ?string
     {
         if (!\is_resource($this->stream)) {
             return null;
@@ -150,7 +150,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         return $this->parseAddress(\stream_socket_get_name($this->stream, false));
     }
 
-    private function parseAddress($address)
+    private function parseAddress($address): ?string
     {
         if ($address === false) {
             return null;

@@ -6,6 +6,7 @@ use React\Dns\Config\Config as DnsConfig;
 use React\Dns\Resolver\Factory as DnsFactory;
 use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 /**
@@ -146,7 +147,7 @@ final class Connector implements ConnectorInterface
         }
     }
 
-    public function connect($uri)
+    public function connect($uri): PromiseInterface
     {
         $scheme = 'tcp';
         if (\strpos($uri, '://') !== false) {
@@ -173,7 +174,7 @@ final class Connector implements ConnectorInterface
      * @return string
      * @internal
      */
-    public static function uri(array $parts, $host, $ip)
+    public static function uri(array $parts, $host, $ip): string
     {
         $uri = '';
 

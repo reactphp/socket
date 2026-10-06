@@ -138,7 +138,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
         });
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         $address = $this->tcp->getAddress();
         if ($address === null) {
@@ -148,23 +148,23 @@ final class SecureServer extends EventEmitter implements ServerInterface
         return \str_replace('tcp://' , 'tls://', $address);
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->tcp->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->tcp->resume();
     }
 
-    public function close()
+    public function close(): void
     {
-        return $this->tcp->close();
+        $this->tcp->close();
     }
 
     /** @internal */
-    public function handleConnection(ConnectionInterface $connection)
+    public function handleConnection(ConnectionInterface $connection): void
     {
         if (!$connection instanceof Connection) {
             $this->emit('error', [new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')]);

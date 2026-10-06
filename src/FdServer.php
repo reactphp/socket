@@ -146,7 +146,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->resume();
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         if (!\is_resource($this->master)) {
             return null;
@@ -167,7 +167,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         return 'tcp://' . $address;
     }
 
-    public function pause()
+    public function pause(): void
     {
         if (!$this->listening) {
             return;
@@ -177,7 +177,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->listening = false;
     }
 
-    public function resume()
+    public function resume(): void
     {
         if ($this->listening || !\is_resource($this->master)) {
             return;
@@ -195,7 +195,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->listening = true;
     }
 
-    public function close()
+    public function close(): void
     {
         if (!\is_resource($this->master)) {
             return;
@@ -207,7 +207,7 @@ final class FdServer extends EventEmitter implements ServerInterface
     }
 
     /** @internal */
-    public function handleConnection($socket)
+    public function handleConnection($socket): void
     {
         $connection = new Connection($socket, $this->loop);
         $connection->unix = $this->unix;

@@ -75,22 +75,22 @@ final class SocketServer extends EventEmitter implements ServerInterface
         });
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->server->getAddress();
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->server->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->server->resume();
     }
 
-    public function close()
+    public function close(): void
     {
         $this->server->close();
     }
@@ -144,7 +144,7 @@ final class SocketServer extends EventEmitter implements ServerInterface
      * @copyright Copyright (c) 2023 Christian Lück, taken from https://github.com/clue/errno with permission
      * @codeCoverageIgnore
      */
-    public static function errno($errstr)
+    public static function errno($errstr): int
     {
         // PHP defines the required `strerror()` function through either `ext-sockets`, `ext-posix` or `ext-pcntl`
         $strerror = \function_exists('socket_strerror') ? 'socket_strerror' : (\function_exists('posix_strerror') ? 'posix_strerror' : (\function_exists('pcntl_strerror') ? 'pcntl_strerror' : null));
@@ -193,7 +193,7 @@ final class SocketServer extends EventEmitter implements ServerInterface
      * @copyright Copyright (c) 2023 Christian Lück, taken from https://github.com/clue/errno with permission
      * @codeCoverageIgnore
      */
-    public static function errconst($errno)
+    public static function errconst($errno): string
     {
         // PHP defines most useful errno constants like `ECONNREFUSED` through constants in `ext-sockets` like `SOCKET_ECONNREFUSED`
         // PHP also defines a hand full of errno constants like `EMFILE` through constants in `ext-pcntl` like `PCNTL_EMFILE`
