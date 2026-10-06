@@ -5,14 +5,19 @@ namespace React\Socket;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 final class SecureConnector implements ConnectorInterface
 {
+    /** @var ConnectorInterface */
     private $connector;
+    /** @var StreamEncryption */
     private $streamEncryption;
+    /** @var array<string, mixed> */
     private $context;
 
+    /** @param array<string, mixed> $context */
     public function __construct(ConnectorInterface $connector, ?LoopInterface $loop = null, array $context = [])
     {
         $this->connector = $connector;
@@ -20,7 +25,7 @@ final class SecureConnector implements ConnectorInterface
         $this->context = $context;
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         if (\strpos($uri, '://') === false) {
             $uri = 'tls://' . $uri;
@@ -62,7 +67,7 @@ final class SecureConnector implements ConnectorInterface
                     $error->getCode()
                 );
             });
-        }, function (\Exception $e) use ($uri) {
+        }, function (\Throwable $e) use ($uri) {
             if ($e instanceof \RuntimeException) {
                 $message = \preg_replace('/^Connection to [^ ]+/', '', $e->getMessage());
                 $e = new \RuntimeException(
@@ -77,7 +82,7 @@ final class SecureConnector implements ConnectorInterface
                 if (\PHP_VERSION_ID < 80100) {
                     $r->setAccessible(true);
                 }
-                $trace = $r->getValue($e);
+                $trace = $e->getTrace();
 
                 // Exception trace arguments are not available on some PHP 7.4 installs
                 // @codeCoverageIgnoreStart
@@ -97,7 +102,8 @@ final class SecureConnector implements ConnectorInterface
             throw $e;
         });
 
-        return new Promise(
+        /** @var Promise<ConnectionInterface> $result */
+        $result = new Promise(
             function ($resolve, $reject) use ($promise) {
                 $promise->then($resolve, $reject);
             },
@@ -109,9 +115,12 @@ final class SecureConnector implements ConnectorInterface
                     ));
                 }
 
+                assert($promise instanceof PromiseInterface);
                 $promise->cancel();
                 $promise = null;
             }
         );
+
+        return $result;
     }
 }

@@ -4,4 +4,5 @@
 /examples/ export-ignore
 /phpunit.xml.dist export-ignore
 /phpunit.xml.legacy export-ignore
+/phpstan.neon.dist export-ignore
 /tests/ export-ignore

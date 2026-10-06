@@ -21,11 +21,11 @@ class ConnectionStub extends EventEmitter implements ConnectionInterface
         return true;
     }
 
-    public function pause()
+    public function pause(): void
     {
     }
 
-    public function resume()
+    public function resume(): void
     {
     }
 
@@ -47,7 +47,7 @@ class ConnectionStub extends EventEmitter implements ConnectionInterface
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 
@@ -56,8 +56,13 @@ class ConnectionStub extends EventEmitter implements ConnectionInterface
         return $this->data;
     }
 
-    public function getRemoteAddress()
+    public function getRemoteAddress(): ?string
     {
         return '127.0.0.1';
+    }
+
+    public function getLocalAddress(): ?string
+    {
+        return null;
     }
 }

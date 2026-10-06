@@ -5,20 +5,24 @@ namespace React\Socket;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 final class TcpConnector implements ConnectorInterface
 {
+    /** @var LoopInterface */
     private $loop;
+    /** @var array<string, mixed> */
     private $context;
 
+    /** @param array<string, mixed> $context */
     public function __construct(?LoopInterface $loop = null, array $context = [])
     {
         $this->loop = $loop ?? Loop::get();
         $this->context = $context;
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;
@@ -77,14 +81,15 @@ final class TcpConnector implements ConnectorInterface
 
         if (false === $stream) {
             return reject(new \RuntimeException(
-                'Connection to ' . $uri . ' failed: ' . $errstr . SocketServer::errconst($errno),
-                $errno
+                'Connection to ' . $uri . ' failed: ' . $errstr . SocketServer::errconst($errno ?? 0),
+                $errno ?? 0
             ));
         }
 
         // wait for connection
-        return new Promise(function ($resolve, $reject) use ($stream, $uri) {
-            $this->loop->addWriteStream($stream, function ($stream) use ($resolve, $reject, $uri) {
+        /** @var Promise<ConnectionInterface> $result */
+        $result = new Promise(function ($resolve, $reject) use ($stream, $uri) {
+            $this->loop->addWriteStream($stream, function () use ($stream, $resolve, $reject, $uri) {
                 $this->loop->removeWriteStream($stream);
 
                 // The following hack looks like the only way to
@@ -95,7 +100,8 @@ final class TcpConnector implements ConnectorInterface
                     if (\function_exists('socket_import_stream')) {
                         // actual socket errno and errstr can be retrieved with ext-sockets
                         $socket = \socket_import_stream($stream);
-                        $errno = \socket_get_option($socket, \SOL_SOCKET, \SO_ERROR);
+                        $errno = $socket === false ? 0 : \socket_get_option($socket, \SOL_SOCKET, \SO_ERROR);
+                        $errno = \is_int($errno) ? $errno : 0;
                         $errstr = \socket_strerror($errno);
                     } elseif (\PHP_OS === 'Linux') {
                         // Linux reports socket errno and errstr again when trying to write to the dead socket.
@@ -103,12 +109,13 @@ final class TcpConnector implements ConnectorInterface
                         // This is only known to work on Linux, Mac and Windows are known to not support this.
                         $errno = 0;
                         $errstr = '';
-                        \set_error_handler(function ($_, $error) use (&$errno, &$errstr) {
+                        \set_error_handler(function ($_, $error) use (&$errno, &$errstr): bool {
                             // Match errstr from PHP's warning message.
                             // fwrite(): send of 1 bytes failed with errno=111 Connection refused
                             \preg_match('/errno=(\d+) (.+)/', $error, $m);
                             $errno = (int) ($m[1] ?? 0);
                             $errstr = $m[2] ?? $error;
+                            return true;
                         });
 
                         \fwrite($stream, \PHP_EOL);
@@ -139,5 +146,7 @@ final class TcpConnector implements ConnectorInterface
                 \defined('SOCKET_ECONNABORTED') ? \SOCKET_ECONNABORTED : 103
             );
         });
+
+        return $result;
     }
 }

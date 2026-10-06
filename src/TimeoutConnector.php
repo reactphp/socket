@@ -5,25 +5,31 @@ namespace React\Socket;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 
 final class TimeoutConnector implements ConnectorInterface
 {
+    /** @var ConnectorInterface */
     private $connector;
+    /** @var float */
     private $timeout;
+    /** @var LoopInterface */
     private $loop;
 
-    public function __construct(ConnectorInterface $connector, $timeout, ?LoopInterface $loop = null)
+    public function __construct(ConnectorInterface $connector, float $timeout, ?LoopInterface $loop = null)
     {
         $this->connector = $connector;
         $this->timeout = $timeout;
         $this->loop = $loop ?? Loop::get();
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         $promise = $this->connector->connect($uri);
 
-        return new Promise(function ($resolve, $reject) use ($promise, $uri) {
+        /** @var Promise<ConnectionInterface> $result */
+        $result = new Promise(function ($resolve, $reject) use ($promise, $uri) {
+            /** @var \React\EventLoop\TimerInterface|false|null $timer */
             $timer = null;
             $promise = $promise->then(function ($v) use (&$timer, $resolve) {
                 if ($timer) {
@@ -53,16 +59,18 @@ final class TimeoutConnector implements ConnectorInterface
 
                 // Cancel pending connection to clean up any underlying resources and references.
                 // Avoid garbage references in call stack by passing pending promise by reference.
-                assert(\method_exists($promise, 'cancel'));
+                assert($promise instanceof PromiseInterface && \is_callable([$promise, 'cancel']));
                 $promise->cancel();
                 $promise = null;
             });
         }, function () use (&$promise) {
             // Cancelling this promise will cancel the pending connection, thus triggering the rejection logic above.
             // Avoid garbage references in call stack by passing pending promise by reference.
-            assert(\method_exists($promise, 'cancel'));
+            assert($promise instanceof PromiseInterface && \is_callable([$promise, 'cancel']));
             $promise->cancel();
             $promise = null;
         });
+
+        return $result;
     }
 }

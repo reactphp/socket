@@ -7,6 +7,7 @@ use React\EventLoop\LoopInterface;
 
 final class SocketServer extends EventEmitter implements ServerInterface
 {
+    /** @var ServerInterface */
     private $server;
 
     /**
@@ -26,12 +27,12 @@ final class SocketServer extends EventEmitter implements ServerInterface
      * given event loop instance.
      *
      * @param string         $uri
-     * @param array          $context
+     * @param array{tcp?: array<string, mixed>, tls?: array<string, mixed>, unix?: array<string, mixed>} $context
      * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, array $context = [], ?LoopInterface $loop = null)
+    public function __construct(string $uri, array $context = [], ?LoopInterface $loop = null)
     {
         // apply default options if not explicitly given
         $context += [
@@ -75,22 +76,22 @@ final class SocketServer extends EventEmitter implements ServerInterface
         });
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return $this->server->getAddress();
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->server->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->server->resume();
     }
 
-    public function close()
+    public function close(): void
     {
         $this->server->close();
     }
@@ -107,11 +108,12 @@ final class SocketServer extends EventEmitter implements ServerInterface
     {
         $errno = 0;
         $errstr = '';
-        \set_error_handler(function ($_, $error) use (&$errno, &$errstr) {
+        \set_error_handler(function ($_, $error) use (&$errno, &$errstr): bool {
             // Match errstr from PHP's warning message.
             // stream_socket_accept(): accept failed: Connection timed out
-            $errstr = \preg_replace('#.*: #', '', $error);
+            $errstr = \preg_replace('#.*: #', '', $error) ?? $error;
             $errno = self::errno($errstr);
+            return true;
         });
 
         $newSocket = \stream_socket_accept($socket, 0);
@@ -144,13 +146,11 @@ final class SocketServer extends EventEmitter implements ServerInterface
      * @copyright Copyright (c) 2023 Christian Lück, taken from https://github.com/clue/errno with permission
      * @codeCoverageIgnore
      */
-    public static function errno($errstr)
+    public static function errno(string $errstr): int
     {
         // PHP defines the required `strerror()` function through either `ext-sockets`, `ext-posix` or `ext-pcntl`
         $strerror = \function_exists('socket_strerror') ? 'socket_strerror' : (\function_exists('posix_strerror') ? 'posix_strerror' : (\function_exists('pcntl_strerror') ? 'pcntl_strerror' : null));
         if ($strerror !== null) {
-            assert(\is_string($strerror) && \is_callable($strerror));
-
             // PHP defines most useful errno constants like `ECONNREFUSED` through constants in `ext-sockets` like `SOCKET_ECONNREFUSED`
             // PHP also defines a hand full of errno constants like `EMFILE` through constants in `ext-pcntl` like `PCNTL_EMFILE`
             // go through list of all defined constants like `SOCKET_E*` and `PCNTL_E*` and see if they match the given `$errstr`
@@ -193,7 +193,7 @@ final class SocketServer extends EventEmitter implements ServerInterface
      * @copyright Copyright (c) 2023 Christian Lück, taken from https://github.com/clue/errno with permission
      * @codeCoverageIgnore
      */
-    public static function errconst($errno)
+    public static function errconst(int $errno): string
     {
         // PHP defines most useful errno constants like `ECONNREFUSED` through constants in `ext-sockets` like `SOCKET_ECONNREFUSED`
         // PHP also defines a hand full of errno constants like `EMFILE` through constants in `ext-pcntl` like `PCNTL_EMFILE`

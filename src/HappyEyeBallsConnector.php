@@ -5,12 +5,16 @@ namespace React\Socket;
 use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 final class HappyEyeBallsConnector implements ConnectorInterface
 {
+    /** @var LoopInterface */
     private $loop;
+    /** @var ConnectorInterface */
     private $connector;
+    /** @var ResolverInterface */
     private $resolver;
 
     public function __construct(?LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver)
@@ -20,13 +24,13 @@ final class HappyEyeBallsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         $original = $uri;
         if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;
             $parts = \parse_url($uri);
-            if (isset($parts['scheme'])) {
+            if ($parts !== false && isset($parts['scheme'])) {
                 unset($parts['scheme']);
             }
         } else {

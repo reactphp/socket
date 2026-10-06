@@ -1,0 +1,7 @@
+parameters:
+    level: max
+    paths:
+        - src
+    phpVersion: 70100
+    # Retain runtime guards for older supported Promise implementations.
+    treatPhpDocTypesAsCertain: false

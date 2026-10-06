@@ -49,3 +49,28 @@ jobs:
           coverage: pcov
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
+
+  PHPStan:
+    name: PHPStan (PHP ${{ matrix.php }} on ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        php:
+          - 8.5
+          - 8.4
+          - 8.3
+          - 8.2
+          - 8.1
+          - 8.0
+          - 7.4
+          - 7.3
+          - 7.2
+          - 7.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - run: composer install
+      - run: vendor/bin/phpstan analyse --no-progress

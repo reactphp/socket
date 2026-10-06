@@ -23,6 +23,7 @@ class Connection extends EventEmitter implements ConnectionInterface
      * Internal flag whether this is a Unix domain socket (UDS) connection
      *
      * @internal
+     * @var bool
      */
     public $unix = false;
 
@@ -33,14 +34,20 @@ class Connection extends EventEmitter implements ConnectionInterface
      * `tls://` scheme for encrypted connections instead of `tcp://`.
      *
      * @internal
+     * @var bool
      */
     public $encryptionEnabled = false;
 
-    /** @internal */
+    /**
+     * @internal
+     * @var resource
+     */
     public $stream;
 
+    /** @var DuplexResourceStream */
     private $input;
 
+    /** @param resource $resource */
     public function __construct($resource, LoopInterface $loop)
     {
         // Legacy PHP < 7.3.3 (and PHP < 7.2.15) suffers from a bug where feof()
@@ -78,49 +85,50 @@ class Connection extends EventEmitter implements ConnectionInterface
         $this->input->on('close', [$this, 'close']);
     }
 
-    public function isReadable()
+    public function isReadable(): bool
     {
         return $this->input->isReadable();
     }
 
-    public function isWritable()
+    public function isWritable(): bool
     {
         return $this->input->isWritable();
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->input->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->input->resume();
     }
 
-    public function pipe(WritableStreamInterface $dest, array $options = [])
+    /** @param array{end?: bool} $options */
+    public function pipe(WritableStreamInterface $dest, array $options = []): WritableStreamInterface
     {
         return $this->input->pipe($dest, $options);
     }
 
-    public function write($data)
+    public function write($data): bool
     {
         return $this->input->write($data);
     }
 
-    public function end($data = null)
+    public function end($data = null): void
     {
         $this->input->end($data);
     }
 
-    public function close()
+    public function close(): void
     {
         $this->input->close();
         $this->handleClose();
         $this->removeAllListeners();
     }
 
-    public function handleClose()
+    public function handleClose(): void
     {
         if (!\is_resource($this->stream)) {
             return;
@@ -132,7 +140,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         @\stream_socket_shutdown($this->stream, \STREAM_SHUT_RDWR);
     }
 
-    public function getRemoteAddress()
+    public function getRemoteAddress(): ?string
     {
         if (!\is_resource($this->stream)) {
             return null;
@@ -141,7 +149,7 @@ class Connection extends EventEmitter implements ConnectionInterface
         return $this->parseAddress(\stream_socket_get_name($this->stream, true));
     }
 
-    public function getLocalAddress()
+    public function getLocalAddress(): ?string
     {
         if (!\is_resource($this->stream)) {
             return null;
@@ -150,7 +158,8 @@ class Connection extends EventEmitter implements ConnectionInterface
         return $this->parseAddress(\stream_socket_get_name($this->stream, false));
     }
 
-    private function parseAddress($address)
+    /** @param string|false $address */
+    private function parseAddress($address): ?string
     {
         if ($address === false) {
             return null;

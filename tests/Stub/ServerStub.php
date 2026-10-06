@@ -7,12 +7,20 @@ use React\Socket\ServerInterface;
 
 class ServerStub extends EventEmitter implements ServerInterface
 {
-    public function getAddress()
+    public function getAddress(): ?string
     {
         return '127.0.0.1:80';
     }
 
-    public function close()
+    public function close(): void
+    {
+    }
+
+    public function pause(): void
+    {
+    }
+
+    public function resume(): void
     {
     }
 }

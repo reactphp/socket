@@ -4,6 +4,7 @@ namespace React\Socket;
 
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 use function React\Promise\resolve;
 
@@ -15,6 +16,7 @@ use function React\Promise\resolve;
  */
 final class UnixConnector implements ConnectorInterface
 {
+    /** @var LoopInterface */
     private $loop;
 
     public function __construct(?LoopInterface $loop = null)
@@ -22,7 +24,7 @@ final class UnixConnector implements ConnectorInterface
         $this->loop = $loop ?? Loop::get();
     }
 
-    public function connect($path)
+    public function connect(string $path): PromiseInterface
     {
         if (\strpos($path, '://') === false) {
             $path = 'unix://' . $path;
@@ -37,8 +39,8 @@ final class UnixConnector implements ConnectorInterface
 
         if (!$resource) {
             return reject(new \RuntimeException(
-                'Unable to connect to unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno),
-                $errno
+                'Unable to connect to unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno ?? 0),
+                $errno ?? 0
             ));
         }
 

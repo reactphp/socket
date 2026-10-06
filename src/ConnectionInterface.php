@@ -82,7 +82,7 @@ interface ConnectionInterface extends DuplexStreamInterface
      *
      * @return ?string remote address (URI) or null if unknown
      */
-    public function getRemoteAddress();
+    public function getRemoteAddress(): ?string;
 
     /**
      * Returns the full local address (full URI with scheme, IP and port) where this connection has been established with
@@ -115,5 +115,5 @@ interface ConnectionInterface extends DuplexStreamInterface
      * @return ?string local address (URI) or null if unknown
      * @see self::getRemoteAddress()
      */
-    public function getLocalAddress();
+    public function getLocalAddress(): ?string;
 }

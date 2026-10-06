@@ -6,6 +6,7 @@ use React\Dns\Config\Config as DnsConfig;
 use React\Dns\Resolver\Factory as DnsFactory;
 use React\Dns\Resolver\ResolverInterface;
 use React\EventLoop\LoopInterface;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 
 /**
@@ -25,6 +26,7 @@ use function React\Promise\reject;
  */
 final class Connector implements ConnectorInterface
 {
+    /** @var array<string, ConnectorInterface> */
     private $connectors = [];
 
     /**
@@ -46,7 +48,7 @@ final class Connector implements ConnectorInterface
      * This value SHOULD NOT be given unless you're sure you want to explicitly use a
      * given event loop instance.
      *
-     * @param array          $context
+     * @param array{tcp?: bool|array<string, mixed>|ConnectorInterface, tls?: bool|array<string, mixed>|ConnectorInterface, unix?: bool|ConnectorInterface, dns?: bool|string|DnsConfig|ResolverInterface, timeout?: bool|float, happy_eyeballs?: bool} $context
      * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException for invalid arguments
      */
@@ -86,7 +88,7 @@ final class Connector implements ConnectorInterface
                     // try to load nameservers from system config or default to Google's public DNS
                     $config = DnsConfig::loadSystemConfigBlocking();
                     if (!$config->nameservers) {
-                        $config->nameservers[] = '8.8.8.8'; // @codeCoverageIgnore
+                        $config->nameservers = ['8.8.8.8']; // @codeCoverageIgnore
                     }
                 }
 
@@ -146,7 +148,7 @@ final class Connector implements ConnectorInterface
         }
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         $scheme = 'tcp';
         if (\strpos($uri, '://') !== false) {
@@ -167,13 +169,13 @@ final class Connector implements ConnectorInterface
     /**
      * [internal] Builds on URI from the given URI parts and ip address with original hostname as query
      *
-     * @param array  $parts
+     * @param array{scheme?: string, host?: string, port?: int, path?: string, query?: string, fragment?: string} $parts
      * @param string $host
      * @param string $ip
      * @return string
      * @internal
      */
-    public static function uri(array $parts, $host, $ip)
+    public static function uri(array $parts, string $host, string $ip): string
     {
         $uri = '';
 
