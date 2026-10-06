@@ -9,13 +9,11 @@ use function React\Promise\reject;
 
 final class HappyEyeBallsConnector implements ConnectorInterface
 {
-    private $loop;
     private $connector;
     private $resolver;
 
-    public function __construct(?LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver)
+    public function __construct(ConnectorInterface $connector, ResolverInterface $resolver)
     {
-        $this->loop = $loop ?? Loop::get();
         $this->connector = $connector;
         $this->resolver = $resolver;
     }
@@ -48,7 +46,6 @@ final class HappyEyeBallsConnector implements ConnectorInterface
         }
 
         $builder = new HappyEyeBallsConnectionBuilder(
-            $this->loop,
             $this->connector,
             $this->resolver,
             $uri,

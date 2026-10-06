@@ -33,7 +33,6 @@ use React\EventLoop\LoopInterface;
 final class TcpServer extends EventEmitter implements ServerInterface
 {
     private $master;
-    private $loop;
     private $listening = false;
 
     /**
@@ -121,15 +120,12 @@ final class TcpServer extends EventEmitter implements ServerInterface
      * The `backlog` context option defaults to `511` unless given explicitly.
      *
      * @param string|int     $uri
-     * @param ?LoopInterface $loop
      * @param array          $context
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, ?LoopInterface $loop = null, array $context = [])
+    public function __construct($uri, array $context = [])
     {
-        $this->loop = $loop ?? Loop::get();
-
         // a single port has been given => assume localhost
         if ((string)(int)$uri === (string)$uri) {
             $uri = '127.0.0.1:' . $uri;
@@ -212,7 +208,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->removeReadStream($this->master);
+        Loop::removeReadStream($this->master);
         $this->listening = false;
     }
 
@@ -222,7 +218,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        Loop::addReadStream($this->master, function ($master) {
             try {
                 $newSocket = SocketServer::accept($master);
             } catch (\RuntimeException $e) {
@@ -249,7 +245,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
     public function handleConnection($socket)
     {
         $this->emit('connection', [
-            new Connection($socket, $this->loop)
+            new Connection($socket)
         ]);
     }
 }
