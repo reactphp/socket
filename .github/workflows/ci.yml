@@ -11,9 +11,10 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-24.04
+          - ubuntu-26.04
           - windows-2022
         php:
+          - 8.6
           - 8.5
           - 8.4
           - 8.3
@@ -36,8 +37,7 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: xdebug
           ini-file: development
-      - run: composer config secure-http false && composer config repo.packagist composer http://packagist.org && composer config preferred-install source
-        if: ${{ matrix.php < 5.5 && matrix.os == 'windows-2022' }} # legacy PHP on Windows is allowed to use insecure downloads until it will be removed again
+          tools: ${{ matrix.php < 5.5 && matrix.os == 'windows-2022' && 'composer:2.2.30' || '' }} # legacy PHP < 5.5 on Windows crashes with Composer 2.2.31+ until https://github.com/composer/composer/issues/13276 is fixed
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
         if: ${{ matrix.php >= 7.3 }}
@@ -52,14 +52,14 @@ jobs:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.5
+          php-version: 8.6
           coverage: xdebug
       - run: composer install
       - run: vendor/bin/phpunit --coverage-text
 
   PHPUnit-hhvm:
     name: PHPUnit (HHVM)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     continue-on-error: true
     steps:
       - uses: actions/checkout@v7
