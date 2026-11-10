@@ -29,8 +29,8 @@
         "php": ">=7.1",
         "evenement/evenement": "^3.0 || ^2.0 || ^1.0",
         "react/dns": "^1.13",
-        "react/event-loop": "^1.2",
-        "react/promise": "^3.2 || ^2.6 || ^1.2.1",
+        "react/event-loop": "^1.6",
+        "react/promise": "^3.3 || ^2.6 || ^1.2.1",
         "react/stream": "^1.4"
     },
     "require-dev": {
