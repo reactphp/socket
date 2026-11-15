@@ -3,6 +3,7 @@
 namespace React\Tests\Socket;
 
 use Evenement\EventEmitterInterface;
+use React\EventLoop\Loop;
 use React\Promise\Deferred;
 use React\Promise\Promise;
 use React\Socket\ConnectionInterface;
@@ -118,6 +119,14 @@ class SecureIntegrationTest extends TestCase
         $client = await(timeout($this->connector->connect($this->address), self::TIMEOUT));
         /* @var $client ConnectionInterface */
 
+        // clear OpenSSL errors from closing the client before the server reads,
+        // as legacy PHP < 7.2 does not (https://bugs.php.net/bug.php?id=78775)
+        $client->on('close', function () {
+            Loop::futureTick(function () {
+                while (openssl_error_string() !== false);
+            });
+        });
+
         $data = str_repeat('a', 200000);
         $client->end($data);
 
@@ -180,6 +189,13 @@ class SecureIntegrationTest extends TestCase
     {
         $data = str_repeat('b', 100000);
         $this->server->on('connection', function (ConnectionInterface $peer) use ($data) {
+            // clear OpenSSL errors from closing the server side before the client reads,
+            // as legacy PHP < 7.2 does not (https://bugs.php.net/bug.php?id=78775)
+            $peer->on('close', function () {
+                Loop::futureTick(function () {
+                    while (openssl_error_string() !== false);
+                });
+            });
             $peer->end($data);
         });
 

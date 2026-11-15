@@ -115,8 +115,8 @@ class SocketServerTest extends TestCase
             $this->fail();
         } catch (\RuntimeException $e) {
             if ($e->getCode() === 0) {
-                // Zend PHP does not currently report a sane error
-                $this->assertStringEndsWith('Unknown error', $e->getMessage());
+                // PHP 8.6+ reports error message without errno, earlier versions do not report a sane error
+                $this->assertStringEndsWith(PHP_VERSION_ID >= 80600 ? 'Address already in use' : 'Unknown error', $e->getMessage());
             } else {
                 $this->assertEquals(SOCKET_EADDRINUSE, $e->getCode());
                 $this->assertStringEndsWith('Address already in use (EADDRINUSE)', $e->getMessage());
