@@ -31,30 +31,49 @@ final class HappyEyeBallsConnectionBuilder
      */
     const RESOLUTION_DELAY = 0.05;
 
+    /** @var LoopInterface */
     public $loop;
+    /** @var ConnectorInterface */
     public $connector;
+    /** @var ResolverInterface */
     public $resolver;
+    /** @var string */
     public $uri;
+    /** @var string */
     public $host;
+    /** @var array<int, bool> */
     public $resolved = [
         Message::TYPE_A    => false,
         Message::TYPE_AAAA => false,
     ];
+    /** @var array<int, PromiseInterface<void>> */
     public $resolverPromises = [];
+    /** @var array<int, PromiseInterface<ConnectionInterface>> */
     public $connectionPromises = [];
+    /** @var list<string> */
     public $connectQueue = [];
+    /** @var ?TimerInterface */
     public $nextAttemptTimer;
+    /** @var array{scheme?: string, host?: string, port?: int, path?: string, query?: string, fragment?: string} */
     public $parts;
+    /** @var int */
     public $ipsCount = 0;
+    /** @var int */
     public $failureCount = 0;
+    /** @var ?callable */
     public $resolve;
+    /** @var ?callable */
     public $reject;
 
+    /** @var ?int */
     public $lastErrorFamily;
+    /** @var ?string */
     public $lastError6;
+    /** @var ?string */
     public $lastError4;
 
-    public function __construct(LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver, $uri, $host, $parts)
+    /** @param array{scheme?: string, host?: string, port?: int, path?: string, query?: string, fragment?: string} $parts */
+    public function __construct(LoopInterface $loop, ConnectorInterface $connector, ResolverInterface $resolver, string $uri, string $host, array $parts)
     {
         $this->loop = $loop;
         $this->connector = $connector;
@@ -64,14 +83,17 @@ final class HappyEyeBallsConnectionBuilder
         $this->parts = $parts;
     }
 
-    public function connect()
+    /** @return PromiseInterface<ConnectionInterface> */
+    public function connect(): PromiseInterface
     {
-        return new Promise(function ($resolve, $reject) {
-            $lookupResolve = function ($type) use ($resolve, $reject) {
+        /** @var Promise<ConnectionInterface> $result */
+        $result = new Promise(function ($resolve, $reject) {
+            $lookupResolve = function (int $type) use ($resolve, $reject) {
                 return function (array $ips) use ($type, $resolve, $reject) {
                     unset($this->resolverPromises[$type]);
                     $this->resolved[$type] = true;
 
+                    /** @var list<string> $ips */
                     $this->mixIpsIntoConnectQueue($ips);
 
                     // start next connection attempt if not already awaiting next
@@ -89,6 +111,7 @@ final class HappyEyeBallsConnectionBuilder
                 }
 
                 // Otherwise delay processing IPv4 lookup until short timer passes or IPv6 resolves in the meantime
+                /** @var Deferred<list<string>> $deferred */
                 $deferred = new Deferred(function () use (&$ips) {
                     // discard all IPv4 addresses if cancelled
                     $ips = [];
@@ -113,19 +136,24 @@ final class HappyEyeBallsConnectionBuilder
 
             $this->cleanUp();
         });
+
+        return $result;
     }
 
     /**
      * @internal
-     * @param int      $type   DNS query type
+     * @param Message::TYPE_A|Message::TYPE_AAAA $type DNS address query type
      * @param callable $reject
-     * @return \React\Promise\PromiseInterface<string[]> Returns a promise that
+     * @return \React\Promise\PromiseInterface<list<string>> Returns a promise that
      *     always resolves with a list of IP addresses on success or an empty
      *     list on error.
      */
-    public function resolve($type, $reject)
+    public function resolve(int $type, callable $reject): PromiseInterface
     {
-        return $this->resolver->resolveAll($this->host, $type)->then(null, function (\Exception $e) use ($type, $reject) {
+        /** @var PromiseInterface<list<string>> $promise A and AAAA queries resolve to IP addresses. */
+        $promise = $this->resolver->resolveAll($this->host, $type);
+
+        return $promise->then(null, function (\Throwable $e) use ($type, $reject) {
             unset($this->resolverPromises[$type]);
             $this->resolved[$type] = true;
 
@@ -159,9 +187,10 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function check($resolve, $reject)
+    public function check(callable $resolve, callable $reject): void
     {
         $ip = \array_shift($this->connectQueue);
+        assert($ip !== null);
 
         // start connection attempt and remember array position to later unset again
         $this->connectionPromises[] = $this->attemptConnection($ip);
@@ -174,7 +203,7 @@ final class HappyEyeBallsConnectionBuilder
             $this->cleanUp();
 
             $resolve($connection);
-        }, function (\Exception $e) use ($index, $ip, $resolve, $reject) {
+        }, function (\Throwable $e) use ($index, $ip, $resolve, $reject) {
             unset($this->connectionPromises[$index]);
 
             $this->failureCount++;
@@ -228,8 +257,9 @@ final class HappyEyeBallsConnectionBuilder
 
     /**
      * @internal
+     * @return PromiseInterface<ConnectionInterface>
      */
-    public function attemptConnection($ip)
+    public function attemptConnection(string $ip): PromiseInterface
     {
         $uri = Connector::uri($this->parts, $this->host, $ip);
 
@@ -239,21 +269,21 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function cleanUp()
+    public function cleanUp(): void
     {
         // clear list of outstanding IPs to avoid creating new connections
         $this->connectQueue = [];
 
         // cancel pending connection attempts
         foreach ($this->connectionPromises as $connectionPromise) {
-            if ($connectionPromise instanceof PromiseInterface && \method_exists($connectionPromise, 'cancel')) {
+            if (\is_callable([$connectionPromise, 'cancel'])) {
                 $connectionPromise->cancel();
             }
         }
 
         // cancel pending DNS resolution (cancel IPv4 first in case it is awaiting IPv6 resolution delay)
         foreach (\array_reverse($this->resolverPromises) as $resolverPromise) {
-            if ($resolverPromise instanceof PromiseInterface && \method_exists($resolverPromise, 'cancel')) {
+            if (\is_callable([$resolverPromise, 'cancel'])) {
                 $resolverPromise->cancel();
             }
         }
@@ -267,7 +297,7 @@ final class HappyEyeBallsConnectionBuilder
     /**
      * @internal
      */
-    public function hasBeenResolved()
+    public function hasBeenResolved(): bool
     {
         foreach ($this->resolved as $typeHasBeenResolved) {
             if ($typeHasBeenResolved === false) {
@@ -286,19 +316,24 @@ final class HappyEyeBallsConnectionBuilder
      * @link https://tools.ietf.org/html/rfc8305#section-4
      *
      * @internal
+     * @param list<string> $ips
      */
-    public function mixIpsIntoConnectQueue(array $ips)
+    public function mixIpsIntoConnectQueue(array $ips): void
     {
         \shuffle($ips);
         $this->ipsCount += \count($ips);
         $connectQueueStash = $this->connectQueue;
         $this->connectQueue = [];
-        while (\count($connectQueueStash) > 0 || \count($ips) > 0) {
-            if (\count($ips) > 0) {
-                $this->connectQueue[] = \array_shift($ips);
+        while ($connectQueueStash || $ips) {
+            if ($ips) {
+                $ip = \array_shift($ips);
+                assert($ip !== null);
+                $this->connectQueue[] = $ip;
             }
-            if (\count($connectQueueStash) > 0) {
-                $this->connectQueue[] = \array_shift($connectQueueStash);
+            if ($connectQueueStash) {
+                $ip = \array_shift($connectQueueStash);
+                assert($ip !== null);
+                $this->connectQueue[] = $ip;
             }
         }
     }
@@ -307,7 +342,7 @@ final class HappyEyeBallsConnectionBuilder
      * @internal
      * @return string
      */
-    public function error()
+    public function error(): string
     {
         if ($this->lastError4 === $this->lastError6) {
             $message = $this->lastError6;

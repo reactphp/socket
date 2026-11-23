@@ -75,7 +75,7 @@ interface ServerInterface extends EventEmitterInterface
      *
      * @return ?string the full listening address (URI) or NULL if it is unknown (not applicable to this server socket or already closed)
      */
-    public function getAddress();
+    public function getAddress(): ?string;
 
     /**
      * Pauses accepting new incoming connections.
@@ -114,7 +114,7 @@ interface ServerInterface extends EventEmitterInterface
      * @see self::resume()
      * @return void
      */
-    public function pause();
+    public function pause(): void;
 
     /**
      * Resumes accepting new incoming connections.
@@ -136,7 +136,7 @@ interface ServerInterface extends EventEmitterInterface
      * @see self::pause()
      * @return void
      */
-    public function resume();
+    public function resume(): void;
 
     /**
      * Shuts down this listening socket
@@ -147,5 +147,5 @@ interface ServerInterface extends EventEmitterInterface
      *
      * @return void
      */
-    public function close();
+    public function close(): void;
 }

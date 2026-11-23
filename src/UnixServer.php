@@ -21,8 +21,11 @@ use React\EventLoop\LoopInterface;
  */
 final class UnixServer extends EventEmitter implements ServerInterface
 {
+    /** @var resource */
     private $master;
+    /** @var LoopInterface */
     private $loop;
+    /** @var bool */
     private $listening = false;
 
     /**
@@ -44,11 +47,11 @@ final class UnixServer extends EventEmitter implements ServerInterface
      *
      * @param string         $path
      * @param ?LoopInterface $loop
-     * @param array          $context
+     * @param array<string, mixed> $context
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($path, ?LoopInterface $loop = null, array $context = [])
+    public function __construct(string $path, ?LoopInterface $loop = null, array $context = [])
     {
         $this->loop = $loop ?? Loop::get();
 
@@ -63,16 +66,17 @@ final class UnixServer extends EventEmitter implements ServerInterface
 
         $errno = 0;
         $errstr = '';
-        \set_error_handler(function ($_, $error) use (&$errno, &$errstr) {
+        \set_error_handler(function ($_, $error) use (&$errno, &$errstr): bool {
             // PHP does not seem to report errno/errstr for Unix domain sockets (UDS) right now.
             // This only applies to UDS server sockets, see also https://3v4l.org/NAhpr.
             if (\preg_match('/\(([^\)]+)\)|\[(\d+)\]: (.*)/', $error, $match)) {
                 $errstr = $match[3] ?? $match[1];
                 $errno = (int) ($match[2] ?? 0);
             }
+            return true;
         });
 
-        $this->master = \stream_socket_server(
+        $master = \stream_socket_server(
             $path,
             $errno,
             $errstr,
@@ -82,18 +86,19 @@ final class UnixServer extends EventEmitter implements ServerInterface
 
         \restore_error_handler();
 
-        if (false === $this->master) {
+        if (false === $master) {
             throw new \RuntimeException(
-                'Failed to listen on Unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno),
-                $errno
+                'Failed to listen on Unix domain socket "' . $path . '": ' . $errstr . SocketServer::errconst($errno ?? 0),
+                $errno ?? 0
             );
         }
-        \stream_set_blocking($this->master, 0);
+        $this->master = $master;
+        \stream_set_blocking($this->master, false);
 
         $this->resume();
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         if (!\is_resource($this->master)) {
             return null;
@@ -102,7 +107,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
         return 'unix://' . \stream_socket_get_name($this->master, false);
     }
 
-    public function pause()
+    public function pause(): void
     {
         if (!$this->listening) {
             return;
@@ -112,15 +117,15 @@ final class UnixServer extends EventEmitter implements ServerInterface
         $this->listening = false;
     }
 
-    public function resume()
+    public function resume(): void
     {
         if ($this->listening || !is_resource($this->master)) {
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        $this->loop->addReadStream($this->master, function () {
             try {
-                $newSocket = SocketServer::accept($master);
+                $newSocket = SocketServer::accept($this->master);
             } catch (\RuntimeException $e) {
                 $this->emit('error', [$e]);
                 return;
@@ -130,7 +135,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
         $this->listening = true;
     }
 
-    public function close()
+    public function close(): void
     {
         if (!\is_resource($this->master)) {
             return;
@@ -141,8 +146,11 @@ final class UnixServer extends EventEmitter implements ServerInterface
         $this->removeAllListeners();
     }
 
-    /** @internal */
-    public function handleConnection($socket)
+    /**
+     * @internal
+     * @param resource $socket
+     */
+    public function handleConnection($socket): void
     {
         $connection = new Connection($socket, $this->loop);
         $connection->unix = true;

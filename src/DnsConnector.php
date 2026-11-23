@@ -9,7 +9,9 @@ use function React\Promise\reject;
 
 final class DnsConnector implements ConnectorInterface
 {
+    /** @var ConnectorInterface */
     private $connector;
+    /** @var ResolverInterface */
     private $resolver;
 
     public function __construct(ConnectorInterface $connector, ResolverInterface $resolver)
@@ -18,13 +20,13 @@ final class DnsConnector implements ConnectorInterface
         $this->resolver = $resolver;
     }
 
-    public function connect($uri)
+    public function connect(string $uri): PromiseInterface
     {
         $original = $uri;
         if (\strpos($uri, '://') === false) {
             $uri = 'tcp://' . $uri;
             $parts = \parse_url($uri);
-            if (isset($parts['scheme'])) {
+            if ($parts !== false && isset($parts['scheme'])) {
                 unset($parts['scheme']);
             }
         } else {
@@ -46,17 +48,20 @@ final class DnsConnector implements ConnectorInterface
         }
 
         $promise = $this->resolver->resolve($host);
+        /** @var ?string $resolved */
         $resolved = null;
 
-        return new Promise(
+        /** @var Promise<ConnectionInterface> $result */
+        $result = new Promise(
             function ($resolve, $reject) use (&$promise, &$resolved, $uri, $host, $parts) {
                 // resolve/reject with result of DNS lookup
+                /** @var PromiseInterface<string> $promise */
                 $promise->then(function ($ip) use (&$promise, &$resolved, $uri, $host, $parts) {
                     $resolved = $ip;
 
                     return $promise = $this->connector->connect(
                         Connector::uri($parts, $host, $ip)
-                    )->then(null, function (\Exception $e) use ($uri) {
+                    )->then(null, function (\Throwable $e) use ($uri) {
                         if ($e instanceof \RuntimeException) {
                             $message = \preg_replace('/^(Connection to [^ ]+)[&?]hostname=[^ &]+/', '$1', $e->getMessage());
                             $e = new \RuntimeException(
@@ -71,7 +76,7 @@ final class DnsConnector implements ConnectorInterface
                             if (\PHP_VERSION_ID < 80100) {
                                 $r->setAccessible(true);
                             }
-                            $trace = $r->getValue($e);
+                            $trace = $e->getTrace();
 
                             // Exception trace arguments are not available on some PHP 7.4 installs
                             // @codeCoverageIgnoreStart
@@ -105,7 +110,7 @@ final class DnsConnector implements ConnectorInterface
                 }
 
                 // (try to) cancel pending DNS lookup / connection attempt
-                if ($promise instanceof PromiseInterface && \method_exists($promise, 'cancel')) {
+                if ($promise instanceof PromiseInterface && \is_callable([$promise, 'cancel'])) {
                     // overwrite callback arguments for PHP7+ only, so they do not show
                     // up in the Exception trace and do not cause a possible cyclic reference.
                     $_ = $reject = null;
@@ -115,5 +120,7 @@ final class DnsConnector implements ConnectorInterface
                 }
             }
         );
+
+        return $result;
     }
 }

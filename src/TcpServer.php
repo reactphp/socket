@@ -32,8 +32,11 @@ use React\EventLoop\LoopInterface;
  */
 final class TcpServer extends EventEmitter implements ServerInterface
 {
+    /** @var resource */
     private $master;
+    /** @var LoopInterface */
     private $loop;
+    /** @var bool */
     private $listening = false;
 
     /**
@@ -120,13 +123,13 @@ final class TcpServer extends EventEmitter implements ServerInterface
      * Passing unknown context options has no effect.
      * The `backlog` context option defaults to `511` unless given explicitly.
      *
-     * @param string|int     $uri
+     * @param string         $uri
      * @param ?LoopInterface $loop
-     * @param array          $context
+     * @param array<string, mixed> $context
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($uri, ?LoopInterface $loop = null, array $context = [])
+    public function __construct(string $uri, ?LoopInterface $loop = null, array $context = [])
     {
         $this->loop = $loop ?? Loop::get();
 
@@ -158,6 +161,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
             );
         }
 
+        /** @var array{scheme: string, host: string, port: int} $parts */
         if (@\inet_pton(\trim($parts['host'], '[]')) === false) {
             throw new \InvalidArgumentException(
                 'Given URI "' . $uri . '" does not contain a valid host IP (EINVAL)',
@@ -165,37 +169,41 @@ final class TcpServer extends EventEmitter implements ServerInterface
             );
         }
 
-        $this->master = @\stream_socket_server(
+        $master = @\stream_socket_server(
             $uri,
             $errno,
             $errstr,
             \STREAM_SERVER_BIND | \STREAM_SERVER_LISTEN,
             \stream_context_create(['socket' => $context + ['backlog' => 511]])
         );
-        if (false === $this->master) {
+        if (false === $master) {
             if ($errno === 0) {
                 // PHP does not seem to report errno, so match errno from errstr
                 // @link https://3v4l.org/3qOBl
-                $errno = SocketServer::errno($errstr);
+                $errno = SocketServer::errno($errstr ?? '');
             }
 
             throw new \RuntimeException(
-                'Failed to listen on "' . $uri . '": ' . $errstr . SocketServer::errconst($errno),
-                $errno
+                'Failed to listen on "' . $uri . '": ' . $errstr . SocketServer::errconst($errno ?? 0),
+                $errno ?? 0
             );
         }
+        $this->master = $master;
         \stream_set_blocking($this->master, false);
 
         $this->resume();
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         if (!\is_resource($this->master)) {
             return null;
         }
 
         $address = \stream_socket_get_name($this->master, false);
+        if ($address === false) {
+            return null;
+        }
 
         // check if this is an IPv6 address which includes multiple colons but no square brackets
         $pos = \strrpos($address, ':');
@@ -206,7 +214,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
         return 'tcp://' . $address;
     }
 
-    public function pause()
+    public function pause(): void
     {
         if (!$this->listening) {
             return;
@@ -216,15 +224,15 @@ final class TcpServer extends EventEmitter implements ServerInterface
         $this->listening = false;
     }
 
-    public function resume()
+    public function resume(): void
     {
         if ($this->listening || !\is_resource($this->master)) {
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        $this->loop->addReadStream($this->master, function () {
             try {
-                $newSocket = SocketServer::accept($master);
+                $newSocket = SocketServer::accept($this->master);
             } catch (\RuntimeException $e) {
                 $this->emit('error', [$e]);
                 return;
@@ -234,7 +242,7 @@ final class TcpServer extends EventEmitter implements ServerInterface
         $this->listening = true;
     }
 
-    public function close()
+    public function close(): void
     {
         if (!\is_resource($this->master)) {
             return;
@@ -245,8 +253,11 @@ final class TcpServer extends EventEmitter implements ServerInterface
         $this->removeAllListeners();
     }
 
-    /** @internal */
-    public function handleConnection($socket)
+    /**
+     * @internal
+     * @param resource $socket
+     */
+    public function handleConnection($socket): void
     {
         $this->emit('connection', [
             new Connection($socket, $this->loop)

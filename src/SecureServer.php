@@ -52,8 +52,11 @@ use React\EventLoop\LoopInterface;
  */
 final class SecureServer extends EventEmitter implements ServerInterface
 {
+    /** @var ServerInterface */
     private $tcp;
+    /** @var StreamEncryption */
     private $encryption;
+    /** @var array<string, mixed> */
     private $context;
 
     /**
@@ -115,7 +118,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
      *
      * @param ServerInterface|TcpServer $tcp
      * @param ?LoopInterface $loop
-     * @param array $context
+     * @param array<string, mixed> $context
      * @see TcpServer
      * @link https://www.php.net/manual/en/context.ssl.php for TLS context options
      */
@@ -130,7 +133,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
         $this->encryption = new StreamEncryption($loop ?? Loop::get());
         $this->context = $context;
 
-        $this->tcp->on('connection', function ($connection) {
+        $this->tcp->on('connection', function (ConnectionInterface $connection) {
             $this->handleConnection($connection);
         });
         $this->tcp->on('error', function ($error) {
@@ -138,7 +141,7 @@ final class SecureServer extends EventEmitter implements ServerInterface
         });
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         $address = $this->tcp->getAddress();
         if ($address === null) {
@@ -148,23 +151,23 @@ final class SecureServer extends EventEmitter implements ServerInterface
         return \str_replace('tcp://' , 'tls://', $address);
     }
 
-    public function pause()
+    public function pause(): void
     {
         $this->tcp->pause();
     }
 
-    public function resume()
+    public function resume(): void
     {
         $this->tcp->resume();
     }
 
-    public function close()
+    public function close(): void
     {
-        return $this->tcp->close();
+        $this->tcp->close();
     }
 
     /** @internal */
-    public function handleConnection(ConnectionInterface $connection)
+    public function handleConnection(ConnectionInterface $connection): void
     {
         if (!$connection instanceof Connection) {
             $this->emit('error', [new \UnexpectedValueException('Base server does not use internal Connection class exposing stream resource')]);

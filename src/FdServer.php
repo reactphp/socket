@@ -33,9 +33,13 @@ use React\EventLoop\LoopInterface;
  */
 final class FdServer extends EventEmitter implements ServerInterface
 {
+    /** @var resource */
     private $master;
+    /** @var LoopInterface */
     private $loop;
+    /** @var bool */
     private $unix = false;
+    /** @var bool */
     private $listening = false;
 
     /**
@@ -77,7 +81,7 @@ final class FdServer extends EventEmitter implements ServerInterface
      */
     public function __construct($fd, ?LoopInterface $loop = null)
     {
-        if (\preg_match('#^php://fd/(\d+)$#', $fd, $m)) {
+        if (\is_string($fd) && \preg_match('#^php://fd/(\d+)$#', $fd, $m)) {
             $fd = (int) $m[1];
         }
         if (!\is_int($fd) || $fd < 0 || $fd >= \PHP_INT_MAX) {
@@ -91,27 +95,29 @@ final class FdServer extends EventEmitter implements ServerInterface
 
         $errno = 0;
         $errstr = '';
-        \set_error_handler(function ($_, $error) use (&$errno, &$errstr) {
+        \set_error_handler(function ($_, $error) use (&$errno, &$errstr): bool {
             // Match errstr from PHP's warning message.
             // fopen(php://fd/3): Failed to open stream: Error duping file descriptor 3; possibly it doesn't exist: [9]: Bad file descriptor
             \preg_match('/\[(\d+)\]: (.*)/', $error, $m);
             $errno = (int) ($m[1] ?? 0);
             $errstr = $m[2] ?? $error;
+            return true;
         });
 
-        $this->master = \fopen('php://fd/' . $fd, 'r+');
+        $master = \fopen('php://fd/' . $fd, 'r+');
 
         \restore_error_handler();
 
-        if (false === $this->master) {
+        if (false === $master) {
             throw new \RuntimeException(
                 'Failed to listen on FD ' . $fd . ': ' . $errstr . SocketServer::errconst($errno),
                 $errno
             );
         }
+        $this->master = $master;
 
         $meta = \stream_get_meta_data($this->master);
-        if (!isset($meta['stream_type']) || $meta['stream_type'] !== 'tcp_socket') {
+        if ($meta['stream_type'] !== 'tcp_socket') {
             \fclose($this->master);
 
             $errno = \defined('SOCKET_ENOTSOCK') ? \SOCKET_ENOTSOCK : 88;
@@ -139,20 +145,23 @@ final class FdServer extends EventEmitter implements ServerInterface
 
         // Assume this is a Unix domain socket (UDS) when its listening address doesn't parse as a valid URL with a port.
         // Looks like this work-around is the closest we can get because PHP doesn't expose SO_DOMAIN even with ext-sockets.
-        $this->unix = \parse_url($this->getAddress(), \PHP_URL_PORT) === false;
+        $this->unix = \parse_url($this->getAddress() ?? '', \PHP_URL_PORT) === false;
 
         \stream_set_blocking($this->master, false);
 
         $this->resume();
     }
 
-    public function getAddress()
+    public function getAddress(): ?string
     {
         if (!\is_resource($this->master)) {
             return null;
         }
 
         $address = \stream_socket_get_name($this->master, false);
+        if ($address === false) {
+            return null;
+        }
 
         if ($this->unix === true) {
             return 'unix://' . $address;
@@ -167,7 +176,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         return 'tcp://' . $address;
     }
 
-    public function pause()
+    public function pause(): void
     {
         if (!$this->listening) {
             return;
@@ -177,15 +186,15 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->listening = false;
     }
 
-    public function resume()
+    public function resume(): void
     {
         if ($this->listening || !\is_resource($this->master)) {
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        $this->loop->addReadStream($this->master, function () {
             try {
-                $newSocket = SocketServer::accept($master);
+                $newSocket = SocketServer::accept($this->master);
             } catch (\RuntimeException $e) {
                 $this->emit('error', [$e]);
                 return;
@@ -195,7 +204,7 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->listening = true;
     }
 
-    public function close()
+    public function close(): void
     {
         if (!\is_resource($this->master)) {
             return;
@@ -206,8 +215,11 @@ final class FdServer extends EventEmitter implements ServerInterface
         $this->removeAllListeners();
     }
 
-    /** @internal */
-    public function handleConnection($socket)
+    /**
+     * @internal
+     * @param resource $socket
+     */
+    public function handleConnection($socket): void
     {
         $connection = new Connection($socket, $this->loop);
         $connection->unix = $this->unix;

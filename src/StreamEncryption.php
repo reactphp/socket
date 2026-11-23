@@ -4,6 +4,7 @@ namespace React\Socket;
 
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
+use React\Promise\PromiseInterface;
 
 /**
  * This class is considered internal and its API should not be relied upon
@@ -13,11 +14,14 @@ use React\Promise\Deferred;
  */
 class StreamEncryption
 {
+    /** @var LoopInterface */
     private $loop;
+    /** @var int */
     private $method;
+    /** @var bool */
     private $server;
 
-    public function __construct(LoopInterface $loop, $server = true)
+    public function __construct(LoopInterface $loop, bool $server = true)
     {
         $this->loop = $loop;
         $this->server = $server;
@@ -45,7 +49,7 @@ class StreamEncryption
      * @param Connection $stream
      * @return \React\Promise\PromiseInterface<Connection>
      */
-    public function enable(Connection $stream)
+    public function enable(Connection $stream): PromiseInterface
     {
         return $this->toggle($stream, true);
     }
@@ -55,7 +59,7 @@ class StreamEncryption
      * @param bool $toggle
      * @return \React\Promise\PromiseInterface<Connection>
      */
-    public function toggle(Connection $stream, $toggle)
+    public function toggle(Connection $stream, bool $toggle): PromiseInterface
     {
         // pause actual stream instance to continue operation on raw stream socket
         $stream->pause();
@@ -63,6 +67,7 @@ class StreamEncryption
         // TODO: add write() event to make sure we're not sending any excessive data
 
         // cancelling this leaves this stream in an inconsistent state…
+        /** @var Deferred<null> $deferred */
         $deferred = new Deferred(function () {
             throw new \RuntimeException();
         });
@@ -71,6 +76,7 @@ class StreamEncryption
         $socket = $stream->stream;
 
         // get crypto method from context options or use global setting from constructor
+        /** @var array{ssl?: array{crypto_method?: int}} $context */
         $context = \stream_context_get_options($socket);
         $method = $context['ssl']['crypto_method'] ?? $this->method;
 
@@ -106,19 +112,24 @@ class StreamEncryption
      * @param int $method
      * @return void
      */
-    public function toggleCrypto($socket, Deferred $deferred, $toggle, $method)
+    public function toggleCrypto($socket, Deferred $deferred, bool $toggle, int $method): void
     {
         $error = null;
-        \set_error_handler(function ($_, $errstr) use (&$error) {
+        \set_error_handler(function ($_, $errstr) use (&$error): bool {
             $error = \str_replace(["\r", "\n"], ' ', $errstr);
 
             // remove useless function name from error message
             if (($pos = \strpos($error, "): ")) !== false) {
-                $error = \substr($error, $pos + 3);
+                $error = (string) \substr($error, $pos + 3);
             }
+            return true;
         });
 
-        $result = \stream_socket_enable_crypto($socket, $toggle, $method);
+        if ($toggle) {
+            // Configure the full crypto bitmask through the SSL context, including combined protocol flags.
+            \stream_context_set_option($socket, 'ssl', 'crypto_method', $method);
+        }
+        $result = \stream_socket_enable_crypto($socket, $toggle);
 
         \restore_error_handler();
 

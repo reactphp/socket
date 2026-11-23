@@ -34,6 +34,7 @@
         "react/stream": "^1.4"
     },
     "require-dev": {
+        "phpstan/phpstan": "^1.4.10 || ^2.1",
         "phpunit/phpunit": "^9.6 || ^8.5 || ^7.5",
         "react/async": "^4.3 || ^3",
         "react/promise-stream": "^1.4",
