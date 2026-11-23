@@ -82,6 +82,16 @@ final class TcpConnector implements ConnectorInterface
             ));
         }
 
+        // Support socket_set_option($socket, SOL_SOCKET, $option, $value)
+        // Sets socket options for the socket: https://www.php.net/manual/en/function.socket-set-option.php
+        if (isset($context['socket']['socket_options']) && \function_exists('socket_import_stream')) {
+            $socket = \socket_import_stream($stream);
+            foreach ($context['socket']['socket_options'] as $option => $value) {
+                \socket_set_option($socket, \SOL_SOCKET, $option, $value);
+            }
+            $stream = \socket_export_stream($socket);
+        }
+
         // wait for connection
         return new Promise(function ($resolve, $reject) use ($stream, $uri) {
             $this->loop->addWriteStream($stream, function ($stream) use ($resolve, $reject, $uri) {
