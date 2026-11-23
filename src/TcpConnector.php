@@ -9,12 +9,10 @@ use function React\Promise\reject;
 
 final class TcpConnector implements ConnectorInterface
 {
-    private $loop;
     private $context;
 
-    public function __construct(?LoopInterface $loop = null, array $context = [])
+    public function __construct(array $context = [])
     {
-        $this->loop = $loop ?? Loop::get();
         $this->context = $context;
     }
 
@@ -84,8 +82,8 @@ final class TcpConnector implements ConnectorInterface
 
         // wait for connection
         return new Promise(function ($resolve, $reject) use ($stream, $uri) {
-            $this->loop->addWriteStream($stream, function ($stream) use ($resolve, $reject, $uri) {
-                $this->loop->removeWriteStream($stream);
+            Loop::addWriteStream($stream, function ($stream) use ($resolve, $reject, $uri) {
+                Loop::removeWriteStream($stream);
 
                 // The following hack looks like the only way to
                 // detect connection refused errors with PHP's stream sockets.
@@ -127,11 +125,11 @@ final class TcpConnector implements ConnectorInterface
                         $errno
                     ));
                 } else {
-                    $resolve(new Connection($stream, $this->loop));
+                    $resolve(new Connection($stream));
                 }
             });
         }, function () use ($stream, $uri) {
-            $this->loop->removeWriteStream($stream);
+            Loop::removeWriteStream($stream);
             \fclose($stream);
 
             throw new \RuntimeException(

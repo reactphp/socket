@@ -2,6 +2,7 @@
 
 namespace React\Socket;
 
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
 
@@ -13,13 +14,11 @@ use React\Promise\Deferred;
  */
 class StreamEncryption
 {
-    private $loop;
     private $method;
     private $server;
 
-    public function __construct(LoopInterface $loop, $server = true)
+    public function __construct($server = true)
     {
-        $this->loop = $loop;
         $this->server = $server;
 
         // support TLSv1.0+ by default and exclude legacy SSLv2/SSLv3.
@@ -78,21 +77,21 @@ class StreamEncryption
             $this->toggleCrypto($socket, $deferred, $toggle, $method);
         };
 
-        $this->loop->addReadStream($socket, $toggleCrypto);
+        Loop::addReadStream($socket, $toggleCrypto);
 
         if (!$this->server) {
             $toggleCrypto();
         }
 
         return $deferred->promise()->then(function () use ($stream, $socket, $toggle) {
-            $this->loop->removeReadStream($socket);
+            Loop::removeReadStream($socket);
 
             $stream->encryptionEnabled = $toggle;
             $stream->resume();
 
             return $stream;
         }, function($error) use ($stream, $socket) {
-            $this->loop->removeReadStream($socket);
+            Loop::removeReadStream($socket);
             $stream->resume();
             throw $error;
         });

@@ -15,13 +15,6 @@ use function React\Promise\resolve;
  */
 final class UnixConnector implements ConnectorInterface
 {
-    private $loop;
-
-    public function __construct(?LoopInterface $loop = null)
-    {
-        $this->loop = $loop ?? Loop::get();
-    }
-
     public function connect($path)
     {
         if (\strpos($path, '://') === false) {
@@ -42,7 +35,7 @@ final class UnixConnector implements ConnectorInterface
             ));
         }
 
-        $connection = new Connection($resource, $this->loop);
+        $connection = new Connection($resource);
         $connection->unix = true;
 
         return resolve($connection);

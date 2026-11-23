@@ -22,7 +22,6 @@ use React\EventLoop\LoopInterface;
 final class UnixServer extends EventEmitter implements ServerInterface
 {
     private $master;
-    private $loop;
     private $listening = false;
 
     /**
@@ -43,15 +42,12 @@ final class UnixServer extends EventEmitter implements ServerInterface
      * given event loop instance.
      *
      * @param string         $path
-     * @param ?LoopInterface $loop
      * @param array          $context
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($path, ?LoopInterface $loop = null, array $context = [])
+    public function __construct($path, array $context = [])
     {
-        $this->loop = $loop ?? Loop::get();
-
         if (\strpos($path, '://') === false) {
             $path = 'unix://' . $path;
         } elseif (\substr($path, 0, 7) !== 'unix://') {
@@ -108,7 +104,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->removeReadStream($this->master);
+        Loop::removeReadStream($this->master);
         $this->listening = false;
     }
 
@@ -118,7 +114,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        Loop::addReadStream($this->master, function ($master) {
             try {
                 $newSocket = SocketServer::accept($master);
             } catch (\RuntimeException $e) {
@@ -144,7 +140,7 @@ final class UnixServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection($socket)
     {
-        $connection = new Connection($socket, $this->loop);
+        $connection = new Connection($socket);
         $connection->unix = true;
 
         $this->emit('connection', [

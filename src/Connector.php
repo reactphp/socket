@@ -5,6 +5,7 @@ namespace React\Socket;
 use React\Dns\Config\Config as DnsConfig;
 use React\Dns\Resolver\Factory as DnsFactory;
 use React\Dns\Resolver\ResolverInterface;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use function React\Promise\reject;
 
@@ -37,20 +38,13 @@ final class Connector implements ConnectorInterface
      * This class takes two optional arguments for more advanced usage:
      *
      * ```php
-     * $connector = new React\Socket\Connector(array $context = [], ?LoopInterface $loop = null);
+     * $connector = new React\Socket\Connector(array $context = []);
      * ```
      *
-     * This class takes an optional `LoopInterface|null $loop` parameter that can be used to
-     * pass the event loop instance to use for this object. You can use a `null` value
-     * here in order to use the [default loop](https://github.com/reactphp/event-loop#loop).
-     * This value SHOULD NOT be given unless you're sure you want to explicitly use a
-     * given event loop instance.
-     *
      * @param array          $context
-     * @param ?LoopInterface $loop
      * @throws \InvalidArgumentException for invalid arguments
      */
-    public function __construct(array $context = [], ?LoopInterface $loop = null)
+    public function __construct(array $context = [])
     {
         // apply default options if not explicitly given
         $context += [
@@ -71,7 +65,6 @@ final class Connector implements ConnectorInterface
             $tcp = $context['tcp'];
         } else {
             $tcp = new TcpConnector(
-                $loop,
                 \is_array($context['tcp']) ? $context['tcp'] : []
             );
         }
@@ -93,12 +86,12 @@ final class Connector implements ConnectorInterface
                 $factory = new DnsFactory();
                 $resolver = $factory->createCached(
                     $config,
-                    $loop
+                    Loop::get()
                 );
             }
 
             if ($context['happy_eyeballs'] === true) {
-                $tcp = new HappyEyeBallsConnector($loop, $tcp, $resolver);
+                $tcp = new HappyEyeBallsConnector($tcp, $resolver);
             } else {
                 $tcp = new DnsConnector($tcp, $resolver);
             }
@@ -110,8 +103,7 @@ final class Connector implements ConnectorInterface
             if ($context['timeout'] !== false) {
                 $context['tcp'] = new TimeoutConnector(
                     $context['tcp'],
-                    $context['timeout'],
-                    $loop
+                    $context['timeout']
                 );
             }
 
@@ -122,7 +114,6 @@ final class Connector implements ConnectorInterface
             if (!$context['tls'] instanceof ConnectorInterface) {
                 $context['tls'] = new SecureConnector(
                     $tcp,
-                    $loop,
                     \is_array($context['tls']) ? $context['tls'] : []
                 );
             }
@@ -130,8 +121,7 @@ final class Connector implements ConnectorInterface
             if ($context['timeout'] !== false) {
                 $context['tls'] = new TimeoutConnector(
                     $context['tls'],
-                    $context['timeout'],
-                    $loop
+                    $context['timeout']
                 );
             }
 
@@ -140,7 +130,7 @@ final class Connector implements ConnectorInterface
 
         if ($context['unix'] !== false) {
             if (!$context['unix'] instanceof ConnectorInterface) {
-                $context['unix'] = new UnixConnector($loop);
+                $context['unix'] = new UnixConnector();
             }
             $this->connectors['unix'] = $context['unix'];
         }

@@ -10,9 +10,8 @@ class ConnectionTest extends TestCase
     public function testCloseConnectionWillCloseSocketResource()
     {
         $resource = fopen('php://memory', 'r+');
-        $loop = $this->createMock(LoopInterface::class);
 
-        $connection = new Connection($resource, $loop);
+        $connection = new Connection($resource);
         $connection->close();
 
         $this->assertFalse(is_resource($resource));

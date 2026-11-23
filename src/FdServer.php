@@ -34,7 +34,6 @@ use React\EventLoop\LoopInterface;
 final class FdServer extends EventEmitter implements ServerInterface
 {
     private $master;
-    private $loop;
     private $unix = false;
     private $listening = false;
 
@@ -75,7 +74,7 @@ final class FdServer extends EventEmitter implements ServerInterface
      * @throws \InvalidArgumentException if the listening address is invalid
      * @throws \RuntimeException if listening on this address fails (already in use etc.)
      */
-    public function __construct($fd, ?LoopInterface $loop = null)
+    public function __construct($fd)
     {
         if (\preg_match('#^php://fd/(\d+)$#', $fd, $m)) {
             $fd = (int) $m[1];
@@ -86,8 +85,6 @@ final class FdServer extends EventEmitter implements ServerInterface
                 \defined('SOCKET_EINVAL') ? \SOCKET_EINVAL : (\defined('PCNTL_EINVAL') ? \PCNTL_EINVAL : 22)
             );
         }
-
-        $this->loop = $loop ?? Loop::get();
 
         $errno = 0;
         $errstr = '';
@@ -173,7 +170,7 @@ final class FdServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->removeReadStream($this->master);
+        Loop::removeReadStream($this->master);
         $this->listening = false;
     }
 
@@ -183,7 +180,7 @@ final class FdServer extends EventEmitter implements ServerInterface
             return;
         }
 
-        $this->loop->addReadStream($this->master, function ($master) {
+        Loop::addReadStream($this->master, function ($master) {
             try {
                 $newSocket = SocketServer::accept($master);
             } catch (\RuntimeException $e) {
@@ -209,7 +206,7 @@ final class FdServer extends EventEmitter implements ServerInterface
     /** @internal */
     public function handleConnection($socket)
     {
-        $connection = new Connection($socket, $this->loop);
+        $connection = new Connection($socket);
         $connection->unix = $this->unix;
 
         $this->emit('connection', [$connection]);

@@ -3,6 +3,7 @@
 namespace React\Socket;
 
 use Evenement\EventEmitter;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Stream\DuplexResourceStream;
 use React\Stream\Util;
@@ -41,7 +42,7 @@ class Connection extends EventEmitter implements ConnectionInterface
 
     private $input;
 
-    public function __construct($resource, LoopInterface $loop)
+    public function __construct($resource)
     {
         // Legacy PHP < 7.3.3 (and PHP < 7.2.15) suffers from a bug where feof()
         // might block with 100% CPU usage on fragmented TLS records.
@@ -66,9 +67,9 @@ class Connection extends EventEmitter implements ConnectionInterface
 
         $this->input = new DuplexResourceStream(
             $resource,
-            $loop,
+            Loop::get(),
             $clearCompleteBuffer ? -1 : null,
-            new WritableResourceStream($resource, $loop, null, $limitWriteChunks ? 8192 : null)
+            new WritableResourceStream($resource, Loop::get(), null, $limitWriteChunks ? 8192 : null)
         );
 
         $this->stream = $resource;
