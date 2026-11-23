@@ -1379,6 +1379,33 @@ $secureConnector = new React\Socket\SecureConnector($dnsConnector, null, array(
 ));
 ```
 
+In case you want to retrieve your peers certificate or certificate chain,
+you can use the related context options:
+
+```php
+$secureConnector = new React\Socket\SecureConnector($dnsConnector, $loop, array(
+    'capture_peer_cert' => true,
+    'capture_peer_cert_chain' => true,
+));
+```
+
+To show the peer certificate for every new connection this can be done as
+follows:
+
+```php
+$secureConnector->connect('www.google.com:443')->then(function (React\Socket\ConnectionInterface $connection) {
+    assert($connection instanceof React\Socket\Connection);
+    if ($connection->hasTlsPeer()) {
+        $peer = $connection->getTlsPeer();
+        if ($peer && $peer->hasPeerCertificate()) {
+            $peerCert = $peer->getPeerCertificate();
+            openssl_x509_export($peerCert, $cert);
+            echo $cert;
+        }
+    }
+});
+```
+
 By default, this connector supports TLSv1.0+ and excludes support for legacy
 SSLv2/SSLv3. As of PHP 5.6+ you can also explicitly choose the TLS version you
 want to negotiate with the remote side:
